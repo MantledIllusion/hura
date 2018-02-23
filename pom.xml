@@ -4,7 +4,7 @@
 
 	<groupId>com.mantledillusion.injection</groupId>
 	<artifactId>hura</artifactId>
-	<version>1.0.0.ALPHA2</version>
+	<version>1.0.0.ALPHA3</version>
 
 	<name>Hura</name>
 	<description>Hura is a dependency injection framework focused on sequential injection and bean lifecycle management.</description>
