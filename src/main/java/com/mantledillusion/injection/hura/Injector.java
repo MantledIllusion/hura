@@ -331,26 +331,24 @@ public class Injector {
 		@Override
 		T allocate(Injector injector, InjectionChain injectionChain, InjectionSettings<T> set,
 				InjectionProcessors<T> applicators) {
-			injector.defineSingletonIfNecessary(injectionChain, set, this.instance,
-					Collections.emptyList());
+			injector.defineSingletonIfNecessary(injectionChain, set, this.instance, Collections.emptyList());
 			return this.instance;
 		}
 	}
-	
+
 	static final class ProviderAllocator<T, T2 extends T> extends AbstractAllocator<T> {
 
 		private final BeanProvider<T2> provider;
-		
+
 		ProviderAllocator(BeanProvider<T2> provider) {
 			this.provider = provider;
 		}
-		
+
 		@Override
 		T allocate(Injector injector, InjectionChain injectionChain, InjectionSettings<T> set,
 				InjectionProcessors<T> applicators) {
 			T bean = this.provider.provide(injector.new TemporalInjectorCallback(injectionChain));
-			injector.defineSingletonIfNecessary(injectionChain, set, bean,
-					Collections.emptyList());
+			injector.defineSingletonIfNecessary(injectionChain, set, bean, Collections.emptyList());
 			return bean;
 		}
 	}
@@ -445,8 +443,8 @@ public class Injector {
 			try {
 				finalizable.process();
 			} catch (Exception e) {
-				throw new ProcessorException(
-						"Unable to finalize; the processing threw an exception: " + e.getMessage(), e);
+				throw new ProcessorException("Unable to finalize; the processing threw an exception: " + e.getMessage(),
+						e);
 			}
 		}
 	}
@@ -607,8 +605,10 @@ public class Injector {
 		}
 
 		process(instance, set.type, injectionChain, applicators.getPostProcessorsOfPhase(Phase.INJECT));
-		registerFinalizers(instance, set.isIndependent, injectionChain, applicators.getPostProcessorsOfPhase(Phase.FINALIZE));
-		registerDestroyers(instance, set.isIndependent, injectionChain, applicators.getPostProcessorsOfPhase(Phase.DESTROY));
+		registerFinalizers(instance, set.isIndependent, injectionChain,
+				applicators.getPostProcessorsOfPhase(Phase.FINALIZE));
+		registerDestroyers(instance, set.isIndependent, injectionChain,
+				applicators.getPostProcessorsOfPhase(Phase.DESTROY));
 
 		return instance;
 	}
@@ -706,14 +706,22 @@ public class Injector {
 		}
 	}
 
-	@Process(Phase.DESTROY)
-	private synchronized void releaseReferences() {
+	/**
+	 * Shorthand for calling {@link #destroy(Object)} with all beans that have been
+	 * instantiated by this {@link Injector} at the moment of calling.
+	 */
+	public void destroyAll() {
 		Iterator<Entry<Object, List<SelfSustaningProcessor>>> beanIter = this.beans.entrySet().iterator();
 		while (beanIter.hasNext()) {
 			Entry<Object, List<SelfSustaningProcessor>> entry = beanIter.next();
 			destroy(entry.getKey(), entry.getValue());
 			beanIter.remove();
 		}
+	}
+
+	@Process(Phase.DESTROY)
+	private synchronized void releaseReferences() {
+		destroyAll();
 		destroy(this.baseInjectionContext);
 	}
 
