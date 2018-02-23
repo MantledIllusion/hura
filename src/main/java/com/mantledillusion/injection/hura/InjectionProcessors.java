@@ -2,6 +2,7 @@ package com.mantledillusion.injection.hura;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,7 +23,7 @@ class InjectionProcessors<T> {
 
 	@SuppressWarnings("rawtypes")
 	static final InjectionProcessors EMPTY = of();
-	
+
 	private final Map<Processor.Phase, List<Processor<? super T>>> postProcessors;
 
 	private InjectionProcessors(Map<Processor.Phase, List<Processor<? super T>>> postProcessors) {
@@ -178,9 +179,23 @@ class InjectionProcessors<T> {
 
 			Processor<T> postProcessor;
 			if (m.getParameterCount() == 0) {
-				postProcessor = (bean, tCallback) -> m.invoke(bean);
+				postProcessor = (bean, tCallback) -> {
+					try {
+						m.invoke(bean);
+					} catch (InvocationTargetException e) {
+						throw new ProcessorException("Unable to invoke method '" + m.getName() + "' for processing: "
+								+ e.getTargetException().getMessage(), e.getTargetException());
+					}
+				};
 			} else {
-				postProcessor = (bean, tCallback) -> m.invoke(bean, tCallback);
+				postProcessor = (bean, tCallback) -> {
+					try {
+						m.invoke(bean, tCallback);
+					} catch (InvocationTargetException e) {
+						throw new ProcessorException("Unable to invoke method '" + m.getName() + "' for processing: "
+								+ e.getTargetException().getMessage(), e.getTargetException());
+					}
+				};
 			}
 
 			switch (m.getAnnotation(Process.class).value()) {
