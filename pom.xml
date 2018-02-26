@@ -37,7 +37,7 @@
 		<!-- maven dependency versions -->
 		<hydnora.version>1.0.0</hydnora.version>
 		<essentials.reflection.version>1.1.0</essentials.reflection.version>
-		<org.apache.commons.lang.version>3.6</org.apache.commons.lang.version>
+		<org.apache.commons.lang.version>3.7</org.apache.commons.lang.version>
 		<org.apache.commons.collections.version>4.1</org.apache.commons.collections.version>
 		<slf4j.version>1.7.25</slf4j.version>
 		<junit.version>4.12</junit.version>
