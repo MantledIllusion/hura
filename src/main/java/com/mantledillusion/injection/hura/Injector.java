@@ -431,9 +431,22 @@ public class Injector {
 	public final <T> T instantiate(TypedBlueprint<T> blueprint) {
 		InjectionChain chain = InjectionChain.of(blueprint, this.baseInjectionContext, this.resolvingContext);
 		InjectionSettings<T> settings = InjectionSettings.of(blueprint);
-		T instance = instantiate(chain, settings);
-		this.beans.put(instance, chain.getDestroyables());
-		finalize(chain.getFinalizables());
+		
+		T instance;
+		try {
+			instance = instantiate(chain, settings);
+			this.beans.put(instance, chain.getDestroyables());
+			finalize(chain.getFinalizables());
+		} catch (Exception e) {
+			for (SelfSustaningProcessor destroyable: chain.getDestroyables()) {
+				try {
+					destroyable.process();
+				} catch (Exception e1) {
+					// Do nothing; If proper injection has failed, destorying might fail as well.
+				}
+			}
+			throw e;
+		}
 		return instance;
 	}
 
@@ -557,6 +570,10 @@ public class Injector {
 			throw new InjectionException("Unable to instantiate the type '" + set.type.getSimpleName()
 					+ "' with constructor '" + injectableConstructor.getConstructor() + "': " + e.getMessage(), e);
 		}
+		registerDestroyers(instance, set.isIndependent, injectionChain,
+				applicators.getPostProcessorsOfPhase(Phase.DESTROY));
+		registerFinalizers(instance, set.isIndependent, injectionChain,
+				applicators.getPostProcessorsOfPhase(Phase.FINALIZE));
 
 		defineSingletonIfNecessary(injectionChain, set, instance, applicators.getPostProcessorsOfPhase(Phase.DESTROY));
 
@@ -605,10 +622,6 @@ public class Injector {
 		}
 
 		process(instance, set.type, injectionChain, applicators.getPostProcessorsOfPhase(Phase.INJECT));
-		registerFinalizers(instance, set.isIndependent, injectionChain,
-				applicators.getPostProcessorsOfPhase(Phase.FINALIZE));
-		registerDestroyers(instance, set.isIndependent, injectionChain,
-				applicators.getPostProcessorsOfPhase(Phase.DESTROY));
 
 		return instance;
 	}
