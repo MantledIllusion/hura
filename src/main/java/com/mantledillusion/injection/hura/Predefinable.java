@@ -111,6 +111,8 @@ public abstract class Predefinable {
 		 * <p>
 		 * Allocates the singletonId to the specified {@link BeanProvider}.
 		 * 
+		 * @param <T>
+		 *            The type of the singleton.
 		 * @param singletonId
 		 *            The singletonId on whose injections the given instance may be
 		 *            referenced at; may <b>not</b> be null.
@@ -133,6 +135,8 @@ public abstract class Predefinable {
 		 * <p>
 		 * Allocates the singletonId to the specified {@link Class}.
 		 * 
+		 * @param <T>
+		 *            The type of the singleton.
 		 * @param singletonId
 		 *            The singletonId on whose injections the given instance may be
 		 *            referenced at; may <b>not</b> be null.

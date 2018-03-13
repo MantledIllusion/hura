@@ -109,10 +109,8 @@ final class InjectionChain {
 			throw new InjectionException(
 					"Injection dependecy cycle detected: " + getStringifiedChainSinceConstructor(c));
 		}
-		List<SelfSustaningProcessor> finalizables = isIndependent ? this.finalizables : new ArrayList<>();
-		List<SelfSustaningProcessor> destroyables = isIndependent ? this.destroyables : new ArrayList<>();
 		return new InjectionChain(this.typeAllocations, this.singletonAllocations, this.context, this.resolvingContext,
-				ListUtils.union(this.constructorChain, Collections.singletonList(c)), finalizables, destroyables);
+				ListUtils.union(this.constructorChain, Collections.singletonList(c)), this.finalizables, this.destroyables);
 	}
 
 	static InjectionChain of(TypedBlueprint<?> blueprint, InjectionContext baseContext,
@@ -147,8 +145,8 @@ final class InjectionChain {
 		return this.context.hasSingleton(singletonId);
 	}
 
-	<T> void addSingleton(String singletonId, T instance, List<SelfSustaningProcessor> destroyables) {
-		this.context.addSingleton(singletonId, instance, destroyables);
+	<T> void addSingleton(String singletonId, T instance) {
+		this.context.addSingleton(singletonId, instance);
 	}
 
 	<T> T retrieveSingleton(String singletonId) {

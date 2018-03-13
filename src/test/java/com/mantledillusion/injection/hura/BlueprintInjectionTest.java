@@ -247,7 +247,7 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 	}
 	
 	@Test
-	public void testCollecivePredefinableDefinition() {
+	public void testCollectivePredefinableDefinition() {
 		String propertyValue = "value";
 		String singleton = "singleton";
 		
