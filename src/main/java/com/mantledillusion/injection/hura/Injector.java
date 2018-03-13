@@ -81,27 +81,6 @@ public class Injector {
 		private RootInjector(InjectionContext globalInjectionContext, ResolvingContext resolvingContext) {
 			super(globalInjectionContext, resolvingContext);
 		}
-
-		/**
-		 * Destroys this {@link RootInjector}, which causes all of its beans to be
-		 * destroyed, including its {@link SingletonMode#GLOBAL} {@link Singleton}s to
-		 * be removed from the global {@link InjectionContext}.
-		 * <p>
-		 * This {@link Method} is exclusive to the {@link RootInjector}, because normal
-		 * {@link Injector}s down the tree can only be injected automatically instead of
-		 * being created manually, so they can only be destroyed automatically as well.
-		 * <p>
-		 * That being said, calling this {@link Method} will cause all yet undestroyed
-		 * child {@link Injector}s of this {@link RootInjector} to be destroyed, who
-		 * will then destroy their undestroyed child {@link Injector}s and so on.
-		 * <p>
-		 * In other words, calling this {@link Method} effectively destroys the whole
-		 * injection tree that has been build using this {@link RootInjector}, instead
-		 * of destroying just one sub tree with {@link #destroy(Object)}.
-		 */
-		public void destroy() {
-			super.releaseReferences();
-		}
 	}
 
 	/**
@@ -331,7 +310,7 @@ public class Injector {
 		@Override
 		T allocate(Injector injector, InjectionChain injectionChain, InjectionSettings<T> set,
 				InjectionProcessors<T> applicators) {
-			injector.defineSingletonIfNecessary(injectionChain, set, this.instance, Collections.emptyList());
+			injector.defineSingletonIfNecessary(injectionChain, set, this.instance);
 			return this.instance;
 		}
 	}
@@ -348,7 +327,7 @@ public class Injector {
 		T allocate(Injector injector, InjectionChain injectionChain, InjectionSettings<T> set,
 				InjectionProcessors<T> applicators) {
 			T bean = this.provider.provide(injector.new TemporalInjectorCallback(injectionChain));
-			injector.defineSingletonIfNecessary(injectionChain, set, bean, Collections.emptyList());
+			injector.defineSingletonIfNecessary(injectionChain, set, bean);
 			return bean;
 		}
 	}
@@ -575,7 +554,7 @@ public class Injector {
 		registerFinalizers(instance, set.isIndependent, injectionChain,
 				applicators.getPostProcessorsOfPhase(Phase.FINALIZE));
 
-		defineSingletonIfNecessary(injectionChain, set, instance, applicators.getPostProcessorsOfPhase(Phase.DESTROY));
+		defineSingletonIfNecessary(injectionChain, set, instance);
 
 		process(instance, set.type, injectionChain, applicators.getPostProcessorsOfPhase(Phase.INSPECT));
 
@@ -647,14 +626,9 @@ public class Injector {
 		}
 	}
 
-	private <T> void defineSingletonIfNecessary(InjectionChain chain, InjectionSettings<?> set, T instance,
-			List<Processor<? super T>> destroyers) {
+	private <T> void defineSingletonIfNecessary(InjectionChain chain, InjectionSettings<?> set, T instance) {
 		if (!set.isIndependent) {
-			List<SelfSustaningProcessor> destroyables = new ArrayList<>(0);
-			for (Processor<? super T> destroyer : destroyers) {
-				destroyables.add(() -> destroyer.process(instance, null));
-			}
-			chain.addSingleton(set.singletonId, instance, destroyables);
+			chain.addSingleton(set.singletonId, instance);
 		}
 	}
 
@@ -682,10 +656,8 @@ public class Injector {
 
 	private <T> void registerDestroyers(T instance, boolean isIndependent, InjectionChain injectionChain,
 			List<Processor<? super T>> destroyers) {
-		if (isIndependent) {
-			for (Processor<? super T> destroyer : destroyers) {
-				injectionChain.addDestoryable(() -> destroyer.process(instance, null));
-			}
+		for (Processor<? super T> destroyer : destroyers) {
+			injectionChain.addDestoryable(() -> destroyer.process(instance, null));
 		}
 	}
 
@@ -719,6 +691,11 @@ public class Injector {
 		}
 	}
 
+	@Process(Phase.DESTROY)
+	private synchronized void releaseReferences() {
+		destroyAll();
+	}
+
 	/**
 	 * Shorthand for calling {@link #destroy(Object)} with all beans that have been
 	 * instantiated by this {@link Injector} at the moment of calling.
@@ -729,20 +706,6 @@ public class Injector {
 			Entry<Object, List<SelfSustaningProcessor>> entry = beanIter.next();
 			destroy(entry.getKey(), entry.getValue());
 			beanIter.remove();
-		}
-	}
-
-	@Process(Phase.DESTROY)
-	private synchronized void releaseReferences() {
-		destroyAll();
-		destroy(this.baseInjectionContext);
-	}
-
-	private void destroy(InjectionContext context) {
-		for (String singletonId : context.retrieveSelfDefinedSingletonIds()) {
-			destroy(context.retrieveSingleton(singletonId),
-					context.retrieveSelfDefinedSingletonDestroyables(singletonId));
-			context.removeSelfDefinedSingleton(singletonId);
 		}
 	}
 
@@ -770,8 +733,7 @@ public class Injector {
 	 * This is the reason why the returned type is {@link RootInjector} (not
 	 * {@link Injector}), as the injection tree's root {@link Injector} offers some
 	 * special functionality like predefining {@link SingletonMode#GLOBAL}
-	 * {@link Singleton}s and destroying the whole injection tree using
-	 * {@link RootInjector#destroy()}.
+	 * {@link Singleton}s.
 	 * 
 	 * @param predefinables
 	 *            The {@link Predefinable}s to globally use in all sub injections
@@ -841,7 +803,7 @@ public class Injector {
 		}
 
 		singletons.entrySet().stream().forEach(entry -> globalInjectionContext.addSingleton(entry.getKey(),
-				entry.getValue(), Collections.emptyList()));
+				entry.getValue()));
 		properties.entrySet().stream()
 				.forEach(entry -> globalResolvingContext.addProperty(entry.getKey(), entry.getValue()));
 

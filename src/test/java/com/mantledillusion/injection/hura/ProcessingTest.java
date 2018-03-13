@@ -17,7 +17,8 @@ import com.mantledillusion.injection.hura.annotation.Define;
 import com.mantledillusion.injection.hura.exception.ProcessorException;
 import com.mantledillusion.injection.hura.exception.ValidatorException;
 import com.mantledillusion.injection.hura.exception.BlueprintException;
-import com.mantledillusion.injection.hura.injectables.InjectableWithGlobalSingletonAndSubInjector;
+import com.mantledillusion.injection.hura.injectables.InjectableWithDestructableSingleton;
+import com.mantledillusion.injection.hura.injectables.InjectableWithDestructableSingletonAndInjector;
 import com.mantledillusion.injection.hura.injectables.InjectableWithInjectableAndRelay;
 import com.mantledillusion.injection.hura.injectables.InjectableWithInspectedAnnotations;
 import com.mantledillusion.injection.hura.injectables.InjectableWithProcessableFields;
@@ -207,15 +208,16 @@ public class ProcessingTest extends AbstractInjectionTest {
 	}
 	
 	@Test
-	public void testRootInjectorDestruction() {
+	public void testSingletonDestruction() {
 		RootInjector rootInjector = Injector.of();
 		
-		InjectableWithGlobalSingletonAndSubInjector injectable = rootInjector.instantiate(InjectableWithGlobalSingletonAndSubInjector.class);
-		InjectableWithGlobalSingletonAndSubInjector subInjectable = injectable.injector.instantiate(InjectableWithGlobalSingletonAndSubInjector.class);
-		
-		injectable.injector.destroy(subInjectable);
+		InjectableWithDestructableSingletonAndInjector injectable = rootInjector.instantiate(InjectableWithDestructableSingletonAndInjector.class);
+		InjectableWithDestructableSingleton sub = injectable.injector.instantiate(InjectableWithDestructableSingleton.class);
+
 		assertFalse(injectable.singleton.wasDestructed);
-		rootInjector.destroy();
+		injectable.injector.destroy(sub);
+		assertFalse(injectable.singleton.wasDestructed);
+		rootInjector.destroy(injectable);
 		assertTrue(injectable.singleton.wasDestructed);
 	}
 }
