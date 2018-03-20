@@ -3,23 +3,34 @@ package com.mantledillusion.injection.hura;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import org.apache.commons.collections4.ListUtils;
+import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
 import com.mantledillusion.injection.hura.Injector.AbstractAllocator;
 import com.mantledillusion.injection.hura.Injector.SelfSustaningProcessor;
 import com.mantledillusion.injection.hura.annotation.Inject.SingletonMode;
-import com.mantledillusion.injection.hura.exception.InjectionException;
 
 final class InjectionChain {
+
+	private static enum DependencyContext {
+		INDEPENDENT, SEQUENCE, GLOBAL;
+
+		private static DependencyContext of(boolean isIndependent, SingletonMode mode) {
+			if (isIndependent) {
+				return INDEPENDENT;
+			} else if (mode == SingletonMode.SEQUENCE) {
+				return DependencyContext.SEQUENCE;
+			} else {
+				return GLOBAL;
+			}
+		}
+	}
 
 	// Root Blueprint
 	private final Map<Type, AbstractAllocator<?>> typeAllocations;
@@ -30,8 +41,9 @@ final class InjectionChain {
 	private final ResolvingContext resolvingContext;
 
 	// Injection Chain
-	private final Set<Constructor<?>> constructors;
-	private final List<Constructor<?>> constructorChain;
+	private final LinkedHashSet<Constructor<?>> constructorChain;
+	private final DependencyContext dependency;
+	private final Constructor<?> dependencyConstructor;
 
 	// Processability
 	private final List<SelfSustaningProcessor> finalizables;
@@ -45,8 +57,9 @@ final class InjectionChain {
 		this.context = new InjectionContext(baseContext);
 		this.resolvingContext = resolvingContext.merge(blueprint.getPropertyAllocations());
 
-		this.constructors = new HashSet<>();
-		this.constructorChain = new ArrayList<>();
+		this.constructorChain = new LinkedHashSet<>();
+		this.dependency = DependencyContext.INDEPENDENT;
+		this.dependencyConstructor = null;
 
 		this.finalizables = new ArrayList<>();
 		this.destroyables = new ArrayList<>();
@@ -54,8 +67,8 @@ final class InjectionChain {
 
 	private InjectionChain(Map<Type, AbstractAllocator<?>> typeAllocations,
 			Map<String, AbstractAllocator<?>> singletonAllocations, InjectionContext context,
-			ResolvingContext resolvingContext, List<Constructor<?>> constructorChain,
-			List<SelfSustaningProcessor> finalizables,
+			ResolvingContext resolvingContext, LinkedHashSet<Constructor<?>> constructorChain,
+			DependencyContext dependency, Constructor<?> dependencyConstructor, List<SelfSustaningProcessor> finalizables,
 			List<SelfSustaningProcessor> destroyables) {
 		this.typeAllocations = typeAllocations;
 		this.singletonAllocations = singletonAllocations;
@@ -63,8 +76,9 @@ final class InjectionChain {
 		this.context = context;
 		this.resolvingContext = resolvingContext;
 
-		this.constructors = new HashSet<>(constructorChain);
 		this.constructorChain = constructorChain;
+		this.dependency = dependency;
+		this.dependencyConstructor = dependencyConstructor;
 
 		this.finalizables = finalizables;
 		this.destroyables = destroyables;
@@ -82,35 +96,44 @@ final class InjectionChain {
 		ResolvingContext resolvingContext = this.resolvingContext.merge(blueprint.getPropertyAllocations());
 
 		return new InjectionChain(typeAllocations, singletonAllocations, this.context, resolvingContext,
-				this.constructorChain, this.finalizables, this.destroyables);
+				this.constructorChain, this.dependency, this.dependencyConstructor, this.finalizables,
+				this.destroyables);
 	}
-	
+
 	InjectionChain extendBy(List<Blueprint> extensions) {
 		Map<Type, AbstractAllocator<?>> typeAllocations = new HashMap<>();
 		Map<String, AbstractAllocator<?>> singletonAllocations = new HashMap<>();
 		ResolvingContext resolvingContext = new ResolvingContext();
-		
-		for (Blueprint extension: extensions) {
+
+		for (Blueprint extension : extensions) {
 			typeAllocations.putAll(extension.getTypeAllocations());
 			singletonAllocations.putAll(extension.getSingletonAllocations());
 			resolvingContext = resolvingContext.merge(extension.getPropertyAllocations());
 		}
-		
+
 		typeAllocations.putAll(this.typeAllocations);
 		singletonAllocations.putAll(this.singletonAllocations);
 		resolvingContext = resolvingContext.merge(this.resolvingContext);
-		
+
 		return new InjectionChain(typeAllocations, singletonAllocations, this.context, resolvingContext,
-				this.constructorChain, this.finalizables, this.destroyables);
+				this.constructorChain, this.dependency, this.dependencyConstructor, this.finalizables,
+				this.destroyables);
 	}
 
 	InjectionChain extendBy(Constructor<?> c, boolean isIndependent, SingletonMode mode, String singletonId) {
-		if (this.constructors.contains(c)) {
-			throw new InjectionException(
-					"Injection dependecy cycle detected: " + getStringifiedChainSinceConstructor(c));
+		DependencyContext dependency = DependencyContext.of(isIndependent, mode);
+		Constructor<?> dependencyConstructor = this.dependencyConstructor;
+		if (this.dependency.ordinal() > dependency.ordinal()) {
+			dependency = this.dependency;
+		} else {
+			dependencyConstructor = c;
 		}
+
+		LinkedHashSet<Constructor<?>> constructorChain = new LinkedHashSet<>(this.constructorChain);
+		constructorChain.add(c);
+
 		return new InjectionChain(this.typeAllocations, this.singletonAllocations, this.context, this.resolvingContext,
-				ListUtils.union(this.constructorChain, Collections.singletonList(c)), this.finalizables, this.destroyables);
+				constructorChain, dependency, dependencyConstructor, this.finalizables, this.destroyables);
 	}
 
 	static InjectionChain of(TypedBlueprint<?> blueprint, InjectionContext baseContext,
@@ -163,9 +186,21 @@ final class InjectionChain {
 	}
 
 	// Injection Chain
+	boolean containsConstructor(Constructor<?> c) {
+		return this.constructorChain.contains(c);
+	}
+	
+	boolean isChildOfGlobalSingleton() {
+		return this.dependency == DependencyContext.GLOBAL;
+	}
+
 	String getStringifiedChainSinceConstructor(Constructor<?> c) {
-		return StringUtils.join(
-				this.constructorChain.subList(this.constructorChain.indexOf(c), this.constructorChain.size()), " -> ");
+		int index = IteratorUtils.indexOf(this.constructorChain.iterator(), constructor -> constructor == c);
+		return StringUtils.join(IteratorUtils.skippingIterator(this.constructorChain.iterator(), index), " -> ");
+	}
+
+	String getStringifiedChainSinceDependency() {
+		return getStringifiedChainSinceConstructor(this.dependencyConstructor);
 	}
 
 	// Processables
@@ -176,7 +211,7 @@ final class InjectionChain {
 	List<SelfSustaningProcessor> getFinalizables() {
 		return this.finalizables;
 	}
-	
+
 	void addDestoryable(SelfSustaningProcessor destroyable) {
 		this.destroyables.add(destroyable);
 	}

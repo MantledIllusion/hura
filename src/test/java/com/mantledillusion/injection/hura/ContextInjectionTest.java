@@ -11,12 +11,18 @@ import com.mantledillusion.injection.hura.uninjectables.UninjectableWithBeanWith
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithContextWithoutSingletonId;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithGlobalSingletonContext;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithGlobalSingletonInjector;
+import com.mantledillusion.injection.hura.uninjectables.UninjectableWithSequenceSingletonInjector;
 
 public class ContextInjectionTest extends AbstractInjectionTest {
 
 	@Test(expected=InjectionException.class)
 	public void testDirectContextInjection() {
 		this.suite.injectInSuiteContext(ExampleContext.class);
+	}
+
+	@Test(expected=InjectionException.class)
+	public void testSequenceInjectorInjection() {
+		this.suite.injectInSuiteContext(UninjectableWithSequenceSingletonInjector.class);
 	}
 
 	@Test(expected=InjectionException.class)
