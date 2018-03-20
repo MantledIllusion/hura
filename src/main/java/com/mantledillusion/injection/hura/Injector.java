@@ -546,8 +546,12 @@ public class Injector {
 					+ injectionChain.getStringifiedChainSinceConstructor(injectableConstructor.getConstructor()));
 		}
 
-		injectionChain = injectionChain.extendBy(injectableConstructor.getConstructor(), set.isIndependent,
-				set.singletonMode, set.singletonId);
+		if (!set.isIndependent && set.singletonMode == SingletonMode.GLOBAL) {
+			injectionChain = InjectionChain.forGlobalSingletonInjection(this.resolvingContext);
+		} else {
+			injectionChain = injectionChain.extendBy(injectableConstructor.getConstructor(), set.isIndependent,
+					set.singletonMode, set.singletonId);
+		}
 
 		Object[] parameters = new Object[injectableConstructor.getParamCount()];
 		for (int i = 0; i < injectableConstructor.getParamCount(); i++) {
