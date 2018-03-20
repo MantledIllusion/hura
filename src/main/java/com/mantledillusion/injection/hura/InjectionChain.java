@@ -49,13 +49,14 @@ final class InjectionChain {
 	private final List<SelfSustaningProcessor> finalizables;
 	private final List<SelfSustaningProcessor> destroyables;
 
-	private InjectionChain(TypedBlueprint<?> blueprint, InjectionContext baseContext,
+	private InjectionChain(Map<Type, AbstractAllocator<?>> typeAllocations,
+			Map<String, AbstractAllocator<?>> singletonAllocations, InjectionContext baseContext,
 			ResolvingContext resolvingContext) {
-		this.typeAllocations = blueprint.getTypeAllocations();
-		this.singletonAllocations = blueprint.getSingletonAllocations();
+		this.typeAllocations = typeAllocations;
+		this.singletonAllocations = singletonAllocations;
 
 		this.context = new InjectionContext(baseContext);
-		this.resolvingContext = resolvingContext.merge(blueprint.getPropertyAllocations());
+		this.resolvingContext = new ResolvingContext(resolvingContext);
 
 		this.constructorChain = new LinkedHashSet<>();
 		this.dependency = DependencyContext.INDEPENDENT;
@@ -68,8 +69,8 @@ final class InjectionChain {
 	private InjectionChain(Map<Type, AbstractAllocator<?>> typeAllocations,
 			Map<String, AbstractAllocator<?>> singletonAllocations, InjectionContext context,
 			ResolvingContext resolvingContext, LinkedHashSet<Constructor<?>> constructorChain,
-			DependencyContext dependency, Constructor<?> dependencyConstructor, List<SelfSustaningProcessor> finalizables,
-			List<SelfSustaningProcessor> destroyables) {
+			DependencyContext dependency, Constructor<?> dependencyConstructor,
+			List<SelfSustaningProcessor> finalizables, List<SelfSustaningProcessor> destroyables) {
 		this.typeAllocations = typeAllocations;
 		this.singletonAllocations = singletonAllocations;
 
@@ -136,12 +137,14 @@ final class InjectionChain {
 				constructorChain, dependency, dependencyConstructor, this.finalizables, this.destroyables);
 	}
 
-	static InjectionChain of(TypedBlueprint<?> blueprint, InjectionContext baseContext,
+	static InjectionChain forInjection(Map<Type, AbstractAllocator<?>> typeAllocations, InjectionContext baseContext,
 			ResolvingContext resolvingContext) {
-		if (blueprint == null) {
-			throw new IllegalArgumentException("Unable to inject using a null blueprint.");
-		}
-		return new InjectionChain(blueprint, baseContext, resolvingContext);
+		return new InjectionChain(typeAllocations, new HashMap<>(), baseContext, resolvingContext);
+	}
+
+	static InjectionChain forSingletonResolving(Map<String, AbstractAllocator<?>> singletonAllocations, InjectionContext baseContext,
+			ResolvingContext resolvingContext) {
+		return new InjectionChain(new HashMap<>(), singletonAllocations, baseContext, resolvingContext);
 	}
 
 	// Blueprint
@@ -164,6 +167,10 @@ final class InjectionChain {
 	}
 
 	// Context
+	InjectionContext getContext() {
+		return this.context;
+	}
+
 	boolean hasSingleton(String singletonId) {
 		return this.context.hasSingleton(singletonId);
 	}
@@ -189,7 +196,7 @@ final class InjectionChain {
 	boolean containsConstructor(Constructor<?> c) {
 		return this.constructorChain.contains(c);
 	}
-	
+
 	boolean isChildOfGlobalSingleton() {
 		return this.dependency == DependencyContext.GLOBAL;
 	}

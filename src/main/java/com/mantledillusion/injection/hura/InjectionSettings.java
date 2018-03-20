@@ -16,8 +16,9 @@ import com.mantledillusion.injection.hura.annotation.Inject.SingletonMode;
 final class InjectionSettings<T> {
 
 	@SuppressWarnings("rawtypes")
-	static final InjectionSettings DEFAULTS = new InjectionSettings<>(null, true, StringUtils.EMPTY, false, SingletonMode.SEQUENCE, InjectionMode.EAGER, false, Collections.emptyList());;
-	
+	static final InjectionSettings DEFAULTS = new InjectionSettings<>(null, true, StringUtils.EMPTY, false,
+			SingletonMode.SEQUENCE, InjectionMode.EAGER, false, Collections.emptyList());;
+
 	final Class<T> type;
 	final boolean isIndependent;
 	final String singletonId;
@@ -28,7 +29,8 @@ final class InjectionSettings<T> {
 	final List<Class<? extends BlueprintTemplate>> extensions;
 
 	private InjectionSettings(Class<T> type, boolean isIndependent, String singletonId, boolean isContext,
-			SingletonMode singletonMode, InjectionMode injectionMode, boolean overwriteWithNull, List<Class<? extends BlueprintTemplate>> extensions) {
+			SingletonMode singletonMode, InjectionMode injectionMode, boolean overwriteWithNull,
+			List<Class<? extends BlueprintTemplate>> extensions) {
 		this.type = type;
 		this.isIndependent = isIndependent;
 		this.singletonId = singletonId;
@@ -49,13 +51,19 @@ final class InjectionSettings<T> {
 			throw new IllegalArgumentException("Unable to inject using a null blueprint.");
 		}
 		return new InjectionSettings<>(blueprint.getRootType(), true, StringUtils.EMPTY,
-				isContext(blueprint.getRootType()), SingletonMode.SEQUENCE, InjectionMode.EAGER, false, Collections.emptyList());
+				isContext(blueprint.getRootType()), SingletonMode.SEQUENCE, InjectionMode.EAGER, false,
+				Collections.emptyList());
 	}
 
 	static <T> InjectionSettings<T> of(Class<T> type, Inject annotation) {
 		return new InjectionSettings<>(type, StringUtils.isBlank(annotation.value()), annotation.value(),
-				isContext(type), annotation.singletonMode(), annotation.injectionMode(),
-				annotation.overwriteWithNull(), Arrays.asList(annotation.extensions()));
+				isContext(type), annotation.singletonMode(), annotation.injectionMode(), annotation.overwriteWithNull(),
+				Arrays.asList(annotation.extensions()));
+	}
+
+	static InjectionSettings<Object> of(String singletonId, SingletonMode mode) {
+		return new InjectionSettings<>(Object.class, false, singletonId, false, mode,
+				InjectionMode.EAGER, false, Collections.emptyList());
 	}
 
 	private static boolean isContext(Class<?> type) {

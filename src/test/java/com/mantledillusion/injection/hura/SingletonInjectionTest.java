@@ -21,13 +21,15 @@ public class SingletonInjectionTest extends AbstractInjectionTest {
 	public void testSequenceSingletonInjection() {
 		InjectableWithSequenceSingletonInjectables injectable = this.suite.injectInSuiteContext(InjectableWithSequenceSingletonInjectables.class);
 		
-		assertTrue(injectable.a.sequenceSingleton == injectable.b.sequenceSingleton);
+		assertSame(injectable.a.sequenceSingleton, injectable.b.sequenceSingleton);
 		
-		InjectableWithSequenceSingleton main = this.suite.injectInSuiteContext(InjectableWithSequenceSingleton.class);
-		InjectableWithSequenceSingleton childA = main.subInjector.instantiate(InjectableWithSequenceSingleton.class);
-		InjectableWithSequenceSingleton childB = main.subInjector.instantiate(InjectableWithSequenceSingleton.class);
+		Injectable singleton = new Injectable();
+		InjectableWithInjector main = this.suite.injectInSuiteContext(InjectableWithInjector.class, Singleton.of(InjectableWithSequenceSingleton.SINGLETON, singleton));
+		InjectableWithSequenceSingleton childA = main.injector.instantiate(InjectableWithSequenceSingleton.class);
+		InjectableWithSequenceSingleton childB = main.injector.instantiate(InjectableWithSequenceSingleton.class);
 		
-		assertTrue(main.sequenceSingleton == childA.sequenceSingleton && main.sequenceSingleton == childB.sequenceSingleton);
+		assertSame(singleton, childA.sequenceSingleton);
+		assertSame(singleton, childB.sequenceSingleton);
 	}
 	
 	@Test
