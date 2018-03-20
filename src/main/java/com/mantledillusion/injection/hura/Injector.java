@@ -78,8 +78,26 @@ public class Injector {
 	 */
 	public static final class RootInjector extends Injector {
 
-		private RootInjector(InjectionContext globalInjectionContext, ResolvingContext resolvingContext) {
+		private RootInjector(GlobalInjectionContext globalInjectionContext, ResolvingContext resolvingContext) {
 			super(globalInjectionContext, resolvingContext);
+		}
+
+		/**
+		 * Extension to {@link #destroyAll()} that not only destroys the whole injection
+		 * tree, but also all {@link SingletonMode#GLOBAL} {@link Singleton}s.
+		 */
+		public void destroyInjector() {
+			destroyAll();
+			((Injector) this).globalInjectionContext.destroy();
+		}
+
+		/**
+		 * Normal {@link Injector#destroyAll()} method, but since it is called on the
+		 * {@link RootInjector}, it destroyes the whole injection tree.
+		 */
+		@Override
+		public void destroyAll() {
+			super.destroyAll();
 		}
 	}
 
@@ -310,7 +328,7 @@ public class Injector {
 		@Override
 		T allocate(Injector injector, InjectionChain injectionChain, InjectionSettings<T> set,
 				InjectionProcessors<T> applicators) {
-			injector.defineSingletonIfNecessary(injectionChain, set, this.instance);
+			injector.handleDestroying(injectionChain, set, this.instance, Collections.emptyList());
 			return this.instance;
 		}
 	}
@@ -327,7 +345,7 @@ public class Injector {
 		T allocate(Injector injector, InjectionChain injectionChain, InjectionSettings<T> set,
 				InjectionProcessors<T> applicators) {
 			T bean = this.provider.provide(injector.new TemporalInjectorCallback(injectionChain));
-			injector.defineSingletonIfNecessary(injectionChain, set, bean);
+			injector.handleDestroying(injectionChain, set, bean, Collections.emptyList());
 			return bean;
 		}
 	}
@@ -356,7 +374,7 @@ public class Injector {
 		void process() throws Exception;
 	}
 
-	private final InjectionContext globalInjectionContext;
+	private final GlobalInjectionContext globalInjectionContext;
 	private final InjectionContext baseInjectionContext;
 	private final ResolvingContext resolvingContext;
 
@@ -364,7 +382,7 @@ public class Injector {
 
 	@Construct
 	private Injector(
-			@Inject(value = InjectionContext.INJECTION_CONTEXT_SINGLETON_ID, singletonMode = SingletonMode.GLOBAL) InjectionContext globalInjectionContext,
+			@Inject(value = InjectionContext.INJECTION_CONTEXT_SINGLETON_ID, singletonMode = SingletonMode.GLOBAL) GlobalInjectionContext globalInjectionContext,
 			@Inject(value = InjectionContext.INJECTION_CONTEXT_SINGLETON_ID, singletonMode = SingletonMode.SEQUENCE) InjectionContext baseInjectionContext,
 			@Inject(value = ResolvingContext.RESOLVING_CONTEXT_SINGLETON_ID, singletonMode = SingletonMode.SEQUENCE) ResolvingContext resolvingContex) {
 		this.globalInjectionContext = globalInjectionContext;
@@ -372,7 +390,7 @@ public class Injector {
 		this.resolvingContext = resolvingContex;
 	}
 
-	private Injector(InjectionContext globalInjectionContext, ResolvingContext resolvingContext) {
+	private Injector(GlobalInjectionContext globalInjectionContext, ResolvingContext resolvingContext) {
 		this.globalInjectionContext = globalInjectionContext;
 		this.baseInjectionContext = new InjectionContext();
 		this.resolvingContext = resolvingContext;
@@ -443,12 +461,15 @@ public class Injector {
 	private void finalize(List<SelfSustaningProcessor> finalizables) {
 		Collections.reverse(finalizables);
 		for (SelfSustaningProcessor finalizable : finalizables) {
-			try {
-				finalizable.process();
-			} catch (Exception e) {
-				throw new ProcessorException("Unable to finalize; the processing threw an exception: " + e.getMessage(),
-						e);
-			}
+			finalize(finalizable);
+		}
+	}
+
+	private void finalize(SelfSustaningProcessor finalizable) {
+		try {
+			finalizable.process();
+		} catch (Exception e) {
+			throw new ProcessorException("Unable to finalize; the processing threw an exception: " + e.getMessage(), e);
 		}
 	}
 
@@ -576,12 +597,10 @@ public class Injector {
 			throw new InjectionException("Unable to instantiate the type '" + set.type.getSimpleName()
 					+ "' with constructor '" + injectableConstructor.getConstructor() + "': " + e.getMessage(), e);
 		}
-		registerDestroyers(instance, set.isIndependent, injectionChain,
-				applicators.getPostProcessorsOfPhase(Phase.DESTROY));
-		registerFinalizers(instance, set.isIndependent, injectionChain,
-				applicators.getPostProcessorsOfPhase(Phase.FINALIZE));
 
-		defineSingletonIfNecessary(injectionChain, set, instance);
+		handleDestroying(injectionChain, set, instance, applicators.getPostProcessorsOfPhase(Phase.DESTROY));
+
+		registerFinalizers(instance, injectionChain, applicators.getPostProcessorsOfPhase(Phase.FINALIZE));
 
 		process(instance, set.type, injectionChain, applicators.getPostProcessorsOfPhase(Phase.INSPECT));
 
@@ -653,13 +672,29 @@ public class Injector {
 		}
 	}
 
-	private <T> void defineSingletonIfNecessary(InjectionChain chain, InjectionSettings<?> set, T instance) {
-		if (!set.isIndependent) {
-			if (set.singletonMode == SingletonMode.SEQUENCE) {
-				chain.addSingleton(set.singletonId, instance);
-			} else {
-				this.globalInjectionContext.addSingleton(set.singletonId, instance);
-			}
+	private <T> void handleDestroying(InjectionChain chain, InjectionSettings<?> set, T instance,
+			List<Processor<? super T>> destroyers) {
+		if (set.isIndependent) {
+			registerDestroyers(instance, chain, destroyers);
+		} else if (set.singletonMode == SingletonMode.SEQUENCE) {
+			registerDestroyers(instance, chain, destroyers);
+			chain.addSingleton(set.singletonId, instance);
+		} else {
+			this.globalInjectionContext.addGlobalSingleton(set.singletonId, instance, destroyers);
+		}
+	}
+
+	private <T> void registerDestroyers(T instance, InjectionChain injectionChain,
+			List<Processor<? super T>> destroyers) {
+		for (Processor<? super T> destroyer : destroyers) {
+			injectionChain.addDestoryable(() -> destroyer.process(instance, null));
+		}
+	}
+
+	private <T> void registerFinalizers(T instance, InjectionChain injectionChain,
+			List<Processor<? super T>> finalizers) {
+		for (Processor<? super T> finalizer : finalizers) {
+			injectionChain.addFinalizable(() -> finalizer.process(instance, null));
 		}
 	}
 
@@ -675,20 +710,6 @@ public class Injector {
 			} finally {
 				callback.deactivate();
 			}
-		}
-	}
-
-	private <T> void registerFinalizers(T instance, boolean isIndependent, InjectionChain injectionChain,
-			List<Processor<? super T>> finalizers) {
-		for (Processor<? super T> finalizer : finalizers) {
-			injectionChain.addFinalizable(() -> finalizer.process(instance, null));
-		}
-	}
-
-	private <T> void registerDestroyers(T instance, boolean isIndependent, InjectionChain injectionChain,
-			List<Processor<? super T>> destroyers) {
-		for (Processor<? super T> destroyer : destroyers) {
-			injectionChain.addDestoryable(() -> destroyer.process(instance, null));
 		}
 	}
 
@@ -745,7 +766,7 @@ public class Injector {
 			try {
 				destroyable.process();
 			} catch (Exception e) {
-				throw new RuntimeException("Unable to destroy injected " + bean.getClass().getSimpleName()
+				throw new ProcessorException("Unable to destroy injected " + bean.getClass().getSimpleName()
 						+ " instance (@" + System.identityHashCode(bean) + "): " + e.getMessage(), e);
 			}
 		}
@@ -802,7 +823,7 @@ public class Injector {
 	 * @return A new {@link RootInjector} instance; never null
 	 */
 	public static RootInjector of(Collection<Predefinable> predefinables) {
-		InjectionContext globalInjectionContext = new InjectionContext();
+		GlobalInjectionContext globalInjectionContext = new GlobalInjectionContext();
 		ResolvingContext globalResolvingContext = new ResolvingContext();
 
 		RootInjector injector = new RootInjector(globalInjectionContext, globalResolvingContext);
