@@ -410,14 +410,14 @@ public class Injector {
 	public final <T> T instantiate(TypedBlueprint<T> blueprint) {
 		InjectionChain chain = InjectionChain.of(blueprint, this.baseInjectionContext, this.resolvingContext);
 		InjectionSettings<T> settings = InjectionSettings.of(blueprint);
-		
+
 		T instance;
 		try {
 			instance = instantiate(chain, settings);
 			this.beans.put(instance, chain.getDestroyables());
 			finalize(chain.getFinalizables());
 		} catch (Exception e) {
-			for (SelfSustaningProcessor destroyable: chain.getDestroyables()) {
+			for (SelfSustaningProcessor destroyable : chain.getDestroyables()) {
 				try {
 					destroyable.process();
 				} catch (Exception e1) {
@@ -443,6 +443,13 @@ public class Injector {
 
 	@SuppressWarnings("unchecked")
 	private <T> T instantiate(InjectionChain injectionChain, InjectionSettings<T> set) {
+		if (set.isContext && injectionChain.isChildOfGlobalSingleton()) {
+			throw new InjectionException("Cannot refer to the type '" + set.type.getSimpleName()
+					+ "' as it (or one of its super classes/interfaces) is marked with the "
+					+ Context.class.getSimpleName()
+					+ " annotation; context instances cannot be a sub bean of global singletons, but it is at "
+					+ injectionChain.getStringifiedChainSinceDependency());
+		}
 
 		if (!set.extensions.isEmpty()) {
 			injectionChain = applyExtensions(injectionChain, set.extensions);
@@ -459,11 +466,8 @@ public class Injector {
 			}
 		} else {
 			Object singleton = null;
-			if (set.singletonMode == SingletonMode.GLOBAL) {
-				if (!this.globalInjectionContext.hasSingleton(set.singletonId)) {
-					throw new InjectionException(
-							"There is no global singleton predefined with the singleton id '" + set.singletonId + "'.");
-				}
+			if (set.singletonMode == SingletonMode.GLOBAL
+					&& this.globalInjectionContext.hasSingleton(set.singletonId)) {
 				singleton = this.globalInjectionContext.retrieveSingleton(set.singletonId);
 			} else if (set.singletonMode == SingletonMode.SEQUENCE && injectionChain.hasSingleton(set.singletonId)) {
 				singleton = injectionChain.retrieveSingleton(set.singletonId);
@@ -519,9 +523,17 @@ public class Injector {
 					+ "' as it (or one of its super classes/interfaces) is marked with the "
 					+ Context.class.getSimpleName() + " annotation; context instances have to be provided by the "
 					+ TypedBlueprint.class.getSimpleName());
+		} else if (!set.isIndependent && Injector.class.isAssignableFrom(set.type)) {
+			throw new InjectionException("Cannot inject an " + Injector.class.getSimpleName()
+					+ " as any kind of singleton, as that would allow taking their sequence context out of itself.");
 		}
 
 		InjectableConstructor<T> injectableConstructor = ReflectionCache.getInjectableConstructor(set.type);
+
+		if (injectionChain.containsConstructor(injectableConstructor.getConstructor())) {
+			throw new InjectionException("Injection dependecy cycle detected: "
+					+ injectionChain.getStringifiedChainSinceConstructor(injectableConstructor.getConstructor()));
+		}
 
 		injectionChain = injectionChain.extendBy(injectableConstructor.getConstructor(), set.isIndependent,
 				set.singletonMode, set.singletonId);
@@ -628,7 +640,11 @@ public class Injector {
 
 	private <T> void defineSingletonIfNecessary(InjectionChain chain, InjectionSettings<?> set, T instance) {
 		if (!set.isIndependent) {
-			chain.addSingleton(set.singletonId, instance);
+			if (set.singletonMode == SingletonMode.SEQUENCE) {
+				chain.addSingleton(set.singletonId, instance);
+			} else {
+				this.globalInjectionContext.addSingleton(set.singletonId, instance);
+			}
 		}
 	}
 
@@ -802,8 +818,8 @@ public class Injector {
 			}
 		}
 
-		singletons.entrySet().stream().forEach(entry -> globalInjectionContext.addSingleton(entry.getKey(),
-				entry.getValue()));
+		singletons.entrySet().stream()
+				.forEach(entry -> globalInjectionContext.addSingleton(entry.getKey(), entry.getValue()));
 		properties.entrySet().stream()
 				.forEach(entry -> globalResolvingContext.addProperty(entry.getKey(), entry.getValue()));
 

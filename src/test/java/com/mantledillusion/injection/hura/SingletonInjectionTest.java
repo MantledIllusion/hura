@@ -10,6 +10,7 @@ import com.mantledillusion.injection.hura.exception.InjectionException;
 import com.mantledillusion.injection.hura.injectables.Injectable;
 import com.mantledillusion.injection.hura.injectables.InjectableWithExplicitSingleton;
 import com.mantledillusion.injection.hura.injectables.InjectableWithGlobalSingleton;
+import com.mantledillusion.injection.hura.injectables.InjectableWithInjector;
 import com.mantledillusion.injection.hura.injectables.InjectableWithSequenceSingleton;
 import com.mantledillusion.injection.hura.injectables.InjectableWithSequenceSingletonInjectables;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithWrongTypeSingleton;
@@ -43,9 +44,16 @@ public class SingletonInjectionTest extends AbstractInjectionTest {
 		assertSame(injectable, b.globalSingleton);
 	}
 	
-	@Test(expected=InjectionException.class)
+	@Test
 	public void testGlobalSingletonInjectionWithoutPredefinition() {
-		this.suite.injectInRootContext(InjectableWithGlobalSingleton.class);
+		Injector rootInjector = Injector.of();
+		
+		InjectableWithInjector injectable = rootInjector.instantiate(InjectableWithInjector.class);
+		
+		InjectableWithGlobalSingleton a = injectable.injector.instantiate(InjectableWithGlobalSingleton.class);
+		InjectableWithGlobalSingleton b = rootInjector.instantiate(InjectableWithGlobalSingleton.class);
+		
+		assertSame(a.globalSingleton, b.globalSingleton);
 	}
 	
 	@Test(expected=InjectionException.class)
