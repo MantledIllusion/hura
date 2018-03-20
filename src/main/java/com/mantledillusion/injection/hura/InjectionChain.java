@@ -142,6 +142,10 @@ final class InjectionChain {
 		return new InjectionChain(typeAllocations, new HashMap<>(), baseContext, resolvingContext);
 	}
 
+	static InjectionChain forGlobalSingletonInjection(ResolvingContext resolvingContext) {
+		return new InjectionChain(new HashMap<>(), new HashMap<>(), new InjectionContext(), resolvingContext);
+	}
+
 	static InjectionChain forSingletonResolving(Map<String, AbstractAllocator<?>> singletonAllocations, InjectionContext baseContext,
 			ResolvingContext resolvingContext) {
 		return new InjectionChain(new HashMap<>(), singletonAllocations, baseContext, resolvingContext);

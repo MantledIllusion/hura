@@ -1,5 +1,6 @@
 package com.mantledillusion.injection.hura;
 
+import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
@@ -9,6 +10,7 @@ import com.mantledillusion.injection.hura.Predefinable.Singleton;
 import com.mantledillusion.injection.hura.exception.InjectionException;
 import com.mantledillusion.injection.hura.injectables.Injectable;
 import com.mantledillusion.injection.hura.injectables.InjectableWithExplicitSingleton;
+import com.mantledillusion.injection.hura.injectables.InjectableWithGlobalAndSequenceSingleton;
 import com.mantledillusion.injection.hura.injectables.InjectableWithGlobalSingleton;
 import com.mantledillusion.injection.hura.injectables.InjectableWithInjector;
 import com.mantledillusion.injection.hura.injectables.InjectableWithSequenceSingleton;
@@ -44,6 +46,10 @@ public class SingletonInjectionTest extends AbstractInjectionTest {
 		
 		assertSame(injectable, a.globalSingleton);
 		assertSame(injectable, b.globalSingleton);
+		
+		InjectableWithGlobalAndSequenceSingleton c = this.suite.injectInRootContext(InjectableWithGlobalAndSequenceSingleton.class);
+
+		assertNotSame(c.sequenceSingleton, c.globalSingleton.sequenceSingleton);
 	}
 	
 	@Test
