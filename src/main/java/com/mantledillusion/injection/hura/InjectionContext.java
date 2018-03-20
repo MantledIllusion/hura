@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.mantledillusion.injection.hura.annotation.Construct;
 
-final class InjectionContext {
+class InjectionContext {
 	
 	static final String INJECTION_CONTEXT_SINGLETON_ID = "_injectionContext";
 
@@ -40,5 +40,10 @@ final class InjectionContext {
 	@SuppressWarnings("unchecked")
 	<T> T retrieveSingleton(String singletonId) {
 		return (T) this.singletonBeans.get(singletonId);
+	}
+	
+	@SuppressWarnings("unchecked")
+	<T> T removeSingleton(String singletonId) {
+		return (T) this.singletonBeans.remove(singletonId);
 	}
 }

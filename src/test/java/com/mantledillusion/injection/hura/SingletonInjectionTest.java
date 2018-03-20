@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import com.mantledillusion.injection.hura.Injector.RootInjector;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
 import com.mantledillusion.injection.hura.exception.InjectionException;
 import com.mantledillusion.injection.hura.injectables.Injectable;
@@ -39,7 +40,7 @@ public class SingletonInjectionTest extends AbstractInjectionTest {
 		Injectable injectable = new Injectable();
 		Singleton globalSingleton = Singleton.of(InjectableWithGlobalSingleton.SINGLETON, injectable);
 		
-		Injector injector = Injector.of(globalSingleton);
+		RootInjector injector = Injector.of(globalSingleton);
 		
 		InjectableWithGlobalSingleton a = injector.instantiate(InjectableWithGlobalSingleton.class);
 		InjectableWithGlobalSingleton b = injector.instantiate(InjectableWithGlobalSingleton.class);
@@ -47,9 +48,15 @@ public class SingletonInjectionTest extends AbstractInjectionTest {
 		assertSame(injectable, a.globalSingleton);
 		assertSame(injectable, b.globalSingleton);
 		
-		InjectableWithGlobalAndSequenceSingleton c = this.suite.injectInRootContext(InjectableWithGlobalAndSequenceSingleton.class);
+		injector.destroyInjector();
+		
+		InjectableWithGlobalSingleton c = injector.instantiate(InjectableWithGlobalSingleton.class);
 
-		assertNotSame(c.sequenceSingleton, c.globalSingleton.sequenceSingleton);
+		assertNotSame(injectable, c.globalSingleton);
+		
+		InjectableWithGlobalAndSequenceSingleton d = this.suite.injectInRootContext(InjectableWithGlobalAndSequenceSingleton.class);
+
+		assertNotSame(d.sequenceSingleton, d.globalSingleton.sequenceSingleton);
 	}
 	
 	@Test
