@@ -9,20 +9,26 @@ final class InjectionContext {
 	
 	static final String INJECTION_CONTEXT_SINGLETON_ID = "_injectionContext";
 
-	private final Map<String, Object> singletonBeans = new HashMap<>();
+	private final Map<String, Object> singletonBeans;
 
 	@Construct 
 	InjectionContext() {
-		this.singletonBeans.put(InjectionContext.INJECTION_CONTEXT_SINGLETON_ID, this);
+		this(new HashMap<>());
 	}
 
 	InjectionContext(InjectionContext baseContext) {
+		this.singletonBeans = new HashMap<>();
 		if (baseContext != null) {
 			this.singletonBeans.putAll(baseContext.singletonBeans);
 		}
 		this.singletonBeans.put(InjectionContext.INJECTION_CONTEXT_SINGLETON_ID, this);
 	}
 	
+	private InjectionContext(Map<String, Object> singletonBeans) {
+		this.singletonBeans = singletonBeans;
+		this.singletonBeans.put(InjectionContext.INJECTION_CONTEXT_SINGLETON_ID, this);
+	}
+
 	boolean hasSingleton(String singletonId) {
 		return this.singletonBeans.containsKey(singletonId);
 	}
