@@ -55,8 +55,8 @@ final class InjectionChain {
 		this.typeAllocations = typeAllocations;
 		this.singletonAllocations = singletonAllocations;
 
-		this.context = new InjectionContext(baseContext);
 		this.resolvingContext = new ResolvingContext(resolvingContext);
+		this.context = new InjectionContext(baseContext, this.resolvingContext);
 
 		this.constructorChain = new LinkedHashSet<>();
 		this.dependency = DependencyContext.INDEPENDENT;
@@ -143,7 +143,7 @@ final class InjectionChain {
 	}
 
 	static InjectionChain forGlobalSingletonInjection(ResolvingContext resolvingContext) {
-		return new InjectionChain(new HashMap<>(), new HashMap<>(), new InjectionContext(), resolvingContext);
+		return new InjectionChain(new HashMap<>(), new HashMap<>(), new InjectionContext(resolvingContext), resolvingContext);
 	}
 
 	static InjectionChain forSingletonResolving(Map<String, AbstractAllocator<?>> singletonAllocations, InjectionContext baseContext,

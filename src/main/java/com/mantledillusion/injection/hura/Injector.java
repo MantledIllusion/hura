@@ -22,6 +22,7 @@ import org.apache.commons.lang3.reflect.TypeUtils;
 import com.mantledillusion.injection.hura.BeanAllocation.BeanProvider;
 import com.mantledillusion.injection.hura.Blueprint.BlueprintTemplate;
 import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
+import com.mantledillusion.injection.hura.InjectionContext.GlobalInjectionContext;
 import com.mantledillusion.injection.hura.Predefinable.Property;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
 import com.mantledillusion.injection.hura.Processor.Phase;
@@ -392,7 +393,7 @@ public class Injector {
 
 	private Injector(GlobalInjectionContext globalInjectionContext, ResolvingContext resolvingContext) {
 		this.globalInjectionContext = globalInjectionContext;
-		this.baseInjectionContext = new InjectionContext();
+		this.baseInjectionContext = new InjectionContext(resolvingContext);
 		this.resolvingContext = resolvingContext;
 	}
 
