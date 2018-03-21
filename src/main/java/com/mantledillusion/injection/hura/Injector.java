@@ -400,18 +400,22 @@ public class Injector {
 	/**
 	 * Convenience {@link Method} for not having to use
 	 * {@link #instantiate(TypedBlueprint)} with the result of
-	 * {@link Blueprint#of(Class, Predefinable...)} (without using any
-	 * {@link Predefinable}s).
+	 * {@link Blueprint#of(Class, Predefinable...)}.
 	 * 
 	 * @param <T>
 	 *            The bean type.
 	 * @param clazz
 	 *            The {@link Class} to instantiate and inject; might <b>not</b> be
 	 *            null.
+	 * @param predefinables
+	 *            The {@link Predefinable}s to be used during injection, such as
+	 *            {@link SingletonMode#SEQUENCE} {@link Singleton}s or
+	 *            {@link Property}s; might be null or contain nulls, both is
+	 *            ignored.
 	 * @return An injected instance of the given {@link Class}; never null
 	 */
-	public <T> T instantiate(Class<T> clazz) {
-		return instantiate(Blueprint.of(clazz));
+	public <T> T instantiate(Class<T> clazz, Predefinable... predefinables) {
+		return instantiate(Blueprint.of(clazz, predefinables));
 	}
 
 	/**
