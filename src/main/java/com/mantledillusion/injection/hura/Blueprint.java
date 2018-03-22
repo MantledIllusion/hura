@@ -188,8 +188,7 @@ public class Blueprint {
 							throw new IllegalArgumentException(
 									"There were 2 or more beans defined for the singletonId '" + singletonId + "'");
 						}
-						blueprint.singletonAllocations.put(singleton.getSingletonId(),
-								singleton.getAllocator());
+						blueprint.singletonAllocations.put(singleton.getSingletonId(), singleton.getAllocator());
 					} else if (predefinable instanceof Property) {
 						Property property = (Property) predefinable;
 						String propertyKey = property.getKey();
@@ -260,7 +259,7 @@ public class Blueprint {
 					m.setAccessible(true);
 				} catch (SecurityException e) {
 					throw new BlueprintException("Unable to gain access to the method '" + m + "' of the type '"
-							+ m.getDeclaringClass().getSimpleName() + "': " + e.getMessage(), e);
+							+ m.getDeclaringClass().getSimpleName() + "'", e);
 				}
 			}
 
@@ -269,17 +268,16 @@ public class Blueprint {
 				definable = m.invoke(template);
 			} catch (IllegalAccessException e) {
 				throw new BlueprintException("Unable to call method '" + m + "' annotated with @"
-						+ Define.class.getSimpleName() + " to retrieve its definition: " + e.getMessage(), e);
+						+ Define.class.getSimpleName() + " to retrieve its definition", e);
 			} catch (InvocationTargetException e) {
 				throw new BlueprintException("Unable to call method '" + m + "' annotated with @"
-						+ Define.class.getSimpleName() + " to retrieve its definition: " + e.getMessage(),
-						e.getTargetException());
+						+ Define.class.getSimpleName() + " to retrieve its definition", e.getTargetException());
 			}
 
 			if (definable instanceof Collection) {
 				@SuppressWarnings("unchecked")
 				Collection<Predefinable> predefinables = (Collection<Predefinable>) definable;
-				for (Predefinable predefinable: predefinables) {
+				for (Predefinable predefinable : predefinables) {
 					define(predefinable, blueprint);
 				}
 			} else if (definable instanceof Predefinable) {
@@ -298,15 +296,14 @@ public class Blueprint {
 			}
 		}
 	}
-	
+
 	private static void define(Predefinable predefinable, Blueprint blueprint) {
 		if (predefinable instanceof Property) {
 			Property property = (Property) predefinable;
 			blueprint.propertyAllocations.put(property.getKey(), property.getValue());
 		} else {
 			Singleton singleton = (Singleton) predefinable;
-			blueprint.singletonAllocations.put(singleton.getSingletonId(),
-					singleton.getAllocator());
+			blueprint.singletonAllocations.put(singleton.getSingletonId(), singleton.getAllocator());
 		}
 	}
 }
