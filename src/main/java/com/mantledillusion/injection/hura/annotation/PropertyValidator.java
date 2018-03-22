@@ -54,9 +54,10 @@ class PropertyValidator implements AnnotationValidator<Property, AnnotatedElemen
 		try {
 			pattern = Pattern.compile(annotationInstance.matcher());
 		} catch (PatternSyntaxException | NullPointerException e) {
-			throw new ValidatorException("The " + annotatedElementName + " is annotated with @"
-					+ Property.class.getSimpleName() + ", but the matcher  '" + annotationInstance.matcher()
-					+ "' is no valid pattern: " + e.getMessage(), e);
+			throw new ValidatorException(
+					"The " + annotatedElementName + " is annotated with @" + Property.class.getSimpleName()
+							+ ", but the matcher  '" + annotationInstance.matcher() + "' is no valid pattern.",
+					e);
 		}
 
 		if (!annotationInstance.forced() && annotationInstance.useDefault()

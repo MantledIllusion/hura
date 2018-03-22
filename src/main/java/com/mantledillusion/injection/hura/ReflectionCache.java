@@ -52,20 +52,22 @@ public final class ReflectionCache {
 			this.annotationType = annotationType;
 		}
 	}
-	
-	private static abstract class NonWrappingCache<EntryType, Identifier extends LockIdentifier> extends HydnoraCache<EntryType, Identifier> {
-		
+
+	private static abstract class NonWrappingCache<EntryType, Identifier extends LockIdentifier>
+			extends HydnoraCache<EntryType, Identifier> {
+
 		private NonWrappingCache() {
 			setWrapRuntimeExceptions(false);
 		}
 	}
 
 	// ###############################################################################################################
-	// ############################################### VALIDATION ####################################################
+	// ############################################### VALIDATION
+	// ####################################################
 	// ###############################################################################################################
 
 	private static final class ValidationCache extends NonWrappingCache<Void, TypeIdentifier<?>> {
-		
+
 		@Override
 		public Void load(TypeIdentifier<?> id) throws Exception {
 			for (AnnotationOccurrence ae : AnnotationEssentials.getAnnotationsAnnotatedWith(id.type, Validated.class)) {
@@ -84,7 +86,7 @@ public final class ReflectionCache {
 				c = ((Class<? extends AnnotationValidator<A, E>>) validated.value()).getDeclaredConstructor();
 			} catch (NoSuchMethodException | SecurityException e) {
 				throw new ValidatorException("Unable to find no-args constructor for the annotation validator type '"
-						+ validated.value().getSimpleName() + ": " + e.getMessage(), e);
+						+ validated.value().getSimpleName() + "'", e);
 			}
 
 			if (!c.isAccessible()) {
@@ -93,7 +95,7 @@ public final class ReflectionCache {
 				} catch (SecurityException e) {
 					throw new ValidatorException(
 							"Unable to gain access to the no-args constructor of the annotation validator type '"
-									+ validated.value().getSimpleName() + ": " + e.getMessage(),
+									+ validated.value().getSimpleName() + "'",
 							e);
 				}
 			}
@@ -103,14 +105,15 @@ public final class ReflectionCache {
 				validator = c.newInstance();
 			} catch (Exception e) {
 				throw new ValidatorException("Unable to instantiate the annotation validator type '"
-						+ validated.value().getSimpleName() + ": " + e.getMessage(), e);
+						+ validated.value().getSimpleName() + "' ", e);
 			}
 			try {
 				validator.validate((A) ae.getAnnotation(), (E) ae.getAnnotatedElement());
 			} catch (Exception e) {
-				throw new ValidatorException("Validation of @" + ae.getAnnotation().annotationType().getSimpleName()
-						+ " annotation on '" + ae.getAnnotatedElement() + "' in the type '" + type.getSimpleName()
-						+ "' failed: " + e.getMessage(), e);
+				throw new ValidatorException(
+						"Validation of @" + ae.getAnnotation().annotationType().getSimpleName() + " annotation on '"
+								+ ae.getAnnotatedElement() + "' in the type '" + type.getSimpleName() + "' failed",
+						e);
 			}
 		}
 
@@ -126,7 +129,8 @@ public final class ReflectionCache {
 	}
 
 	// ###############################################################################################################
-	// ######################################### CONSTRUCTOR INJECTION ###############################################
+	// ######################################### CONSTRUCTOR INJECTION
+	// ###############################################
 	// ###############################################################################################################
 
 	static final class InjectableConstructor<T> {
@@ -174,8 +178,7 @@ public final class ReflectionCache {
 		}
 	}
 
-	private static final class ConstructorCache
-			extends NonWrappingCache<InjectableConstructor<?>, TypeIdentifier<?>> {
+	private static final class ConstructorCache extends NonWrappingCache<InjectableConstructor<?>, TypeIdentifier<?>> {
 
 		@Override
 		protected InjectableConstructor<?> load(TypeIdentifier<?> id) throws Exception {
@@ -281,7 +284,8 @@ public final class ReflectionCache {
 	}
 
 	// ###############################################################################################################
-	// ############################################ FIELD RESOLVING ##################################################
+	// ############################################ FIELD RESOLVING
+	// ##################################################
 	// ###############################################################################################################
 
 	static final class ResolvableField {
@@ -303,8 +307,7 @@ public final class ReflectionCache {
 		}
 	}
 
-	private static final class ResolvableFieldCache
-			extends NonWrappingCache<List<ResolvableField>, TypeIdentifier<?>> {
+	private static final class ResolvableFieldCache extends NonWrappingCache<List<ResolvableField>, TypeIdentifier<?>> {
 
 		@Override
 		protected List<ResolvableField> load(TypeIdentifier<?> id) throws Exception {
@@ -351,7 +354,8 @@ public final class ReflectionCache {
 	}
 
 	// ###############################################################################################################
-	// ############################################ FIELD INJECTION ##################################################
+	// ############################################ FIELD INJECTION
+	// ##################################################
 	// ###############################################################################################################
 
 	static final class InjectableField {
@@ -373,8 +377,7 @@ public final class ReflectionCache {
 		}
 	}
 
-	private static final class InjectableFieldCache
-			extends NonWrappingCache<List<InjectableField>, TypeIdentifier<?>> {
+	private static final class InjectableFieldCache extends NonWrappingCache<List<InjectableField>, TypeIdentifier<?>> {
 
 		@Override
 		protected List<InjectableField> load(TypeIdentifier<?> id) throws Exception {
@@ -431,11 +434,11 @@ public final class ReflectionCache {
 	}
 
 	// ###############################################################################################################
-	// ############################################# ANNOTATED TYPE ##################################################
+	// ############################################# ANNOTATED TYPE
+	// ##################################################
 	// ###############################################################################################################
 
-	private static final class AnnotatedTypeCache
-			extends NonWrappingCache<List<Class<?>>, AnnotatedTypeIdentifier> {
+	private static final class AnnotatedTypeCache extends NonWrappingCache<List<Class<?>>, AnnotatedTypeIdentifier> {
 
 		@Override
 		protected List<Class<?>> load(AnnotatedTypeIdentifier id) throws Exception {
@@ -454,11 +457,11 @@ public final class ReflectionCache {
 	}
 
 	// ###############################################################################################################
-	// ############################################ ANNOTATED METHOD #################################################
+	// ############################################ ANNOTATED METHOD
+	// #################################################
 	// ###############################################################################################################
 
-	private static final class AnnotatedMethodCache
-			extends NonWrappingCache<List<Method>, AnnotatedTypeIdentifier> {
+	private static final class AnnotatedMethodCache extends NonWrappingCache<List<Method>, AnnotatedTypeIdentifier> {
 
 		@Override
 		protected List<Method> load(AnnotatedTypeIdentifier id) throws Exception {
@@ -477,7 +480,8 @@ public final class ReflectionCache {
 	}
 
 	// ###############################################################################################################
-	// ############################################ ANNOTATED METHOD #################################################
+	// ############################################ ANNOTATED METHOD
+	// #################################################
 	// ###############################################################################################################
 
 	private static final class AnnotatedAnnotationCache
@@ -501,7 +505,8 @@ public final class ReflectionCache {
 	}
 
 	// ###############################################################################################################
-	// ################################################## MISC #######################################################
+	// ################################################## MISC
+	// #######################################################
 	// ###############################################################################################################
 
 	private static ResolvingSettings retrieveResolvingSettings(AnnotatedElement e) {

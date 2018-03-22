@@ -292,7 +292,7 @@ public class Injector {
 				pattern = Pattern.compile(matcher);
 			} catch (PatternSyntaxException | NullPointerException e) {
 				throw new IllegalArgumentException(
-						"The matcher  '" + matcher + "' is no valid pattern: " + e.getMessage(), e);
+						"The matcher  '" + matcher + "' is no valid pattern", e);
 			}
 
 			if (defaultValue != null && !pattern.matcher(defaultValue).matches()) {
@@ -474,7 +474,7 @@ public class Injector {
 		try {
 			finalizable.process();
 		} catch (Exception e) {
-			throw new ProcessorException("Unable to finalize; the processing threw an exception: " + e.getMessage(), e);
+			throw new ProcessorException("Unable to finalize; the processing threw an exception", e);
 		}
 	}
 
@@ -600,7 +600,7 @@ public class Injector {
 		} catch (IllegalArgumentException | InvocationTargetException | InstantiationException
 				| IllegalAccessException e) {
 			throw new InjectionException("Unable to instantiate the type '" + set.type.getSimpleName()
-					+ "' with constructor '" + injectableConstructor.getConstructor() + "': " + e.getMessage(), e);
+					+ "' with constructor '" + injectableConstructor.getConstructor() + "'", e);
 		}
 
 		handleDestroying(injectionChain, set, instance, applicators.getPostProcessorsOfPhase(Phase.DESTROY));
@@ -711,7 +711,7 @@ public class Injector {
 				postProcessor.process(instance, callback);
 			} catch (Exception e) {
 				throw new ProcessorException("Unable to process instance of '" + type.getSimpleName()
-						+ "'; the processing threw an exception: " + e.getMessage(), e);
+						+ "'; the processing threw an exception", e);
 			} finally {
 				callback.deactivate();
 			}
@@ -772,7 +772,7 @@ public class Injector {
 				destroyable.process();
 			} catch (Exception e) {
 				throw new ProcessorException("Unable to destroy injected " + bean.getClass().getSimpleName()
-						+ " instance (@" + System.identityHashCode(bean) + "): " + e.getMessage(), e);
+						+ " instance (@" + System.identityHashCode(bean) + ")", e);
 			}
 		}
 	}

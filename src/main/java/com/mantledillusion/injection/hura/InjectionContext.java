@@ -40,7 +40,7 @@ class InjectionContext {
 					}
 					super.removeSingleton(entry.getKey());
 				} catch (Exception e) {
-					throw new ProcessorException("Unable to destroy global singleton '"+entry.getKey()+"': "+e.getMessage(), e);
+					throw new ProcessorException("Unable to destroy global singleton '"+entry.getKey()+"'", e);
 				}
 			}
 		}

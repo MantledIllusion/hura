@@ -183,8 +183,8 @@ class InjectionProcessors<T> {
 					try {
 						m.invoke(bean);
 					} catch (InvocationTargetException e) {
-						throw new ProcessorException("Unable to invoke method '" + m.getName() + "' for processing: "
-								+ e.getTargetException().getMessage(), e.getTargetException());
+						throw new ProcessorException("Unable to invoke method '" + m.getName() + "' for processing",
+								e.getTargetException());
 					}
 				};
 			} else {
@@ -192,8 +192,8 @@ class InjectionProcessors<T> {
 					try {
 						m.invoke(bean, tCallback);
 					} catch (InvocationTargetException e) {
-						throw new ProcessorException("Unable to invoke method '" + m.getName() + "' for processing: "
-								+ e.getTargetException().getMessage(), e.getTargetException());
+						throw new ProcessorException("Unable to invoke method '" + m.getName() + "' for processing",
+								e.getTargetException());
 					}
 				};
 			}
