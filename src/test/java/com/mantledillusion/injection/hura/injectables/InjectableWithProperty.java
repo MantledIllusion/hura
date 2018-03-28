@@ -4,6 +4,8 @@ import com.mantledillusion.injection.hura.annotation.Property;
 
 public class InjectableWithProperty {
 
-	@Property("property.key")
+	public static final String PROPERTY_KEY = "property.key";
+	
+	@Property(PROPERTY_KEY)
 	public String propertyValue;
 }

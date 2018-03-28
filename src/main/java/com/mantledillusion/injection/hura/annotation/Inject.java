@@ -8,15 +8,12 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
 import org.apache.commons.lang3.StringUtils;
 
 import com.mantledillusion.injection.hura.BeanAllocation;
-import com.mantledillusion.injection.hura.Blueprint;
 import com.mantledillusion.injection.hura.Injector;
-import com.mantledillusion.injection.hura.Blueprint.BlueprintTemplate;
 import com.mantledillusion.injection.hura.exception.InjectionException;
 
 /**
@@ -158,38 +155,4 @@ public @interface Inject {
 	 *         the allocated bean is null; false otherwise
 	 */
 	boolean overwriteWithNull() default false;
-
-	/**
-	 * {@link BlueprintTemplate} implementations that dynamically extend the
-	 * injection of the annotated {@link Field}/{@link Parameter}.
-	 * <p>
-	 * The {@link BlueprintTemplate} implementing {@link Class}es given here will be
-	 * instantiated and injected by the {@link Injector} on the fly and then
-	 * automatically parsed into {@link Blueprint} instances. Those instances
-	 * definitions will then be used to dynamically extend the definitions of the
-	 * injection running to inject the annotated {@link Field}/{@link Parameter}.
-	 * <p>
-	 * For example, {@link Class} A could have a {@link Field} of the interface I
-	 * annotated with @{@link Inject}, containing the extending
-	 * {@link BlueprintTemplate} E. The template E has a {@link String}
-	 * {@link Field} annotated with @{@link Property} and a @{@link Define}
-	 * {@link Method} named "allocate" of the return type
-	 * {@link BeanAllocation}&lt;I&gt;. That "allocate" {@link Method} could then
-	 * use the property {@link Field} to dynamically decide whether to allocate the
-	 * interface type I with the implementing {@link Class} B or C.
-	 * <p>
-	 * Definitions declared by the extensions are always overridden by definitions
-	 * of the running injection; that means that an extension might define a
-	 * property for the key "a.property.key" just in case that the running injection
-	 * does not.
-	 * <p>
-	 * Inside the given extension array, if two extensions make a definition to the
-	 * same target, the extension with the higher array index overrides the one ith
-	 * the lower index.
-	 * 
-	 * @return The extensions to the injection of the annotated
-	 *         {@link Field}/{@link Parameter}; might be null or contain nulls, both
-	 *         is ignored
-	 */
-	Class<? extends BlueprintTemplate>[] extensions() default {};
 }

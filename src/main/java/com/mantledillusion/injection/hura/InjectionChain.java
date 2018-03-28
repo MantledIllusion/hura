@@ -85,38 +85,35 @@ final class InjectionChain {
 		typeAllocations.putAll(blueprint.getTypeAllocations());
 		sequenceSingletonAllocations.putAll(blueprint.getSingletonAllocations());
 		ResolvingContext resolvingContext = this.resolvingContext.merge(blueprint.getPropertyAllocations());
-		MappingContext mappingContext = this.mappingContext.merge(blueprint.getSingletonIdAllocations());
+		MappingContext mappingContext = this.mappingContext.merge(blueprint.getMappingAllocations());
 
 		return new InjectionChain(this.context, resolvingContext, mappingContext, typeAllocations,
 				sequenceSingletonAllocations, this.globalSingletonAllocations, this.constructorChain, this.dependency,
 				this.dependencyConstructor, this.finalizables, this.destroyables);
 	}
 
-	InjectionChain extendBy(List<Blueprint> extensions) {
+	InjectionChain adjustBy(List<Blueprint> adjustments) {
 		Map<Type, AbstractAllocator<?>> typeAllocations = new HashMap<>();
-		Map<String, AbstractAllocator<?>> sequenceSingletonAllocations = new HashMap<>();
 		ResolvingContext resolvingContext = new ResolvingContext();
 		MappingContext mappingContext = new MappingContext();
 
-		for (Blueprint extension : extensions) {
+		for (Blueprint extension : adjustments) {
 			typeAllocations.putAll(extension.getTypeAllocations());
-			sequenceSingletonAllocations.putAll(extension.getSingletonAllocations());
 			resolvingContext = resolvingContext.merge(extension.getPropertyAllocations());
-			mappingContext = mappingContext.merge(extension.getSingletonIdAllocations());
+			mappingContext = mappingContext.merge(extension.getMappingAllocations());
 		}
 
 		typeAllocations.putAll(this.typeAllocations);
-		sequenceSingletonAllocations.putAll(this.sequenceSingletonAllocations);
 		resolvingContext = resolvingContext.merge(this.resolvingContext);
 		mappingContext = mappingContext.merge(this.mappingContext);
 
 		return new InjectionChain(this.context, resolvingContext, mappingContext, typeAllocations,
-				sequenceSingletonAllocations, this.globalSingletonAllocations, this.constructorChain, this.dependency,
+				this.sequenceSingletonAllocations, this.globalSingletonAllocations, this.constructorChain, this.dependency,
 				this.dependencyConstructor, this.finalizables, this.destroyables);
 	}
 
-	InjectionChain extendBy(Constructor<?> c, boolean isIndependent, SingletonMode mode, String singletonId) {
-		DependencyContext dependency = DependencyContext.of(isIndependent, mode);
+	InjectionChain extendBy(Constructor<?> c, InjectionSettings<?> set) {
+		DependencyContext dependency = DependencyContext.of(set.isIndependent, set.singletonMode);
 		Constructor<?> dependencyConstructor = this.dependencyConstructor;
 		if (this.dependency.ordinal() > dependency.ordinal()) {
 			dependency = this.dependency;

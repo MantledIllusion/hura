@@ -26,7 +26,7 @@ import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
 import com.mantledillusion.injection.hura.InjectionContext.GlobalInjectionContext;
 import com.mantledillusion.injection.hura.Predefinable.Property;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
-import com.mantledillusion.injection.hura.Predefinable.SingletonMapping;
+import com.mantledillusion.injection.hura.Predefinable.Mapping;
 import com.mantledillusion.injection.hura.Processor.Phase;
 import com.mantledillusion.injection.hura.ReflectionCache.InjectableConstructor;
 import com.mantledillusion.injection.hura.ReflectionCache.InjectableConstructor.ParamSettingType;
@@ -445,7 +445,7 @@ public class Injector {
 		ResolvingContext resolvingContext = new ResolvingContext(this.resolvingContext)
 				.merge(blueprint.getPropertyAllocations());
 		MappingContext mappingContext = new MappingContext(this.mappingContext)
-				.merge(blueprint.getSingletonIdAllocations());
+				.merge(blueprint.getMappingAllocations());
 		InjectionContext injectionContext = new InjectionContext(this.baseInjectionContext, resolvingContext,
 				mappingContext);
 
@@ -509,9 +509,7 @@ public class Injector {
 					+ injectionChain.getStringifiedChainSinceDependency());
 		}
 
-		if (!set.extensions.isEmpty()) {
-			injectionChain = applyExtensions(injectionChain, set.extensions);
-		}
+		injectionChain = applyExtensions(injectionChain, set);
 
 		T instance = null;
 
@@ -561,15 +559,25 @@ public class Injector {
 		return instance;
 	}
 
-	private InjectionChain applyExtensions(InjectionChain chain, List<Class<? extends BlueprintTemplate>> extensions) {
+	private InjectionChain applyExtensions(InjectionChain chain, InjectionSettings<?> set) {
 		List<Blueprint> parsed = new ArrayList<>();
-		for (Class<? extends BlueprintTemplate> extension : extensions) {
+		for (Class<? extends BlueprintTemplate> extension : set.extensions) {
 			if (extension != null) {
 				BlueprintTemplate instantiated = instantiate(chain, InjectionSettings.of(Blueprint.of(extension)));
-				parsed.add(Blueprint.from(instantiated));
+				Blueprint blueprint = Blueprint.from(instantiated);
+				if (!blueprint.getSingletonAllocations().isEmpty()) {
+					throw new InjectionException("The blueprint template implementation '" + extension.getSimpleName()
+							+ "' was used as an extension but defines " + blueprint.getSingletonAllocations().size()
+							+ " singletons with the singletonIds ["
+							+ StringUtils.join(blueprint.getSingletonAllocations().keySet(), ", ")
+							+ "]; extensions may not define singletons, as that could cause singletons "
+							+ "to be defined differently depending on where they are injected first.");
+				}
+				parsed.add(blueprint);
 			}
 		}
-		return chain.extendBy(parsed);
+		parsed.add(set.predefinitions);
+		return chain.adjustBy(parsed);
 	}
 
 	private <T> InjectionProcessors<T> buildApplicators(InjectionChain chain, InjectionSettings<T> set) {
@@ -602,8 +610,7 @@ public class Injector {
 		if (!set.isIndependent && set.singletonMode == SingletonMode.GLOBAL) {
 			injectionChain = InjectionChain.forGlobalSingletonResolving(this.globalInjectionContext);
 		} else {
-			injectionChain = injectionChain.extendBy(injectableConstructor.getConstructor(), set.isIndependent,
-					set.singletonMode, set.singletonId);
+			injectionChain = injectionChain.extendBy(injectableConstructor.getConstructor(), set);
 		}
 
 		Object[] parameters = new Object[injectableConstructor.getParamCount()];
@@ -881,16 +888,16 @@ public class Injector {
 											+ singleton.getSingletonId() + "'");
 						}
 						globalSingletonAllocations.put(singleton.getSingletonId(), singleton.getAllocator());
-					} else if (predefinable instanceof SingletonMapping) {
-						SingletonMapping mapping = (SingletonMapping) predefinable;
-						String mappingBase = mapping.getMappingBase();
+					} else if (predefinable instanceof Mapping) {
+						Mapping mapping = (Mapping) predefinable;
+						String mappingBase = mapping.getBase();
 						if (globalMappingContext.hasMapping(mappingBase, mapping.getMode())) {
 							throw new IllegalArgumentException(
 									"There were 2 or more singleton mapping targets defined for the mapping base '"
 											+ mappingBase + "'; '" + globalResolvingContext.getProperty(mappingBase)
-											+ "' and '" + mapping.getMappingTarget() + "'");
+											+ "' and '" + mapping.getTarget() + "'");
 						}
-						globalMappingContext.addMapping(mappingBase, mapping.getMappingTarget(), mapping.getMode());
+						globalMappingContext.addMapping(mappingBase, mapping.getTarget(), mapping.getMode());
 					}
 				}
 			}

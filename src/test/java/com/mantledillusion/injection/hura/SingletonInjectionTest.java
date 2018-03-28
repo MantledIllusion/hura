@@ -8,7 +8,7 @@ import org.junit.Test;
 
 import com.mantledillusion.injection.hura.Injector.RootInjector;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
-import com.mantledillusion.injection.hura.Predefinable.SingletonMapping;
+import com.mantledillusion.injection.hura.Predefinable.Mapping;
 import com.mantledillusion.injection.hura.annotation.Inject.SingletonMode;
 import com.mantledillusion.injection.hura.exception.InjectionException;
 import com.mantledillusion.injection.hura.exception.MappingException;
@@ -97,21 +97,21 @@ public class SingletonInjectionTest extends AbstractInjectionTest {
 		Injector rootInjector = Injector.of(Singleton.of(singletonId, singleton));
 
 		InjectableWithGlobalSingleton injectable = rootInjector.instantiate(InjectableWithGlobalSingleton.class,
-				SingletonMapping.of(InjectableWithGlobalSingleton.SINGLETON, singletonId, SingletonMode.GLOBAL));
+				Mapping.of(InjectableWithGlobalSingleton.SINGLETON, singletonId, SingletonMode.GLOBAL));
 
 		assertSame(singleton, injectable.globalSingleton);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testDefineDoubleMapping() {
-		Injector.of(SingletonMapping.of("1", "2", SingletonMode.GLOBAL),
-				SingletonMapping.of("1", "3", SingletonMode.GLOBAL));
+		Injector.of(Mapping.of("1", "2", SingletonMode.GLOBAL),
+				Mapping.of("1", "3", SingletonMode.GLOBAL));
 	}
 
 	@Test(expected = MappingException.class)
 	public void testDefineLoopedMappings() {
-		Injector.of(SingletonMapping.of("1", "2", SingletonMode.GLOBAL),
-				SingletonMapping.of("2", "3", SingletonMode.GLOBAL),
-				SingletonMapping.of("3", "1", SingletonMode.GLOBAL));
+		Injector.of(Mapping.of("1", "2", SingletonMode.GLOBAL),
+				Mapping.of("2", "3", SingletonMode.GLOBAL),
+				Mapping.of("3", "1", SingletonMode.GLOBAL));
 	}
 }
