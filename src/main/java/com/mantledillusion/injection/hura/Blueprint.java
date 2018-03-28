@@ -12,6 +12,7 @@ import com.mantledillusion.essentials.reflection.TypeEssentials;
 import com.mantledillusion.injection.hura.Injector.AbstractAllocator;
 import com.mantledillusion.injection.hura.Predefinable.Property;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
+import com.mantledillusion.injection.hura.Predefinable.SingletonMapping;
 import com.mantledillusion.injection.hura.annotation.Define;
 import com.mantledillusion.injection.hura.annotation.Inject.SingletonMode;
 import com.mantledillusion.injection.hura.exception.BlueprintException;
@@ -112,8 +113,11 @@ public class Blueprint {
 	private final Map<Type, AbstractAllocator<?>> typeAllocations = new HashMap<>();
 	private final Map<String, AbstractAllocator<?>> singletonAllocations = new HashMap<>();
 	private final Map<String, String> propertyAllocations = new HashMap<>();
+	private final Map<SingletonMode, Map<String, String>> singletonIdAllocations = new HashMap<>();
 
 	private Blueprint() {
+		this.singletonIdAllocations.put(SingletonMode.GLOBAL, new HashMap<>());
+		this.singletonIdAllocations.put(SingletonMode.SEQUENCE, new HashMap<>());
 	}
 
 	Map<Type, AbstractAllocator<?>> getTypeAllocations() {
@@ -126,6 +130,10 @@ public class Blueprint {
 
 	Map<String, String> getPropertyAllocations() {
 		return propertyAllocations;
+	}
+
+	Map<SingletonMode, Map<String, String>> getSingletonIdAllocations() {
+		return singletonIdAllocations;
 	}
 
 	/**
@@ -181,7 +189,17 @@ public class Blueprint {
 		if (predefinables != null) {
 			for (Predefinable predefinable : predefinables) {
 				if (predefinable != null) {
-					if (predefinable instanceof Singleton) {
+					if (predefinable instanceof Property) {
+						Property property = (Property) predefinable;
+						String propertyKey = property.getKey();
+						if (blueprint.propertyAllocations.containsKey(propertyKey)) {
+							throw new IllegalArgumentException(
+									"There were 2 or more property values defined for the key '" + propertyKey + "'; '"
+											+ blueprint.propertyAllocations.get(propertyKey) + "' and '"
+											+ property.getValue() + "'");
+						}
+						blueprint.propertyAllocations.put(propertyKey, property.getValue());
+					} else if (predefinable instanceof Singleton) {
 						Singleton singleton = (Singleton) predefinable;
 						String singletonId = singleton.getSingletonId();
 						if (blueprint.singletonAllocations.containsKey(singletonId)) {
@@ -189,15 +207,18 @@ public class Blueprint {
 									"There were 2 or more beans defined for the singletonId '" + singletonId + "'");
 						}
 						blueprint.singletonAllocations.put(singleton.getSingletonId(), singleton.getAllocator());
-					} else if (predefinable instanceof Property) {
-						Property property = (Property) predefinable;
-						String propertyKey = property.getKey();
-						if (blueprint.propertyAllocations.containsKey(propertyKey)) {
-							throw new IllegalArgumentException("There were 2 or more values defined for the key '"
-									+ propertyKey + "'; '" + blueprint.propertyAllocations.get(propertyKey) + "' and '"
-									+ property.getValue() + "'");
+					}
+					if (predefinable instanceof SingletonMapping) {
+						SingletonMapping mapping = (SingletonMapping) predefinable;
+						SingletonMode mappingMode = mapping.getMode();
+						String mappingBase = mapping.getMappingBase();
+						if (blueprint.singletonIdAllocations.get(mappingMode).containsKey(mappingBase)) {
+							throw new IllegalArgumentException("There were 2 or more '" + mappingMode.name()
+									+ "' singleton mapping targets defined for the mapping base '" + mappingBase
+									+ "'; '" + blueprint.propertyAllocations.get(mappingBase) + "' and '"
+									+ mapping.getMappingTarget() + "'");
 						}
-						blueprint.propertyAllocations.put(propertyKey, property.getValue());
+						blueprint.singletonIdAllocations.get(mappingMode).put(mappingBase, mapping.getMappingTarget());
 					}
 				}
 			}

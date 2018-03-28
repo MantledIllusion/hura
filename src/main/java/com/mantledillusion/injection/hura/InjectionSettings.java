@@ -42,8 +42,13 @@ final class InjectionSettings<T> {
 	}
 
 	<T2 extends T> InjectionSettings<T2> refine(Class<T2> type) {
-		return new InjectionSettings<>(type, isIndependent, singletonId, isContext, singletonMode, injectionMode,
-				overwriteWithNull, this.extensions);
+		return new InjectionSettings<>(type, this.isIndependent, this.singletonId, this.isContext, this.singletonMode,
+				this.injectionMode, this.overwriteWithNull, this.extensions);
+	}
+
+	InjectionSettings<T> refine(String singletonId) {
+		return new InjectionSettings<>(this.type, this.isIndependent, singletonId, this.isContext, this.singletonMode,
+				this.injectionMode, this.overwriteWithNull, this.extensions);
 	}
 
 	static <T> InjectionSettings<T> of(TypedBlueprint<T> blueprint) {
@@ -62,8 +67,8 @@ final class InjectionSettings<T> {
 	}
 
 	static InjectionSettings<Object> of(String singletonId, SingletonMode mode) {
-		return new InjectionSettings<>(Object.class, false, singletonId, false, mode,
-				InjectionMode.EAGER, false, Collections.emptyList());
+		return new InjectionSettings<>(Object.class, false, singletonId, false, mode, InjectionMode.EAGER, false,
+				Collections.emptyList());
 	}
 
 	private static boolean isContext(Class<?> type) {

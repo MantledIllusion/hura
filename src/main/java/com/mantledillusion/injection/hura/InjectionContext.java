@@ -18,7 +18,8 @@ class InjectionContext {
 
 		private final Map<String, List<SelfSustaningProcessor>> destroyables = new HashMap<>();
 		
-		GlobalInjectionContext() {
+		GlobalInjectionContext(ResolvingContext resolvingContext, MappingContext mappingContext) {
+			super(resolvingContext, mappingContext);
 		}
 		
 		<T> void addGlobalSingleton(String singletonId, T instance, List<Processor<? super T>> destroyers) {
@@ -48,15 +49,11 @@ class InjectionContext {
 
 	private final Map<String, Object> singletonBeans;
 	
-	private InjectionContext() {
-		this(null, null);
-	}
-	
-	InjectionContext(ResolvingContext resolvingContext) {
-		this(null, resolvingContext);
+	InjectionContext(ResolvingContext resolvingContext, MappingContext mappingContext) {
+		this(null, resolvingContext, mappingContext);
 	}
 
-	InjectionContext(InjectionContext baseContext, ResolvingContext resolvingContext) {
+	InjectionContext(InjectionContext baseContext, ResolvingContext resolvingContext, MappingContext mappingContext) {
 		this.singletonBeans = new HashMap<>();
 		if (baseContext != null) {
 			this.singletonBeans.putAll(baseContext.singletonBeans);
@@ -64,6 +61,9 @@ class InjectionContext {
 		this.singletonBeans.put(InjectionContext.INJECTION_CONTEXT_SINGLETON_ID, this);
 		if (resolvingContext != null) {
 			this.singletonBeans.put(ResolvingContext.RESOLVING_CONTEXT_SINGLETON_ID, resolvingContext);
+		}
+		if (mappingContext != null) {
+			this.singletonBeans.put(MappingContext.MAPPING_CONTEXT_SINGLETON_ID, mappingContext);
 		}
 	}
 

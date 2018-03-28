@@ -37,7 +37,7 @@ public @interface Inject {
 	 * Mode that specifies whether or not to leave a {@link Field}/{@link Parameter}
 	 * annotated with @{@link Inject} null in certain cases.
 	 */
-	enum InjectionMode {
+	public enum InjectionMode {
 
 		/**
 		 * Always fill the {@link Field}/{@link Parameter} annotated
@@ -73,7 +73,7 @@ public @interface Inject {
 	/**
 	 * Mode that specifies from which injection context to retrieve a singleton.
 	 */
-	enum SingletonMode {
+	public enum SingletonMode {
 
 		/**
 		 * Retrieve singletons from (and construct singletons to) the injection context
