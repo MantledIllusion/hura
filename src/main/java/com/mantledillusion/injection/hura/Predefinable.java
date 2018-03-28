@@ -8,6 +8,7 @@ import com.mantledillusion.injection.hura.BeanAllocation.BeanProvider;
 import com.mantledillusion.injection.hura.Injector.AbstractAllocator;
 import com.mantledillusion.injection.hura.Injector.InstanceAllocator;
 import com.mantledillusion.injection.hura.Injector.ProviderAllocator;
+import com.mantledillusion.injection.hura.annotation.Inject.SingletonMode;
 import com.mantledillusion.injection.hura.Injector.ClassAllocator;
 
 /**
@@ -16,6 +17,7 @@ import com.mantledillusion.injection.hura.Injector.ClassAllocator;
  * Implementations are:<br>
  * - {@link Property}<br>
  * - {@link Singleton}<br>
+ * - {@link SingletonMapping}<br>
  */
 public abstract class Predefinable {
 
@@ -152,6 +154,62 @@ public abstract class Predefinable {
 				throw new IllegalArgumentException("Cannot create singleton with null bean class");
 			}
 			return new Singleton(singletonId, new ClassAllocator<>(beanClass, InjectionProcessors.of()));
+		}
+	}
+
+	/**
+	 * Defines an ID mapping of {@link Singleton}, from a singletonId to a target.
+	 */
+	public static final class SingletonMapping extends Predefinable {
+
+		private final String mappingBase;
+		private final String mappingTarget;
+		private final SingletonMode mode;
+
+		private SingletonMapping(String mappingBase, String mappingTarget, SingletonMode mode) {
+			this.mappingBase = mappingBase;
+			this.mappingTarget = mappingTarget;
+			this.mode = mode;
+		}
+
+		public String getMappingBase() {
+			return mappingBase;
+		}
+
+		public String getMappingTarget() {
+			return mappingTarget;
+		}
+
+		public SingletonMode getMode() {
+			return mode;
+		}
+
+		/**
+		 * Factory {@link Method} for {@link SingletonMapping} instances.
+		 * 
+		 * @param mappingBase
+		 *            The singletonId that is mapped. Singleton references to this
+		 *            mapping base ID will reference the mapping target singleton
+		 *            afterwards; might <b>not</b> be null.
+		 * @param mappingTarget
+		 *            The singletonId that is mapped to. Singleton references to the
+		 *            mapping base ID will reference this mapping target ID's singleton
+		 *            afterwards; might <b>not</b> be null.
+		 * @param mode
+		 *            The {@link SingletonMode} that determines which pool's
+		 *            {@link Singleton}s this mapping refers to; might <b>not</b> be
+		 *            null.
+		 * @return A new {@link SingletonMapping} instance; never null
+		 */
+		public static SingletonMapping of(String mappingBase, String mappingTarget, SingletonMode mode) {
+			if (StringUtils.isEmpty(mappingBase)) {
+				throw new IllegalArgumentException("Cannot create a singleton mapping with a null singletonId");
+			} else if (mappingTarget == null) {
+				throw new IllegalArgumentException("Cannot create a singleton mapping with a null mapping target");
+			} else if (mode == null) {
+				throw new IllegalArgumentException("Cannot create a singleton mapping with a null mode");
+			}
+			return new SingletonMapping(mappingBase, mappingTarget, mode);
 		}
 	}
 

@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -25,6 +26,7 @@ import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
 import com.mantledillusion.injection.hura.InjectionContext.GlobalInjectionContext;
 import com.mantledillusion.injection.hura.Predefinable.Property;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
+import com.mantledillusion.injection.hura.Predefinable.SingletonMapping;
 import com.mantledillusion.injection.hura.Processor.Phase;
 import com.mantledillusion.injection.hura.ReflectionCache.InjectableConstructor;
 import com.mantledillusion.injection.hura.ReflectionCache.InjectableConstructor.ParamSettingType;
@@ -79,8 +81,9 @@ public class Injector {
 	 */
 	public static final class RootInjector extends Injector {
 
-		private RootInjector(GlobalInjectionContext globalInjectionContext, ResolvingContext resolvingContext) {
-			super(globalInjectionContext, resolvingContext);
+		private RootInjector(GlobalInjectionContext globalInjectionContext, ResolvingContext resolvingContext,
+				MappingContext mappingContext) {
+			super(globalInjectionContext, resolvingContext, mappingContext);
 		}
 
 		/**
@@ -291,8 +294,7 @@ public class Injector {
 			try {
 				pattern = Pattern.compile(matcher);
 			} catch (PatternSyntaxException | NullPointerException e) {
-				throw new IllegalArgumentException(
-						"The matcher  '" + matcher + "' is no valid pattern", e);
+				throw new IllegalArgumentException("The matcher  '" + matcher + "' is no valid pattern", e);
 			}
 
 			if (defaultValue != null && !pattern.matcher(defaultValue).matches()) {
@@ -378,6 +380,7 @@ public class Injector {
 	private final GlobalInjectionContext globalInjectionContext;
 	private final InjectionContext baseInjectionContext;
 	private final ResolvingContext resolvingContext;
+	private final MappingContext mappingContext;
 
 	private final IdentityHashMap<Object, List<SelfSustaningProcessor>> beans = new IdentityHashMap<>();
 
@@ -385,16 +388,20 @@ public class Injector {
 	private Injector(
 			@Inject(value = InjectionContext.INJECTION_CONTEXT_SINGLETON_ID, singletonMode = SingletonMode.GLOBAL) GlobalInjectionContext globalInjectionContext,
 			@Inject(value = InjectionContext.INJECTION_CONTEXT_SINGLETON_ID, singletonMode = SingletonMode.SEQUENCE) InjectionContext baseInjectionContext,
-			@Inject(value = ResolvingContext.RESOLVING_CONTEXT_SINGLETON_ID, singletonMode = SingletonMode.SEQUENCE) ResolvingContext resolvingContex) {
+			@Inject(value = ResolvingContext.RESOLVING_CONTEXT_SINGLETON_ID, singletonMode = SingletonMode.SEQUENCE) ResolvingContext resolvingContext,
+			@Inject(value = MappingContext.MAPPING_CONTEXT_SINGLETON_ID, singletonMode = SingletonMode.SEQUENCE) MappingContext mappingContext) {
 		this.globalInjectionContext = globalInjectionContext;
 		this.baseInjectionContext = baseInjectionContext;
-		this.resolvingContext = resolvingContex;
+		this.resolvingContext = resolvingContext;
+		this.mappingContext = mappingContext;
 	}
 
-	private Injector(GlobalInjectionContext globalInjectionContext, ResolvingContext resolvingContext) {
+	private Injector(GlobalInjectionContext globalInjectionContext, ResolvingContext resolvingContext,
+			MappingContext mappingContext) {
 		this.globalInjectionContext = globalInjectionContext;
-		this.baseInjectionContext = new InjectionContext(resolvingContext);
+		this.baseInjectionContext = new InjectionContext(resolvingContext, mappingContext);
 		this.resolvingContext = resolvingContext;
+		this.mappingContext = mappingContext;
 	}
 
 	/**
@@ -435,14 +442,18 @@ public class Injector {
 			throw new IllegalArgumentException("Unable to inject using a null blueprint.");
 		}
 
-		ResolvingContext resolvingContext = new ResolvingContext(this.resolvingContext);
-		blueprint.getPropertyAllocations().forEach((key, value) -> resolvingContext.addProperty(key, value));
+		ResolvingContext resolvingContext = new ResolvingContext(this.resolvingContext)
+				.merge(blueprint.getPropertyAllocations());
+		MappingContext mappingContext = new MappingContext(this.mappingContext)
+				.merge(blueprint.getSingletonIdAllocations());
+		InjectionContext injectionContext = new InjectionContext(this.baseInjectionContext, resolvingContext,
+				mappingContext);
 
-		InjectionContext injectionContext = resolveSingletons(this.baseInjectionContext, resolvingContext,
-				blueprint.getSingletonAllocations(), SingletonMode.SEQUENCE);
+		InjectionChain chain = InjectionChain.forInjection(injectionContext, resolvingContext, mappingContext,
+				blueprint.getTypeAllocations(), blueprint.getSingletonAllocations());
 
-		InjectionChain chain = InjectionChain.forInjection(blueprint.getTypeAllocations(), injectionContext,
-				resolvingContext);
+		resolveSingletonsIntoChain(chain, blueprint.getSingletonAllocations().keySet(), SingletonMode.SEQUENCE);
+
 		InjectionSettings<T> settings = InjectionSettings.of(blueprint);
 
 		T instance;
@@ -451,14 +462,24 @@ public class Injector {
 			this.beans.put(instance, chain.getDestroyables());
 			finalize(chain.getFinalizables());
 		} catch (Exception e) {
+			int failingDestructionCount = 0;
 			for (SelfSustaningProcessor destroyable : chain.getDestroyables()) {
 				try {
 					destroyable.process();
 				} catch (Exception e1) {
-					// Do nothing; If proper injection has failed, destorying might fail as well.
+					failingDestructionCount++;
+					// Do nothing; If proper injection has failed, a failing destroying might just
+					// be a consequence.
 				}
 			}
-			throw e;
+
+			if (failingDestructionCount > 0) {
+				throw new InjectionException("Injection failed; " + chain.getDestroyables().size()
+						+ " destructions were executed on already injected beans (with " + failingDestructionCount
+						+ " of them failing as well)", e);
+			} else {
+				throw e;
+			}
 		}
 		return instance;
 	}
@@ -503,13 +524,23 @@ public class Injector {
 			}
 		} else {
 			Object singleton = null;
+
+			if (injectionChain.hasMapping(set.singletonId, set.singletonMode)) {
+				set = set.refine(injectionChain.map(set.singletonId, set.singletonMode));
+			}
+
 			if (set.singletonMode == SingletonMode.GLOBAL
 					&& this.globalInjectionContext.hasSingleton(set.singletonId)) {
 				singleton = this.globalInjectionContext.retrieveSingleton(set.singletonId);
+			} else if (set.singletonMode == SingletonMode.GLOBAL
+					&& injectionChain.hasGlobalSingletonAllocator(set.singletonId)) {
+				singleton = ((AbstractAllocator<T>) injectionChain.getGlobalSingletonAllocator(set.singletonId))
+						.allocate(this, injectionChain, set, buildApplicators(injectionChain, set));
 			} else if (set.singletonMode == SingletonMode.SEQUENCE && injectionChain.hasSingleton(set.singletonId)) {
 				singleton = injectionChain.retrieveSingleton(set.singletonId);
-			} else if (injectionChain.hasSingletonAllocator(set.singletonId)) {
-				singleton = ((AbstractAllocator<T>) injectionChain.getSingletonAllocator(set.singletonId))
+			} else if (set.singletonMode == SingletonMode.SEQUENCE
+					&& injectionChain.hasSequenceSingletonAllocator(set.singletonId)) {
+				singleton = ((AbstractAllocator<T>) injectionChain.getSequenceSingletonAllocator(set.singletonId))
 						.allocate(this, injectionChain, set, buildApplicators(injectionChain, set));
 			} else if (set.injectionMode == InjectionMode.EAGER) {
 				singleton = createAndInject(injectionChain, set, buildApplicators(injectionChain, set));
@@ -525,10 +556,6 @@ public class Injector {
 							+ singleton.getClass().getSimpleName() + " who is not assignable.");
 				}
 			}
-		}
-
-		if (instance == null) {
-			return null;
 		}
 
 		return instance;
@@ -573,7 +600,7 @@ public class Injector {
 		}
 
 		if (!set.isIndependent && set.singletonMode == SingletonMode.GLOBAL) {
-			injectionChain = InjectionChain.forGlobalSingletonInjection(this.resolvingContext);
+			injectionChain = InjectionChain.forGlobalSingletonResolving(this.globalInjectionContext);
 		} else {
 			injectionChain = injectionChain.extendBy(injectableConstructor.getConstructor(), set.isIndependent,
 					set.singletonMode, set.singletonId);
@@ -617,10 +644,6 @@ public class Injector {
 
 			try {
 				field.set(instance, property);
-			} catch (IllegalArgumentException e) {
-				throw new InjectionException("Unable to set property '" + property + "' to field '" + field.getName()
-						+ "' of the type " + field.getDeclaringClass().getSimpleName() + ", whose type is "
-						+ field.getType().getSimpleName(), e);
 			} catch (IllegalAccessException e) {
 				throw new InjectionException("Unable to resolve field '" + field.getName() + "' of the type "
 						+ field.getDeclaringClass().getSimpleName() + "; unable to gain access", e);
@@ -828,25 +851,19 @@ public class Injector {
 	 * @return A new {@link RootInjector} instance; never null
 	 */
 	public static RootInjector of(Collection<Predefinable> predefinables) {
-		GlobalInjectionContext globalInjectionContext = new GlobalInjectionContext();
 		ResolvingContext globalResolvingContext = new ResolvingContext();
+		MappingContext globalMappingContext = new MappingContext();
+		GlobalInjectionContext globalInjectionContext = new GlobalInjectionContext(globalResolvingContext,
+				globalMappingContext);
 
-		RootInjector injector = new RootInjector(globalInjectionContext, globalResolvingContext);
+		RootInjector injector = new RootInjector(globalInjectionContext, globalResolvingContext, globalMappingContext);
 
 		if (predefinables != null) {
-			Map<String, AbstractAllocator<?>> singletonAllocations = new HashMap<>();
+			Map<String, AbstractAllocator<?>> globalSingletonAllocations = new HashMap<>();
 
 			for (Predefinable predefinable : predefinables) {
 				if (predefinable != null) {
-					if (predefinable instanceof Singleton) {
-						Singleton singleton = ((Singleton) predefinable);
-						if (singletonAllocations.containsKey(singleton.getSingletonId())) {
-							throw new IllegalArgumentException(
-									"There were 2 or more singletons defined for the singletonId '"
-											+ singleton.getSingletonId() + "'");
-						}
-						singletonAllocations.put(singleton.getSingletonId(), singleton.getAllocator());
-					} else if (predefinable instanceof Property) {
+					if (predefinable instanceof Property) {
 						Property property = (Property) predefinable;
 						String propertyKey = property.getKey();
 						if (globalResolvingContext.hasProperty(propertyKey)) {
@@ -856,25 +873,41 @@ public class Injector {
 											+ property.getValue() + "'");
 						}
 						globalResolvingContext.addProperty(propertyKey, property.getValue());
+					} else if (predefinable instanceof Singleton) {
+						Singleton singleton = ((Singleton) predefinable);
+						if (globalSingletonAllocations.containsKey(singleton.getSingletonId())) {
+							throw new IllegalArgumentException(
+									"There were 2 or more singletons defined for the singletonId '"
+											+ singleton.getSingletonId() + "'");
+						}
+						globalSingletonAllocations.put(singleton.getSingletonId(), singleton.getAllocator());
+					} else if (predefinable instanceof SingletonMapping) {
+						SingletonMapping mapping = (SingletonMapping) predefinable;
+						String mappingBase = mapping.getMappingBase();
+						if (globalMappingContext.hasMapping(mappingBase, mapping.getMode())) {
+							throw new IllegalArgumentException(
+									"There were 2 or more singleton mapping targets defined for the mapping base '"
+											+ mappingBase + "'; '" + globalResolvingContext.getProperty(mappingBase)
+											+ "' and '" + mapping.getMappingTarget() + "'");
+						}
+						globalMappingContext.addMapping(mappingBase, mapping.getMappingTarget(), mapping.getMode());
 					}
 				}
 			}
 
-			((Injector) injector).resolveSingletons(globalInjectionContext, globalResolvingContext,
-					singletonAllocations, SingletonMode.GLOBAL);
+			InjectionChain chain = InjectionChain.forGlobalSingletonResolving(globalInjectionContext,
+					globalSingletonAllocations);
+			((Injector) injector).resolveSingletonsIntoChain(chain, globalSingletonAllocations.keySet(),
+					SingletonMode.GLOBAL);
 		}
 
 		return injector;
 	}
 
-	private InjectionContext resolveSingletons(InjectionContext baseContext, ResolvingContext resolvingContext,
-			Map<String, AbstractAllocator<?>> singletonAllocations, SingletonMode mode) {
-		InjectionChain chain = InjectionChain.forSingletonResolving(singletonAllocations, baseContext,
-				resolvingContext);
-		for (String singletonId : singletonAllocations.keySet()) {
+	private void resolveSingletonsIntoChain(InjectionChain chain, Set<String> singletonIds, SingletonMode mode) {
+		for (String singletonId : singletonIds) {
 			InjectionSettings<Object> set = InjectionSettings.of(singletonId, mode);
 			instantiate(chain, set);
 		}
-		return chain.getContext();
 	}
 }
