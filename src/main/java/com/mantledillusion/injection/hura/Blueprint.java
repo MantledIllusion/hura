@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +13,7 @@ import com.mantledillusion.essentials.reflection.TypeEssentials;
 import com.mantledillusion.injection.hura.Injector.AbstractAllocator;
 import com.mantledillusion.injection.hura.Predefinable.Property;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
-import com.mantledillusion.injection.hura.Predefinable.SingletonMapping;
+import com.mantledillusion.injection.hura.Predefinable.Mapping;
 import com.mantledillusion.injection.hura.annotation.Define;
 import com.mantledillusion.injection.hura.annotation.Inject.SingletonMode;
 import com.mantledillusion.injection.hura.exception.BlueprintException;
@@ -40,6 +41,8 @@ import com.mantledillusion.injection.hura.exception.BlueprintException;
  * be created.
  */
 public class Blueprint {
+
+	static final Blueprint EMPTY = new Blueprint();
 
 	/**
 	 * A {@link TypedBlueprint} is an extension to the {@link Blueprint}.
@@ -113,11 +116,11 @@ public class Blueprint {
 	private final Map<Type, AbstractAllocator<?>> typeAllocations = new HashMap<>();
 	private final Map<String, AbstractAllocator<?>> singletonAllocations = new HashMap<>();
 	private final Map<String, String> propertyAllocations = new HashMap<>();
-	private final Map<SingletonMode, Map<String, String>> singletonIdAllocations = new HashMap<>();
+	private final Map<SingletonMode, Map<String, String>> mappingAllocations = new HashMap<>();
 
 	private Blueprint() {
-		this.singletonIdAllocations.put(SingletonMode.GLOBAL, new HashMap<>());
-		this.singletonIdAllocations.put(SingletonMode.SEQUENCE, new HashMap<>());
+		this.mappingAllocations.put(SingletonMode.GLOBAL, new HashMap<>());
+		this.mappingAllocations.put(SingletonMode.SEQUENCE, new HashMap<>());
 	}
 
 	Map<Type, AbstractAllocator<?>> getTypeAllocations() {
@@ -132,8 +135,8 @@ public class Blueprint {
 		return propertyAllocations;
 	}
 
-	Map<SingletonMode, Map<String, String>> getSingletonIdAllocations() {
-		return singletonIdAllocations;
+	Map<SingletonMode, Map<String, String>> getMappingAllocations() {
+		return mappingAllocations;
 	}
 
 	/**
@@ -150,6 +153,23 @@ public class Blueprint {
 	 * @return A new {@link Blueprint} instance; never null
 	 */
 	public static Blueprint of(Predefinable... predefinables) {
+		return of(Arrays.asList(predefinables));
+	}
+
+	/**
+	 * Convenience {@link Method} for not having to implement
+	 * {@link BlueprintTemplate} and passing it to {@link #from(BlueprintTemplate)}
+	 * when the injection scenario is rather basic, so the extended allocation
+	 * features of the {@link BlueprintTemplate} are not needed.
+	 * 
+	 * @param predefinables
+	 *            The {@link Predefinable}s to be used during injection, such as
+	 *            {@link SingletonMode#SEQUENCE} {@link Singleton}s or
+	 *            {@link Property}s; might be null or contain nulls, both is
+	 *            ignored.
+	 * @return A new {@link Blueprint} instance; never null
+	 */
+	public static Blueprint of(Collection<Predefinable> predefinables) {
 		Blueprint blueprint = new Blueprint();
 		addPredefinables(blueprint, predefinables);
 		return blueprint;
@@ -176,6 +196,30 @@ public class Blueprint {
 	 * @return A new {@link TypedBlueprint} instance; never null
 	 */
 	public static <T> TypedBlueprint<T> of(Class<T> rootType, Predefinable... predefinables) {
+		return of(rootType, Arrays.asList(predefinables));
+	}
+
+	/**
+	 * Convenience {@link Method} for not having to implement
+	 * {@link TypedBlueprintTemplate} and passing it to
+	 * {@link #from(TypedBlueprintTemplate)} when the injection scenario is rather
+	 * basic, so the extended allocation features of the
+	 * {@link TypedBlueprintTemplate} are not needed.
+	 * 
+	 * @param <T>
+	 *            The root type of the bean to instantiate and inject by the
+	 *            {@link Injector}.
+	 * @param rootType
+	 *            The {@link Class} of the bean to instantiate and inject by the
+	 *            {@link Injector}; may <b>not</b> return null.
+	 * @param predefinables
+	 *            The {@link Predefinable}s to be used during injection, such as
+	 *            {@link SingletonMode#SEQUENCE} {@link Singleton}s or
+	 *            {@link Property}s; might be null or contain nulls, both is
+	 *            ignored.
+	 * @return A new {@link TypedBlueprint} instance; never null
+	 */
+	public static <T> TypedBlueprint<T> of(Class<T> rootType, Collection<Predefinable> predefinables) {
 		if (rootType == null) {
 			throw new IllegalArgumentException("Cannot create a blue print for a null root type.");
 		}
@@ -185,7 +229,7 @@ public class Blueprint {
 		return blueprint;
 	}
 
-	private static void addPredefinables(Blueprint blueprint, Predefinable... predefinables) {
+	private static void addPredefinables(Blueprint blueprint, Collection<Predefinable> predefinables) {
 		if (predefinables != null) {
 			for (Predefinable predefinable : predefinables) {
 				if (predefinable != null) {
@@ -208,17 +252,17 @@ public class Blueprint {
 						}
 						blueprint.singletonAllocations.put(singleton.getSingletonId(), singleton.getAllocator());
 					}
-					if (predefinable instanceof SingletonMapping) {
-						SingletonMapping mapping = (SingletonMapping) predefinable;
+					if (predefinable instanceof Mapping) {
+						Mapping mapping = (Mapping) predefinable;
 						SingletonMode mappingMode = mapping.getMode();
-						String mappingBase = mapping.getMappingBase();
-						if (blueprint.singletonIdAllocations.get(mappingMode).containsKey(mappingBase)) {
+						String mappingBase = mapping.getBase();
+						if (blueprint.mappingAllocations.get(mappingMode).containsKey(mappingBase)) {
 							throw new IllegalArgumentException("There were 2 or more '" + mappingMode.name()
 									+ "' singleton mapping targets defined for the mapping base '" + mappingBase
 									+ "'; '" + blueprint.propertyAllocations.get(mappingBase) + "' and '"
-									+ mapping.getMappingTarget() + "'");
+									+ mapping.getTarget() + "'");
 						}
-						blueprint.singletonIdAllocations.get(mappingMode).put(mappingBase, mapping.getMappingTarget());
+						blueprint.mappingAllocations.get(mappingMode).put(mappingBase, mapping.getTarget());
 					}
 				}
 			}
@@ -322,9 +366,13 @@ public class Blueprint {
 		if (predefinable instanceof Property) {
 			Property property = (Property) predefinable;
 			blueprint.propertyAllocations.put(property.getKey(), property.getValue());
-		} else {
+		} else if (predefinable instanceof Singleton) {
 			Singleton singleton = (Singleton) predefinable;
 			blueprint.singletonAllocations.put(singleton.getSingletonId(), singleton.getAllocator());
+		} else if (predefinable instanceof Mapping) {
+			Mapping mapping = (Mapping) predefinable;
+			blueprint.mappingAllocations.get(mapping.getMode()).put(mapping.getBase(),
+					mapping.getTarget());
 		}
 	}
 }
