@@ -12,8 +12,8 @@ import com.mantledillusion.injection.hura.Processor.Phase;
 
 /**
  * {@link Annotation} for {@link Class}es that need specific {@link Processor}
- * implementations to be applied at a specific phase during bean instantiation
- * so they can process the bean for its use.
+ * implementations to be applied on the bean at a specific {@link Phase} of the
+ * bean's life cycle.
  */
 @Retention(RUNTIME)
 @Target(TYPE)
@@ -21,8 +21,8 @@ public @interface Processed {
 
 	/**
 	 * Defines a single {@link Processor} implementation that needs to be executed
-	 * at a specific {@link Processor.Phase} in the life cycle of a bean of the {@link Class}
-	 * annotated with @{@link Processed}.
+	 * at a specific {@link Processor.Phase} in the life cycle of a bean of the
+	 * {@link Class} annotated with @{@link Processed}.
 	 */
 	@interface PhasedProcessor {
 
@@ -42,9 +42,9 @@ public @interface Processed {
 		 * <p>
 		 * By default the used {@link Processor.Phase} is {@link Phase#INJECT}.
 		 * 
-		 * @return The injection {@link Processor.Phase} in which to apply the {@link Processor}
-		 *         on a bean of the {@link Class} annotated with {@link Processed};
-		 *         never null
+		 * @return The injection {@link Processor.Phase} in which to apply the
+		 *         {@link Processor} on a bean of the {@link Class} annotated with
+		 *         {@link Processed}; never null
 		 */
 		Phase phase() default Phase.INJECT;
 	}

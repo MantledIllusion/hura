@@ -2,7 +2,7 @@ package com.mantledillusion.injection.hura;
 
 import com.mantledillusion.injection.hura.annotation.Property;
 
-class ResolvingSettings {
+final class ResolvingSettings {
 
 	final String propertyKey;
 	final String matcher;

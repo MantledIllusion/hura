@@ -5,7 +5,7 @@ import java.util.Map;
 
 import com.mantledillusion.injection.hura.annotation.Construct;
 
-class ResolvingContext {
+final class ResolvingContext {
 	
 	static final String RESOLVING_CONTEXT_SINGLETON_ID = "_resolvingContext";
 

@@ -19,7 +19,7 @@ import com.mantledillusion.injection.hura.annotation.Process;
 import com.mantledillusion.injection.hura.annotation.Processed;
 import com.mantledillusion.injection.hura.exception.ProcessorException;
 
-class InjectionProcessors<T> {
+final class InjectionProcessors<T> {
 
 	@SuppressWarnings("rawtypes")
 	static final InjectionProcessors EMPTY = of();

@@ -30,7 +30,7 @@ import com.mantledillusion.injection.hura.annotation.Validated;
 import com.mantledillusion.injection.hura.exception.InjectionException;
 import com.mantledillusion.injection.hura.exception.ValidatorException;
 
-public final class ReflectionCache {
+final class ReflectionCache {
 
 	private static final class TypeIdentifier<T> extends LockIdentifier {
 

@@ -19,11 +19,13 @@ import com.mantledillusion.injection.hura.exception.ResolvingException;
  * who have to receive a property value when their {@link Class} is instantiated
  * and injected by an {@link Injector}.
  * <p>
- * {@link Field}s and {@link Parameter}s annotated with @{@link Property} may not:<br>
- * - be of any other type than {@link String}<br>
- * {@link Field}s annotated with @{@link Property} additionally may not:<br>
- * - be static<br>
- * - be final
+ * {@link Field}s/{@link Parameter}s annotated with @{@link Property} may
+ * not:<br>
+ * <ul>
+ * <li>be a static {@link Field}</li>
+ * <li>be a final {@link Field}</li>
+ * <li>be of any other type than {@link String}</li>
+ * </ul>
  */
 @Retention(RUNTIME)
 @Target({ FIELD, PARAMETER })
@@ -35,7 +37,7 @@ public @interface Property {
 	/**
 	 * The property key to resolve.
 	 * 
-	 * @return The property key to resolve; never null
+	 * @return The property key to resolve; never null or empty
 	 */
 	String value();
 

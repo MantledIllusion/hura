@@ -11,7 +11,7 @@ import com.mantledillusion.injection.hura.annotation.Construct;
 import com.mantledillusion.injection.hura.annotation.Inject.SingletonMode;
 import com.mantledillusion.injection.hura.exception.MappingException;
 
-class MappingContext {
+final class MappingContext {
 
 	static final String MAPPING_CONTEXT_SINGLETON_ID = "_mappingContext";
 
