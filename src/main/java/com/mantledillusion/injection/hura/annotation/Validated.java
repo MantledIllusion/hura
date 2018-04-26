@@ -31,7 +31,7 @@ public @interface Validated {
 	 * <p>
 	 * The validator's generic {@link Annotation} type should be exactly the type
 	 * the {@link Annotation} this @{@link Validated} is annotated on; just as the
-	 * {@link AnnotatedElement} type should be set according to the {@link Target}'s 
+	 * {@link AnnotatedElement} type should be set according to the {@link Target}'s
 	 * {@link ElementType} the annotated {@link Annotation} can be annotated to.
 	 * <p>
 	 * Note that the validator will be instantiated, <b>not</b> injected,

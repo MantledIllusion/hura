@@ -14,10 +14,12 @@ import com.mantledillusion.injection.hura.Injector.ClassAllocator;
 /**
  * Base type for objects that should be treated as given during an injection.
  * <p>
- * Implementations are:<br>
- * - {@link Property}<br>
- * - {@link Singleton}<br>
- * - {@link Mapping}<br>
+ * Implementations are:
+ * <ul>
+ * <li>{@link Property}</li>
+ * <li>{@link Singleton}</li>
+ * <li>{@link Mapping}</li>
+ * </ul>
  */
 public abstract class Predefinable {
 

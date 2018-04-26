@@ -20,8 +20,8 @@ import com.mantledillusion.injection.hura.annotation.Inject.SingletonMode;
 import com.mantledillusion.injection.hura.exception.InjectionException;
 
 /**
- * {@link Annotation} for {@link Field}s and {@link Parameter}s that are already
- * annotated with @{@link Inject} and whose injection needs to be customized.
+ * {@link Annotation} for {@link Field}s and {@link Parameter}s whose injection
+ * needs to be customized.
  * <p>
  * Note that customization is not allowed for {@link Singleton} injections, as
  * that would allow the injected {@link Singleton}s to be defined differently
@@ -35,6 +35,14 @@ import com.mantledillusion.injection.hura.exception.InjectionException;
  * definitions of the running injection, which makes it possible to create an
  * adjustment defining for example a property, just in case the running
  * injection to adjust does not.
+ * <p>
+ * {@link Field}s/{@link Parameter}s annotated with @{@link Adjust} may not:
+ * <ul>
+ * <li>Be annotated on a {@link Field}/{@link Parameter} that is not annotated
+ * with @{@link Inject}</li>
+ * <li>Be annotated on a {@link Field}/{@link Parameter} that is annotated
+ * with @{@link Inject} injecting a {@link Singleton}</li>
+ * </ul>
  */
 @Retention(RUNTIME)
 @Target({ FIELD, PARAMETER })

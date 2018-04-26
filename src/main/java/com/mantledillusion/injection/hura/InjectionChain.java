@@ -180,12 +180,12 @@ final class InjectionChain {
 	}
 
 	// Injection Context
-	boolean hasSingleton(String singletonId) {
-		return this.context.hasSingleton(singletonId);
+	boolean hasSingleton(String singletonId, Class<?> type, boolean allocatedOnly) {
+		return this.context.hasSingleton(singletonId, type, allocatedOnly);
 	}
 
-	<T> void addSingleton(String singletonId, T instance) {
-		this.context.addSingleton(singletonId, instance);
+	<T> void addSingleton(String singletonId, T instance, boolean isAllocated) {
+		this.context.addSingleton(singletonId, instance, isAllocated);
 	}
 
 	<T> T retrieveSingleton(String singletonId) {

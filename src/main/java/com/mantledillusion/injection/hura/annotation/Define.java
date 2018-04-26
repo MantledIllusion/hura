@@ -22,13 +22,18 @@ import com.mantledillusion.injection.hura.Predefinable.Singleton;
  * implementations that define allocations to influence the way the processed
  * {@link TypedBlueprint} is injected by an {@link Injector}.
  * <p>
- * {@link Method}s annotated with @{@link Define} may not:<br>
- * - have a return type any other than:<br>
- * &emsp;&emsp;- {@link Singleton}<br>
- * &emsp;&emsp;- {@link Property}<br>
- * &emsp;&emsp;- {@link Collection} of such {@link Predefinable}s<br>
- * &emsp;&emsp;- {@link BeanAllocation}<br>
- * - have {@link Parameter}s
+ * {@link Method}s annotated with @{@link Define} may not:
+ * <ul>
+ * <li>have a return type any other than:
+ * <ul>
+ * <li>{@link Singleton}</li>
+ * <li>{@link Property}</li>
+ * <li>{@link Collection} of such {@link Predefinable}s</li>
+ * <li>{@link BeanAllocation}</li>
+ * </ul>
+ * </li>
+ * <li>have {@link Parameter}s</li>
+ * </ul>
  */
 @Retention(RUNTIME)
 @Target(METHOD)

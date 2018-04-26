@@ -28,8 +28,10 @@ import com.mantledillusion.injection.hura.Injector;
  * The @{@link Construct} annotation can only be used once per {@link Class},
  * but of course multiple times in a {@link Class}es' hierarchy.
  * <p>
- * {@link Constructor}s annotated with @{@link Construct} may not:<br>
- * - have any {@link Parameter} that is not annotated with @{@link Inject}
+ * {@link Constructor}s annotated with @{@link Construct} may not:
+ * <ul>
+ * <li>have any {@link Parameter} that is not annotated with @{@link Inject}</li>
+ * </ul>
  */
 @Retention(RUNTIME)
 @Target(CONSTRUCTOR)

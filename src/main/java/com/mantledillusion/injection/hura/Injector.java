@@ -331,7 +331,7 @@ public class Injector {
 		@Override
 		T allocate(Injector injector, InjectionChain injectionChain, InjectionSettings<T> set,
 				InjectionProcessors<T> applicators) {
-			injector.handleDestroying(injectionChain, set, this.instance, Collections.emptyList());
+			injector.handleDestroying(injectionChain, set, this.instance, Collections.emptyList(), true);
 			return this.instance;
 		}
 	}
@@ -348,7 +348,7 @@ public class Injector {
 		T allocate(Injector injector, InjectionChain injectionChain, InjectionSettings<T> set,
 				InjectionProcessors<T> applicators) {
 			T bean = this.provider.provide(injector.new TemporalInjectorCallback(injectionChain));
-			injector.handleDestroying(injectionChain, set, bean, Collections.emptyList());
+			injector.handleDestroying(injectionChain, set, bean, Collections.emptyList(), true);
 			return bean;
 		}
 	}
@@ -368,7 +368,7 @@ public class Injector {
 				InjectionProcessors<T> applicators) {
 			InjectionSettings<T2> refinedSettings = set.refine(this.clazz);
 			InjectionProcessors<T2> refinedApplicators = injector.buildApplicators(chain, refinedSettings);
-			return injector.createAndInject(chain, refinedSettings, this.applicators.merge(refinedApplicators));
+			return injector.createAndInject(chain, refinedSettings, this.applicators.merge(refinedApplicators), true);
 		}
 	}
 
@@ -518,7 +518,7 @@ public class Injector {
 				instance = ((AbstractAllocator<T>) injectionChain.getTypeAllocator(set.type)).allocate(this,
 						injectionChain, set, buildApplicators(injectionChain, set));
 			} else if (set.injectionMode == InjectionMode.EAGER) {
-				instance = createAndInject(injectionChain, set, buildApplicators(injectionChain, set));
+				instance = createAndInject(injectionChain, set, buildApplicators(injectionChain, set), false);
 			}
 		} else {
 			Object singleton = null;
@@ -527,21 +527,23 @@ public class Injector {
 				set = set.refine(injectionChain.map(set.singletonId, set.singletonMode));
 			}
 
+			boolean allocatedOnly = set.injectionMode == InjectionMode.EXPLICIT;
 			if (set.singletonMode == SingletonMode.GLOBAL
-					&& this.globalInjectionContext.hasSingleton(set.singletonId)) {
+					&& this.globalInjectionContext.hasSingleton(set.singletonId, set.type, allocatedOnly)) {
 				singleton = this.globalInjectionContext.retrieveSingleton(set.singletonId);
 			} else if (set.singletonMode == SingletonMode.GLOBAL
 					&& injectionChain.hasGlobalSingletonAllocator(set.singletonId)) {
 				singleton = ((AbstractAllocator<T>) injectionChain.getGlobalSingletonAllocator(set.singletonId))
 						.allocate(this, injectionChain, set, buildApplicators(injectionChain, set));
-			} else if (set.singletonMode == SingletonMode.SEQUENCE && injectionChain.hasSingleton(set.singletonId)) {
+			} else if (set.singletonMode == SingletonMode.SEQUENCE
+					&& injectionChain.hasSingleton(set.singletonId, set.type, allocatedOnly)) {
 				singleton = injectionChain.retrieveSingleton(set.singletonId);
 			} else if (set.singletonMode == SingletonMode.SEQUENCE
 					&& injectionChain.hasSequenceSingletonAllocator(set.singletonId)) {
 				singleton = ((AbstractAllocator<T>) injectionChain.getSequenceSingletonAllocator(set.singletonId))
 						.allocate(this, injectionChain, set, buildApplicators(injectionChain, set));
-			} else if (set.injectionMode == InjectionMode.EAGER) {
-				singleton = createAndInject(injectionChain, set, buildApplicators(injectionChain, set));
+			} else if (!allocatedOnly) {
+				singleton = createAndInject(injectionChain, set, buildApplicators(injectionChain, set), false);
 			}
 
 			if (singleton != null) {
@@ -589,7 +591,7 @@ public class Injector {
 	}
 
 	private <T> T createAndInject(InjectionChain injectionChain, InjectionSettings<T> set,
-			InjectionProcessors<T> applicators) {
+			InjectionProcessors<T> applicators, boolean isAllocatedInjection) {
 		if (set.isContext) {
 			throw new InjectionException("Cannot instantiate the type '" + set.type.getSimpleName()
 					+ "' as it (or one of its super classes/interfaces) is marked with the "
@@ -637,7 +639,8 @@ public class Injector {
 					+ "' with constructor '" + injectableConstructor.getConstructor() + "'", e);
 		}
 
-		handleDestroying(injectionChain, set, instance, applicators.getPostProcessorsOfPhase(Phase.DESTROY));
+		handleDestroying(injectionChain, set, instance, applicators.getPostProcessorsOfPhase(Phase.DESTROY),
+				isAllocatedInjection);
 
 		registerFinalizers(instance, injectionChain, applicators.getPostProcessorsOfPhase(Phase.FINALIZE));
 
@@ -708,12 +711,12 @@ public class Injector {
 	}
 
 	private <T> void handleDestroying(InjectionChain chain, InjectionSettings<?> set, T instance,
-			List<Processor<? super T>> destroyers) {
+			List<Processor<? super T>> destroyers, boolean isAllocatedInjection) {
 		if (set.isIndependent) {
 			registerDestroyers(instance, chain, destroyers);
 		} else if (set.singletonMode == SingletonMode.SEQUENCE) {
 			registerDestroyers(instance, chain, destroyers);
-			chain.addSingleton(set.singletonId, instance);
+			chain.addSingleton(set.singletonId, instance, isAllocatedInjection);
 		} else {
 			this.globalInjectionContext.addGlobalSingleton(set.singletonId, instance, destroyers);
 		}

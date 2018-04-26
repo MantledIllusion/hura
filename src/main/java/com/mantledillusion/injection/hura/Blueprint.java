@@ -29,13 +29,15 @@ import com.mantledillusion.injection.hura.exception.BlueprintException;
  * that has to be used for the injection; these kind of injection instructions
  * are called allocations.
  * <p>
- * The static {@link Method}s...<br>
- * - {@link #from(BlueprintTemplate)} (For injection instruction only)<br>
- * - {@link #from(TypedBlueprintTemplate)} (For injection instruction on
- * instantiating a specific type)<br>
- * - {@link #of(Predefinable...)} (For simple injection instruction only)<br>
- * - {@link #of(Class, Predefinable...)} (For simple injection of instantiating
- * a specific type)<br>
+ * The static {@link Method}s...
+ * <ul>
+ * <li>{@link #from(BlueprintTemplate)} (For injection instruction only)</li>
+ * <li>{@link #from(TypedBlueprintTemplate)} (For injection instruction on
+ * instantiating a specific type)</li>
+ * <li>{@link #of(Predefinable...)} (For simple injection instruction only)</li>
+ * <li>{@link #of(Class, Predefinable...)} (For simple injection of instantiating
+ * a specific type)</li>
+ * </ul>
  * ...can be used to create {@link Blueprint} instances; refer to the
  * documentation of these {@link Method}s for information on how allocations can
  * be created.

@@ -17,10 +17,12 @@ import com.mantledillusion.injection.hura.Processor.Phase;
  * {@link Processor.Phase} of a bean's life cycle.
  * <p>
  * {@link Method}s annotated with @{@link Process} may not:<br>
- * - be static<br>
- * - be having one parameter other than of the type
- * {@link TemporalInjectorCallback}<br>
- * - be having more than one parameter
+ * <ul>
+ * <li>be static</li>
+ * <li>be having one parameter other than of the type
+ * {@link TemporalInjectorCallback}</li>
+ * <li>be having more than one parameter</li>
+ * </ul>
  */
 @Retention(RUNTIME)
 @Target(METHOD)
