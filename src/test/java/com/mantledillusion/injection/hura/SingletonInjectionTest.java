@@ -120,12 +120,12 @@ public class SingletonInjectionTest extends AbstractInjectionTest {
 
 	@Test
 	public void testSingletonMapping() {
-		String singletonId = "theSingletonIdToMapTo";
+		String qualifier = "theQualifierToMapTo";
 		Injectable singleton = new Injectable();
-		Injector rootInjector = Injector.of(Singleton.of(singletonId, singleton));
+		Injector rootInjector = Injector.of(Singleton.of(qualifier, singleton));
 
 		InjectableWithGlobalSingleton injectable = rootInjector.instantiate(InjectableWithGlobalSingleton.class,
-				Mapping.of(InjectableWithGlobalSingleton.SINGLETON, singletonId, SingletonMode.GLOBAL));
+				Mapping.of(InjectableWithGlobalSingleton.SINGLETON, qualifier, SingletonMode.GLOBAL));
 
 		assertSame(singleton, injectable.globalSingleton);
 	}

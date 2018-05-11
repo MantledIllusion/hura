@@ -8,7 +8,7 @@ import com.mantledillusion.injection.hura.exception.InjectionException;
 import com.mantledillusion.injection.hura.injectables.InjectableWithContextSensitivity;
 import com.mantledillusion.injection.hura.misc.ExampleContext;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithBeanWithWiringContextSensitiveSingleton;
-import com.mantledillusion.injection.hura.uninjectables.UninjectableWithContextWithoutSingletonId;
+import com.mantledillusion.injection.hura.uninjectables.UninjectableWithContextWithoutQualifier;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithGlobalSingletonContext;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithGlobalSingletonInjector;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithSequenceSingletonInjector;
@@ -36,8 +36,8 @@ public class ContextInjectionTest extends AbstractInjectionTest {
 	}
 
 	@Test(expected=InjectionException.class)
-	public void testContextWithoutSingletonIdInjection() {
-		this.suite.injectInSuiteContext(UninjectableWithContextWithoutSingletonId.class, new ExampleContext());
+	public void testContextWithoutQualifierInjection() {
+		this.suite.injectInSuiteContext(UninjectableWithContextWithoutQualifier.class, new ExampleContext());
 	}
 	
 	@Test(expected=InjectionException.class)

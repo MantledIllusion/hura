@@ -247,12 +247,12 @@ public class Blueprint {
 						blueprint.propertyAllocations.put(propertyKey, property.getValue());
 					} else if (predefinable instanceof Singleton) {
 						Singleton singleton = (Singleton) predefinable;
-						String singletonId = singleton.getSingletonId();
-						if (blueprint.singletonAllocations.containsKey(singletonId)) {
+						String qualifier = singleton.getQualifier();
+						if (blueprint.singletonAllocations.containsKey(qualifier)) {
 							throw new IllegalArgumentException(
-									"There were 2 or more beans defined for the singletonId '" + singletonId + "'");
+									"There were 2 or more beans defined for the qualifier '" + qualifier + "'");
 						}
-						blueprint.singletonAllocations.put(singleton.getSingletonId(), singleton.getAllocator());
+						blueprint.singletonAllocations.put(singleton.getQualifier(), singleton.getAllocator());
 					}
 					if (predefinable instanceof Mapping) {
 						Mapping mapping = (Mapping) predefinable;
@@ -370,7 +370,7 @@ public class Blueprint {
 			blueprint.propertyAllocations.put(property.getKey(), property.getValue());
 		} else if (predefinable instanceof Singleton) {
 			Singleton singleton = (Singleton) predefinable;
-			blueprint.singletonAllocations.put(singleton.getSingletonId(), singleton.getAllocator());
+			blueprint.singletonAllocations.put(singleton.getQualifier(), singleton.getAllocator());
 		} else if (predefinable instanceof Mapping) {
 			Mapping mapping = (Mapping) predefinable;
 			blueprint.mappingAllocations.get(mapping.getMode()).put(mapping.getBase(),

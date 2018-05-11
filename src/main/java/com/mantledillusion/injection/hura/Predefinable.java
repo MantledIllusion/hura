@@ -76,25 +76,25 @@ public abstract class Predefinable {
 	}
 
 	/**
-	 * Defines a {@link Singleton} of a specific singletonId.
+	 * Defines a {@link Singleton} of a specific qualifier.
 	 */
 	public static final class Singleton extends Predefinable {
 
-		private final String singletonId;
+		private final String qualifier;
 		private final AbstractAllocator<?> allocator;
 
-		private Singleton(String singletonId, AbstractAllocator<?> allocator) {
-			this.singletonId = singletonId;
+		private Singleton(String qualifier, AbstractAllocator<?> allocator) {
+			this.qualifier = qualifier;
 			this.allocator = allocator;
 		}
 
 		/**
-		 * Returns the singletonId of this singleton.
+		 * Returns the qualifier of this singleton.
 		 * 
-		 * @return The singletonId; never null or empty
+		 * @return The qualifier; never null or empty
 		 */
-		public String getSingletonId() {
-			return singletonId;
+		public String getQualifier() {
+			return qualifier;
 		}
 
 		AbstractAllocator<?> getAllocator() {
@@ -104,68 +104,68 @@ public abstract class Predefinable {
 		/**
 		 * Factory {@link Method} for {@link Singleton} instances.
 		 * <p>
-		 * Allocates the singletonId to the specified instance.
+		 * Allocates the qualifier to the specified instance.
 		 * 
-		 * @param singletonId
-		 *            The singletonId on whose injections the given instance may be
+		 * @param qualifier
+		 *            The qualifier on whose injections the given instance may be
 		 *            referenced at; might <b>not</b> be null.
 		 * @param bean
 		 *            The instance to allocate as a {@link Singleton}; might be null.
 		 * @return A new {@link Singleton} instance; never null
 		 */
-		public static Singleton of(String singletonId, Object bean) {
-			if (singletonId == null) {
-				throw new IllegalArgumentException("Cannot create singleton with a null singletonId");
+		public static Singleton of(String qualifier, Object bean) {
+			if (qualifier == null) {
+				throw new IllegalArgumentException("Cannot create singleton with a null qualifier");
 			}
-			return new Singleton(singletonId, new InstanceAllocator<>(bean));
+			return new Singleton(qualifier, new InstanceAllocator<>(bean));
 		}
 
 		/**
 		 * Factory {@link Method} for {@link Singleton} instances.
 		 * <p>
-		 * Allocates the singletonId to the specified {@link BeanProvider}.
+		 * Allocates the qualifier to the specified {@link BeanProvider}.
 		 * 
 		 * @param <T>
 		 *            The type of the singleton.
-		 * @param singletonId
-		 *            The singletonId on whose injections the given instance may be
+		 * @param qualifier
+		 *            The qualifier on whose injections the given instance may be
 		 *            referenced at; might <b>not</b> be null.
 		 * @param provider
 		 *            The {@link BeanProvider} to allocate as the provider of a
 		 *            {@link Singleton}; might <b>not</b> be null.
 		 * @return A new {@link Singleton} instance; never null
 		 */
-		public static <T> Singleton of(String singletonId, BeanProvider<T> provider) {
-			if (singletonId == null) {
-				throw new IllegalArgumentException("Cannot create singleton with a null singletonId");
+		public static <T> Singleton of(String qualifier, BeanProvider<T> provider) {
+			if (qualifier == null) {
+				throw new IllegalArgumentException("Cannot create singleton with a null qualifier");
 			} else if (provider == null) {
 				throw new IllegalArgumentException("Cannot create singleton with a null provider");
 			}
-			return new Singleton(singletonId, new ProviderAllocator<>(provider));
+			return new Singleton(qualifier, new ProviderAllocator<>(provider));
 		}
 
 		/**
 		 * Factory {@link Method} for {@link Singleton} instances.
 		 * <p>
-		 * Allocates the singletonId to the specified {@link Class}.
+		 * Allocates the qualifier to the specified {@link Class}.
 		 * 
 		 * @param <T>
 		 *            The type of the singleton.
-		 * @param singletonId
-		 *            The singletonId on whose injections the given instance may be
+		 * @param qualifier
+		 *            The qualifier on whose injections the given instance may be
 		 *            referenced at; might <b>not</b> be null.
 		 * @param beanClass
 		 *            The {@link Class} to allocate as the type of a {@link Singleton};
 		 *            might <b>not</b> be null.
 		 * @return A new {@link Singleton} instance; never null
 		 */
-		public static <T> Singleton of(String singletonId, Class<T> beanClass) {
-			if (singletonId == null) {
-				throw new IllegalArgumentException("Cannot create singleton with a null singletonId");
+		public static <T> Singleton of(String qualifier, Class<T> beanClass) {
+			if (qualifier == null) {
+				throw new IllegalArgumentException("Cannot create singleton with a null qualifier");
 			} else if (beanClass == null) {
 				throw new IllegalArgumentException("Cannot create singleton with a null bean class");
 			}
-			return new Singleton(singletonId, new ClassAllocator<>(beanClass, InjectionProcessors.of()));
+			return new Singleton(qualifier, new ClassAllocator<>(beanClass, InjectionProcessors.of()));
 		}
 	}
 
@@ -185,18 +185,18 @@ public abstract class Predefinable {
 		}
 
 		/**
-		 * Returns the base singletonId to map.
+		 * Returns the base qualifier to map.
 		 * 
-		 * @return The base singletonId; never null
+		 * @return The base qualifier; never null
 		 */
 		public String getBase() {
 			return base;
 		}
 
 		/**
-		 * Returns the target singletonId to map to;
+		 * Returns the target qualifier to map to;
 		 * 
-		 * @return The target singletonId; never null.
+		 * @return The target qualifier; never null.
 		 */
 		public String getTarget() {
 			return target;
@@ -215,11 +215,11 @@ public abstract class Predefinable {
 		 * Factory {@link Method} for {@link Mapping} instances.
 		 * 
 		 * @param base
-		 *            The singletonId that is mapped. Singleton references to this
+		 *            The qualifier that is mapped. Singleton references to this
 		 *            mapping base ID will reference the mapping target singleton
 		 *            afterwards; might <b>not</b> be null.
 		 * @param target
-		 *            The singletonId that is mapped to. Singleton references to the
+		 *            The qualifier that is mapped to. Singleton references to the
 		 *            mapping base ID will reference this mapping target ID's singleton
 		 *            afterwards; might <b>not</b> be null.
 		 * @param mode
@@ -230,7 +230,7 @@ public abstract class Predefinable {
 		 */
 		public static Mapping of(String base, String target, SingletonMode mode) {
 			if (StringUtils.isEmpty(base)) {
-				throw new IllegalArgumentException("Cannot create a singleton mapping with a null singletonId");
+				throw new IllegalArgumentException("Cannot create a singleton mapping with a null qualifier");
 			} else if (target == null) {
 				throw new IllegalArgumentException("Cannot create a singleton mapping with a null mapping target");
 			} else if (mode == null) {

@@ -13,7 +13,7 @@ import com.mantledillusion.injection.hura.misc.TypeInjectionResolvingProcessorAt
 public class InjectableWithInjectedPropertyField {
 
 	@Property("property.key")
-	@Inject("propertySingletonId")
+	@Inject("propertyQualifier")
 	public String injectableProperty;
 	
 	public String valueAtConstruct;

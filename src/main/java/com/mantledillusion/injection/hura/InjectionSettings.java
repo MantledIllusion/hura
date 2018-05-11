@@ -27,7 +27,7 @@ final class InjectionSettings<T> {
 
 	final Class<T> type;
 	final boolean isIndependent;
-	final String singletonId;
+	final String qualifier;
 	final boolean isContext;
 	final SingletonMode singletonMode;
 	final InjectionMode injectionMode;
@@ -35,12 +35,12 @@ final class InjectionSettings<T> {
 	final Blueprint predefinitions;
 	final List<Class<? extends BlueprintTemplate>> extensions;
 
-	private InjectionSettings(Class<T> type, boolean isIndependent, String singletonId, boolean isContext,
+	private InjectionSettings(Class<T> type, boolean isIndependent, String qualifier, boolean isContext,
 			SingletonMode singletonMode, InjectionMode injectionMode, boolean overwriteWithNull,
 			Blueprint predefinitions, List<Class<? extends BlueprintTemplate>> extensions) {
 		this.type = type;
 		this.isIndependent = isIndependent;
-		this.singletonId = singletonId;
+		this.qualifier = qualifier;
 		this.isContext = isContext;
 		this.singletonMode = singletonMode;
 		this.injectionMode = injectionMode;
@@ -50,12 +50,12 @@ final class InjectionSettings<T> {
 	}
 
 	<T2 extends T> InjectionSettings<T2> refine(Class<T2> type) {
-		return new InjectionSettings<>(type, this.isIndependent, this.singletonId, this.isContext, this.singletonMode,
+		return new InjectionSettings<>(type, this.isIndependent, this.qualifier, this.isContext, this.singletonMode,
 				this.injectionMode, this.overwriteWithNull, this.predefinitions, this.extensions);
 	}
 
-	InjectionSettings<T> refine(String singletonId) {
-		return new InjectionSettings<>(this.type, this.isIndependent, singletonId, this.isContext, this.singletonMode,
+	InjectionSettings<T> refine(String qualifier) {
+		return new InjectionSettings<>(this.type, this.isIndependent, qualifier, this.isContext, this.singletonMode,
 				this.injectionMode, this.overwriteWithNull, this.predefinitions, this.extensions);
 	}
 
@@ -85,8 +85,8 @@ final class InjectionSettings<T> {
 				extensions);
 	}
 
-	static InjectionSettings<Object> of(String singletonId, SingletonMode mode) {
-		return new InjectionSettings<>(Object.class, false, singletonId, false, mode, InjectionMode.EAGER, false,
+	static InjectionSettings<Object> of(String qualifier, SingletonMode mode) {
+		return new InjectionSettings<>(Object.class, false, qualifier, false, mode, InjectionMode.EAGER, false,
 				Blueprint.EMPTY, Collections.emptyList());
 	}
 

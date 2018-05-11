@@ -21,10 +21,12 @@ import com.mantledillusion.injection.hura.injectables.InjectableWithDestructable
 import com.mantledillusion.injection.hura.injectables.InjectableWithDestructableSingletonAndInjector;
 import com.mantledillusion.injection.hura.injectables.InjectableWithInjectableAndRelay;
 import com.mantledillusion.injection.hura.injectables.InjectableWithInspectedAnnotations;
+import com.mantledillusion.injection.hura.injectables.InjectableWithManualInjectionsDuringFinalizePhase;
 import com.mantledillusion.injection.hura.injectables.InjectableWithProcessableFields;
 import com.mantledillusion.injection.hura.injectables.InjectableWithProcessingAwareness;
 import com.mantledillusion.injection.hura.injectables.InjectableWithProcessor;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithFailingProcessor;
+import com.mantledillusion.injection.hura.uninjectables.UninjectableWithManualInjectionsDuringInjectPhase;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithMultiParameterProcessMethod;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithStaticProcessMethod;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithWrongTypeParameterProcessMethod;
@@ -219,5 +221,15 @@ public class ProcessingTest extends AbstractInjectionTest {
 		assertFalse(injectable.singleton.wasDestructed);
 		rootInjector.destroy(injectable);
 		assertTrue(injectable.singleton.wasDestructed);
+	}
+	
+	@Test(expected=ProcessorException.class)
+	public void testManualInjectionDuringInjectProcessing() {
+		this.suite.injectInSuiteContext(UninjectableWithManualInjectionsDuringInjectPhase.class);
+	}
+	
+	@Test 
+	public void testManualInjectionDuringFinalizeProcessing() {
+		this.suite.injectInSuiteContext(InjectableWithManualInjectionsDuringFinalizePhase.class);
 	}
 }

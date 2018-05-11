@@ -28,7 +28,7 @@ public class InjectionAdjustmentTest extends AbstractInjectionTest {
 		Injectable singleton = new Injectable();
 		InjectabeWithMappingAdjustment injectable = this.suite.injectInSuiteContext(
 				InjectabeWithMappingAdjustment.class,
-				Singleton.of(InjectabeWithMappingAdjustment.SOME_SINGLETON_ID, singleton));
+				Singleton.of(InjectabeWithMappingAdjustment.SOME_QUALIFIER, singleton));
 		
 		assertSame(singleton, injectable.singletonedInjectable.sequenceSingleton);
 	}

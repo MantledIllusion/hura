@@ -107,7 +107,18 @@ public class Injector {
 
 	/**
 	 * A temporarily valid injection callback that can be used to instantiate a bean
-	 * during a currently running injection sequence of an {@link Injector}.
+	 * during a specific processing of a currently running injection sequence of an
+	 * {@link Injector}.
+	 * <p>
+	 * Since subsequent injection sequences cannot be started during the processing
+	 * of a parent injection sequence, this callback can be used during processing
+	 * to perform a manually triggered injection in the currently running sequence.
+	 * For example, it is prohibited to call an {@link Injector} to inject something
+	 * during a @{@link Process} method call. Doing so would create the possibility
+	 * of incoherent {@link Singleton} pools, since the currently running injection
+	 * sequence (which has caused the @{@link Process} method to be called) could
+	 * define a sequence singleton later on that such an intermediate injection
+	 * sequence created and finished during the method would not be able to obtain.
 	 * <p>
 	 * The callback automatically looses its instantiation ability when the
 	 * injection sequence proceeds; any successive calls on the callback's functions
@@ -462,6 +473,8 @@ public class Injector {
 			this.beans.put(instance, chain.getDestroyables());
 			finalize(chain.getFinalizables());
 		} catch (Exception e) {
+			chain.clearHook();
+
 			int failingDestructionCount = 0;
 			for (SelfSustaningProcessor destroyable : chain.getDestroyables()) {
 				try {
@@ -501,6 +514,9 @@ public class Injector {
 
 	@SuppressWarnings("unchecked")
 	private <T> T instantiate(InjectionChain injectionChain, InjectionSettings<T> set) {
+		InjectionChain hook = injectionChain;
+		hook.hookOnThread();
+
 		if (set.isContext && injectionChain.isChildOfGlobalSingleton()) {
 			throw new InjectionException("Cannot refer to the type '" + set.type.getSimpleName()
 					+ "' as it (or one of its super classes/interfaces) is marked with the "
@@ -523,24 +539,24 @@ public class Injector {
 		} else {
 			Object singleton = null;
 
-			if (injectionChain.hasMapping(set.singletonId, set.singletonMode)) {
-				set = set.refine(injectionChain.map(set.singletonId, set.singletonMode));
+			if (injectionChain.hasMapping(set.qualifier, set.singletonMode)) {
+				set = set.refine(injectionChain.map(set.qualifier, set.singletonMode));
 			}
 
 			boolean allocatedOnly = set.injectionMode == InjectionMode.EXPLICIT;
 			if (set.singletonMode == SingletonMode.GLOBAL
-					&& this.globalInjectionContext.hasSingleton(set.singletonId, set.type, allocatedOnly)) {
-				singleton = this.globalInjectionContext.retrieveSingleton(set.singletonId);
+					&& this.globalInjectionContext.hasSingleton(set.qualifier, set.type, allocatedOnly)) {
+				singleton = this.globalInjectionContext.retrieveSingleton(set.qualifier);
 			} else if (set.singletonMode == SingletonMode.GLOBAL
-					&& injectionChain.hasGlobalSingletonAllocator(set.singletonId)) {
-				singleton = ((AbstractAllocator<T>) injectionChain.getGlobalSingletonAllocator(set.singletonId))
+					&& injectionChain.hasGlobalSingletonAllocator(set.qualifier)) {
+				singleton = ((AbstractAllocator<T>) injectionChain.getGlobalSingletonAllocator(set.qualifier))
 						.allocate(this, injectionChain, set, buildApplicators(injectionChain, set));
 			} else if (set.singletonMode == SingletonMode.SEQUENCE
-					&& injectionChain.hasSingleton(set.singletonId, set.type, allocatedOnly)) {
-				singleton = injectionChain.retrieveSingleton(set.singletonId);
+					&& injectionChain.hasSingleton(set.qualifier, set.type, allocatedOnly)) {
+				singleton = injectionChain.retrieveSingleton(set.qualifier);
 			} else if (set.singletonMode == SingletonMode.SEQUENCE
-					&& injectionChain.hasSequenceSingletonAllocator(set.singletonId)) {
-				singleton = ((AbstractAllocator<T>) injectionChain.getSequenceSingletonAllocator(set.singletonId))
+					&& injectionChain.hasSequenceSingletonAllocator(set.qualifier)) {
+				singleton = ((AbstractAllocator<T>) injectionChain.getSequenceSingletonAllocator(set.qualifier))
 						.allocate(this, injectionChain, set, buildApplicators(injectionChain, set));
 			} else if (!allocatedOnly) {
 				singleton = createAndInject(injectionChain, set, buildApplicators(injectionChain, set), false);
@@ -550,13 +566,15 @@ public class Injector {
 				if (TypeUtils.isAssignable(singleton.getClass(), set.type)) {
 					instance = (T) singleton;
 				} else {
-					throw new InjectionException("The singleton with the id '" + set.singletonId
+					throw new InjectionException("The singleton with the id '" + set.qualifier
 							+ "' needs to be injected with an assignable of the type " + set.type.getSimpleName()
 							+ ", but there already exists a singleton of that name with the type "
 							+ singleton.getClass().getSimpleName() + " who is not assignable.");
 				}
 			}
 		}
+
+		hook.unhookFromThread();
 
 		return instance;
 	}
@@ -570,7 +588,7 @@ public class Injector {
 				if (!blueprint.getSingletonAllocations().isEmpty()) {
 					throw new InjectionException("The blueprint template implementation '" + extension.getSimpleName()
 							+ "' was used as an extension but defines " + blueprint.getSingletonAllocations().size()
-							+ " singletons with the singletonIds ["
+							+ " singletons with the qualifiers ["
 							+ StringUtils.join(blueprint.getSingletonAllocations().keySet(), ", ")
 							+ "]; extensions may not define singletons, as that could cause singletons "
 							+ "to be defined differently depending on where they are injected first.");
@@ -610,7 +628,7 @@ public class Injector {
 		}
 
 		if (!set.isIndependent && set.singletonMode == SingletonMode.GLOBAL) {
-			injectionChain = InjectionChain.forGlobalSingletonResolving(this.globalInjectionContext);
+			injectionChain = InjectionChain.forGlobalSingletonResolving(this.globalInjectionContext, injectionChain);
 		} else {
 			injectionChain = injectionChain.extendBy(injectableConstructor.getConstructor(), set);
 		}
@@ -716,9 +734,9 @@ public class Injector {
 			registerDestroyers(instance, chain, destroyers);
 		} else if (set.singletonMode == SingletonMode.SEQUENCE) {
 			registerDestroyers(instance, chain, destroyers);
-			chain.addSingleton(set.singletonId, instance, isAllocatedInjection);
+			chain.addSingleton(set.qualifier, instance, isAllocatedInjection);
 		} else {
-			this.globalInjectionContext.addGlobalSingleton(set.singletonId, instance, destroyers);
+			this.globalInjectionContext.addGlobalSingleton(set.qualifier, instance, destroyers);
 		}
 	}
 
@@ -885,12 +903,12 @@ public class Injector {
 						globalResolvingContext.addProperty(propertyKey, property.getValue());
 					} else if (predefinable instanceof Singleton) {
 						Singleton singleton = ((Singleton) predefinable);
-						if (globalSingletonAllocations.containsKey(singleton.getSingletonId())) {
+						if (globalSingletonAllocations.containsKey(singleton.getQualifier())) {
 							throw new IllegalArgumentException(
-									"There were 2 or more singletons defined for the singletonId '"
-											+ singleton.getSingletonId() + "'");
+									"There were 2 or more singletons defined for the qualifier '"
+											+ singleton.getQualifier() + "'");
 						}
-						globalSingletonAllocations.put(singleton.getSingletonId(), singleton.getAllocator());
+						globalSingletonAllocations.put(singleton.getQualifier(), singleton.getAllocator());
 					} else if (predefinable instanceof Mapping) {
 						Mapping mapping = (Mapping) predefinable;
 						String mappingBase = mapping.getBase();
@@ -914,9 +932,9 @@ public class Injector {
 		return injector;
 	}
 
-	private void resolveSingletonsIntoChain(InjectionChain chain, Set<String> singletonIds, SingletonMode mode) {
-		for (String singletonId : singletonIds) {
-			InjectionSettings<Object> set = InjectionSettings.of(singletonId, mode);
+	private void resolveSingletonsIntoChain(InjectionChain chain, Set<String> qualifiers, SingletonMode mode) {
+		for (String qualifier : qualifiers) {
+			InjectionSettings<Object> set = InjectionSettings.of(qualifier, mode);
 			instantiate(chain, set);
 		}
 	}

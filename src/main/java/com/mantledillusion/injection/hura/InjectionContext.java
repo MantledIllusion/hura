@@ -25,13 +25,13 @@ class InjectionContext {
 			super(resolvingContext, mappingContext);
 		}
 
-		<T> void addGlobalSingleton(String singletonId, T instance, List<Processor<? super T>> destroyers) {
+		<T> void addGlobalSingleton(String qualifier, T instance, List<Processor<? super T>> destroyers) {
 			List<SelfSustaningProcessor> destroyables = new ArrayList<>();
 			for (Processor<? super T> destroyer : destroyers) {
 				destroyables.add(() -> destroyer.process(instance, null));
 			}
-			this.destroyables.put(singletonId, destroyables);
-			super.addSingleton(singletonId, instance, true);
+			this.destroyables.put(qualifier, destroyables);
+			super.addSingleton(qualifier, instance, true);
 		}
 
 		void destroy() {
@@ -64,9 +64,9 @@ class InjectionContext {
 			 * so they are treated as allocated; they cannot be changed anymore, so order of
 			 * injection within an injection sequence is not relevant any more.
 			 */
-			for (String singletonId : baseContext.singletonBeans.keySet()) {
-				this.singletonBeans.put(singletonId,
-						Pair.of(baseContext.singletonBeans.get(singletonId).getLeft(), Boolean.TRUE));
+			for (String qualifier : baseContext.singletonBeans.keySet()) {
+				this.singletonBeans.put(qualifier,
+						Pair.of(baseContext.singletonBeans.get(qualifier).getLeft(), Boolean.TRUE));
 			}
 		}
 		addSingleton(INJECTION_CONTEXT_SINGLETON_ID, this, false);
@@ -78,33 +78,33 @@ class InjectionContext {
 		}
 	}
 
-	boolean hasSingleton(String singletonId, Class<?> type, boolean allocatedOnly) {
-		if (this.singletonBeans.containsKey(singletonId)) {
-			if (this.singletonBeans.get(singletonId).getRight()) {
+	boolean hasSingleton(String qualifier, Class<?> type, boolean allocatedOnly) {
+		if (this.singletonBeans.containsKey(qualifier)) {
+			if (this.singletonBeans.get(qualifier).getRight()) {
 				return true;
 			} else if (allocatedOnly) {
 				return false;
-			} else if (this.singletonBeans.get(singletonId).getLeft() == null
-					|| this.singletonBeans.get(singletonId).getLeft().getClass() == type) {
+			} else if (this.singletonBeans.get(qualifier).getLeft() == null
+					|| this.singletonBeans.get(qualifier).getLeft().getClass() == type) {
 				return true;
 			} else {
 				/*
 				 * If the singleton was not allocated, it was created on demand by injecting the
-				 * type of the target. This is okay as long as every target of the singletonId
+				 * type of the target. This is okay as long as every target of the qualifier
 				 * has the same type or the origin of the singleton already created is from the
 				 * parent injection sequence.
 				 * 
-				 * But if 2 or more on demand singleton injections of the same singletonId are
+				 * But if 2 or more on demand singleton injections of the same qualifier are
 				 * done in the same injection sequence, it is crucial that the type used for on
 				 * demand injection is exactly the same. If not, the order of the injection in
 				 * that very sequence could determine a different outcome of the injection
 				 * sequence, causing unpredictable behavior.
 				 */
 				throw new InjectionException("A singleton of the type '"
-						+ this.singletonBeans.get(singletonId).getLeft().getClass().getSimpleName()
-						+ "' was created on demand for the singletonId '" + singletonId
+						+ this.singletonBeans.get(qualifier).getLeft().getClass().getSimpleName()
+						+ "' was created on demand for the qualifier '" + qualifier
 						+ "' instead of being allocated. As a result, it can be only injected into "
-						+ "targets of the same type in its injection sequence, but the same singletonId "
+						+ "targets of the same type in its injection sequence, but the same qualifier "
 						+ "is also required for a target of the type '" + type.getSimpleName() + "'.");
 	}
 		} else {
@@ -112,17 +112,17 @@ class InjectionContext {
 		}
 	}
 
-	<T> void addSingleton(String singletonId, T instance, boolean isAllocated) {
-		this.singletonBeans.put(singletonId, Pair.of(instance, isAllocated));
+	<T> void addSingleton(String qualifier, T instance, boolean isAllocated) {
+		this.singletonBeans.put(qualifier, Pair.of(instance, isAllocated));
 	}
 
 	@SuppressWarnings("unchecked")
-	<T> T retrieveSingleton(String singletonId) {
-		return (T) this.singletonBeans.get(singletonId).getLeft();
+	<T> T retrieveSingleton(String qualifier) {
+		return (T) this.singletonBeans.get(qualifier).getLeft();
 	}
 
 	@SuppressWarnings("unchecked")
-	<T> T removeSingleton(String singletonId) {
-		return (T) this.singletonBeans.remove(singletonId);
+	<T> T removeSingleton(String qualifier) {
+		return (T) this.singletonBeans.remove(qualifier);
 	}
 }
