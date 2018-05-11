@@ -107,7 +107,18 @@ public class Injector {
 
 	/**
 	 * A temporarily valid injection callback that can be used to instantiate a bean
-	 * during a currently running injection sequence of an {@link Injector}.
+	 * during a specific processing of a currently running injection sequence of an
+	 * {@link Injector}.
+	 * <p>
+	 * Since subsequent injection sequences cannot be started during the processing
+	 * of a parent injection sequence, this callback can be used during processing
+	 * to perform a manually triggered injection in the currently running sequence.
+	 * For example, it is prohibited to call an {@link Injector} to inject something
+	 * during a @{@link Process} method call. Doing so would create the possibility
+	 * of incoherent {@link Singleton} pools, since the currently running injection
+	 * sequence (which has caused the @{@link Process} method to be called) could
+	 * define a sequence singleton later on that such an intermediate injection
+	 * sequence created and finished during the method would not be able to obtain.
 	 * <p>
 	 * The callback automatically looses its instantiation ability when the
 	 * injection sequence proceeds; any successive calls on the callback's functions
@@ -462,6 +473,8 @@ public class Injector {
 			this.beans.put(instance, chain.getDestroyables());
 			finalize(chain.getFinalizables());
 		} catch (Exception e) {
+			chain.clearHook();
+
 			int failingDestructionCount = 0;
 			for (SelfSustaningProcessor destroyable : chain.getDestroyables()) {
 				try {
@@ -501,6 +514,9 @@ public class Injector {
 
 	@SuppressWarnings("unchecked")
 	private <T> T instantiate(InjectionChain injectionChain, InjectionSettings<T> set) {
+		InjectionChain hook = injectionChain;
+		hook.hookOnThread();
+
 		if (set.isContext && injectionChain.isChildOfGlobalSingleton()) {
 			throw new InjectionException("Cannot refer to the type '" + set.type.getSimpleName()
 					+ "' as it (or one of its super classes/interfaces) is marked with the "
@@ -558,6 +574,8 @@ public class Injector {
 			}
 		}
 
+		hook.unhookFromThread();
+
 		return instance;
 	}
 
@@ -610,7 +628,7 @@ public class Injector {
 		}
 
 		if (!set.isIndependent && set.singletonMode == SingletonMode.GLOBAL) {
-			injectionChain = InjectionChain.forGlobalSingletonResolving(this.globalInjectionContext);
+			injectionChain = InjectionChain.forGlobalSingletonResolving(this.globalInjectionContext, injectionChain);
 		} else {
 			injectionChain = injectionChain.extendBy(injectableConstructor.getConstructor(), set);
 		}

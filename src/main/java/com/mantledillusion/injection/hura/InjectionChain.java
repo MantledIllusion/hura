@@ -14,9 +14,30 @@ import org.apache.commons.lang3.StringUtils;
 import com.mantledillusion.injection.hura.InjectionContext.GlobalInjectionContext;
 import com.mantledillusion.injection.hura.Injector.AbstractAllocator;
 import com.mantledillusion.injection.hura.Injector.SelfSustaningProcessor;
+import com.mantledillusion.injection.hura.Injector.TemporalInjectorCallback;
 import com.mantledillusion.injection.hura.annotation.Inject.SingletonMode;
+import com.mantledillusion.injection.hura.exception.InjectionException;
 
 final class InjectionChain {
+
+	private final class ChainLock {
+
+		private final Object lock;
+
+		private ChainLock() {
+			this.lock = new Object();
+		}
+
+		private ChainLock(ChainLock parentLock) {
+			this.lock = parentLock.lock;
+		}
+
+		private boolean isFromChain(InjectionChain other) {
+			return other == InjectionChain.this;
+		}
+	}
+
+	private static final ThreadLocal<ChainLock> THREAD_CHAIN = new ThreadLocal<>();
 
 	private static enum DependencyContext {
 		INDEPENDENT, SEQUENCE, GLOBAL;
@@ -43,6 +64,7 @@ final class InjectionChain {
 	private final MappingContext mappingContext;
 
 	// Injection Chain
+	private final ChainLock chainLock;
 	private final LinkedHashSet<Constructor<?>> constructorChain;
 	private final DependencyContext dependency;
 	private final Constructor<?> dependencyConstructor;
@@ -54,7 +76,7 @@ final class InjectionChain {
 	private InjectionChain(InjectionContext context, ResolvingContext resolvingContext, MappingContext mappingContext,
 			Map<Type, AbstractAllocator<?>> typeAllocations,
 			Map<String, AbstractAllocator<?>> sequenceSingletonAllocations,
-			Map<String, AbstractAllocator<?>> globalSingletonAllocations,
+			Map<String, AbstractAllocator<?>> globalSingletonAllocations, ChainLock chainLock,
 			LinkedHashSet<Constructor<?>> constructorChain, DependencyContext dependency,
 			Constructor<?> dependencyConstructor, List<SelfSustaningProcessor> finalizables,
 			List<SelfSustaningProcessor> destroyables) {
@@ -66,12 +88,38 @@ final class InjectionChain {
 		this.sequenceSingletonAllocations = sequenceSingletonAllocations;
 		this.globalSingletonAllocations = globalSingletonAllocations;
 
+		if (chainLock == null) {
+			this.chainLock = new ChainLock();
+		} else {
+			this.chainLock = new ChainLock(chainLock);
+		}
 		this.constructorChain = constructorChain;
 		this.dependency = dependency;
 		this.dependencyConstructor = dependencyConstructor;
 
 		this.finalizables = finalizables;
 		this.destroyables = destroyables;
+	}
+
+	void hookOnThread() {
+		if (THREAD_CHAIN.get() == null) {
+			THREAD_CHAIN.set(this.chainLock);
+		} else if (THREAD_CHAIN.get().lock != this.chainLock.lock) {
+			throw new InjectionException(
+					"Cannot begin a new injection sequence during another sequence already running. Use "
+							+ TemporalInjectorCallback.class.getSimpleName()
+							+ " for manually triggered in-sequence injection.");
+		}
+	}
+
+	void unhookFromThread() {
+		if (THREAD_CHAIN.get().isFromChain(this)) {
+			clearHook();
+		}
+	}
+	
+	void clearHook() {
+		THREAD_CHAIN.remove();
 	}
 
 	InjectionChain extendBy(Blueprint blueprint) {
@@ -88,8 +136,8 @@ final class InjectionChain {
 		MappingContext mappingContext = this.mappingContext.merge(blueprint.getMappingAllocations());
 
 		return new InjectionChain(this.context, resolvingContext, mappingContext, typeAllocations,
-				sequenceSingletonAllocations, this.globalSingletonAllocations, this.constructorChain, this.dependency,
-				this.dependencyConstructor, this.finalizables, this.destroyables);
+				sequenceSingletonAllocations, this.globalSingletonAllocations, this.chainLock, this.constructorChain,
+				this.dependency, this.dependencyConstructor, this.finalizables, this.destroyables);
 	}
 
 	InjectionChain adjustBy(List<Blueprint> adjustments) {
@@ -108,8 +156,9 @@ final class InjectionChain {
 		mappingContext = mappingContext.merge(this.mappingContext);
 
 		return new InjectionChain(this.context, resolvingContext, mappingContext, typeAllocations,
-				this.sequenceSingletonAllocations, this.globalSingletonAllocations, this.constructorChain, this.dependency,
-				this.dependencyConstructor, this.finalizables, this.destroyables);
+				this.sequenceSingletonAllocations, this.globalSingletonAllocations, this.chainLock,
+				this.constructorChain, this.dependency, this.dependencyConstructor, this.finalizables,
+				this.destroyables);
 	}
 
 	InjectionChain extendBy(Constructor<?> c, InjectionSettings<?> set) {
@@ -125,30 +174,37 @@ final class InjectionChain {
 		constructorChain.add(c);
 
 		return new InjectionChain(this.context, this.resolvingContext, this.mappingContext, this.typeAllocations,
-				this.sequenceSingletonAllocations, this.globalSingletonAllocations, constructorChain, dependency,
-				dependencyConstructor, this.finalizables, this.destroyables);
+				this.sequenceSingletonAllocations, this.globalSingletonAllocations, this.chainLock, constructorChain,
+				dependency, dependencyConstructor, this.finalizables, this.destroyables);
 	}
 
 	static InjectionChain forInjection(InjectionContext injectionContext, ResolvingContext resolvingContext,
 			MappingContext mappingContext, Map<Type, AbstractAllocator<?>> typeAllocations,
 			Map<String, AbstractAllocator<?>> sequenceSingletonAllocations) {
 		return new InjectionChain(injectionContext, resolvingContext, mappingContext, typeAllocations,
-				sequenceSingletonAllocations, new HashMap<>(), new LinkedHashSet<>(), DependencyContext.INDEPENDENT,
-				null, new ArrayList<>(), new ArrayList<>());
+				sequenceSingletonAllocations, new HashMap<>(), null, new LinkedHashSet<>(),
+				DependencyContext.INDEPENDENT, null, new ArrayList<>(), new ArrayList<>());
 	}
 
-	static InjectionChain forGlobalSingletonResolving(GlobalInjectionContext globalInjectionContext) {
-		return forGlobalSingletonResolving(globalInjectionContext, new HashMap<>());
+	static InjectionChain forGlobalSingletonResolving(GlobalInjectionContext globalInjectionContext, InjectionChain parent) {
+		return forGlobalSingletonResolving(globalInjectionContext, new HashMap<>(), parent.chainLock);
 	}
 
 	static InjectionChain forGlobalSingletonResolving(GlobalInjectionContext globalInjectionContext,
 			Map<String, AbstractAllocator<?>> globalSingletonAllocations) {
-		ResolvingContext resolvingContext = globalInjectionContext.retrieveSingleton(ResolvingContext.RESOLVING_CONTEXT_SINGLETON_ID);
-		MappingContext mappingContext = globalInjectionContext.retrieveSingleton(MappingContext.MAPPING_CONTEXT_SINGLETON_ID);
-		
+		return forGlobalSingletonResolving(globalInjectionContext, globalSingletonAllocations, null);
+	}
+
+	private static InjectionChain forGlobalSingletonResolving(GlobalInjectionContext globalInjectionContext,
+			Map<String, AbstractAllocator<?>> globalSingletonAllocations, ChainLock lock) {
+		ResolvingContext resolvingContext = globalInjectionContext
+				.retrieveSingleton(ResolvingContext.RESOLVING_CONTEXT_SINGLETON_ID);
+		MappingContext mappingContext = globalInjectionContext
+				.retrieveSingleton(MappingContext.MAPPING_CONTEXT_SINGLETON_ID);
+
 		return new InjectionChain(new InjectionContext(resolvingContext, mappingContext), resolvingContext,
-				mappingContext, new HashMap<>(), new HashMap<>(), globalSingletonAllocations, new LinkedHashSet<>(),
-				DependencyContext.INDEPENDENT, null, new ArrayList<>(), new ArrayList<>());
+				mappingContext, new HashMap<>(), new HashMap<>(), globalSingletonAllocations, lock,
+				new LinkedHashSet<>(), DependencyContext.INDEPENDENT, null, new ArrayList<>(), new ArrayList<>());
 	}
 
 	// Blueprint
@@ -200,12 +256,12 @@ final class InjectionChain {
 	String getProperty(String propertyKey) {
 		return this.resolvingContext.getProperty(propertyKey);
 	}
-	
+
 	// Mapping Context
 	boolean hasMapping(String qualifier, SingletonMode mode) {
 		return this.mappingContext.hasMapping(qualifier, mode);
 	}
-	
+
 	String map(String qualifier, SingletonMode mode) {
 		return this.mappingContext.map(qualifier, mode);
 	}
