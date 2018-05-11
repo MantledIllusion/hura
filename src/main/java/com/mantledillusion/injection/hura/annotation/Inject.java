@@ -39,7 +39,7 @@ public @interface Inject {
 	 * <p>
 	 * How the mode is applied depends on the whether the injected bean is
 	 * independent ({@link BeanAllocation}s) or a {@link Singleton} (allocation on
-	 * the singletonId).
+	 * the qualifier).
 	 * <p>
 	 * Note that if a {@link Singleton} is created in a parent injection sequence,
 	 * it is treated as it was allocated in all sub injection sequences, regardless
@@ -63,11 +63,11 @@ public @interface Inject {
 		 * <p>
 		 * For {@link Singleton} beans:
 		 * <ul>
-		 * <li>If the singletonId of the injection target is allocated by a
+		 * <li>If the qualifier of the injection target is allocated by a
 		 * {@link Singleton}, the injection is done using the allocation.</li>
-		 * <li>If the singletonId of the injection target is <b>not</b> allocated by a
+		 * <li>If the qualifier of the injection target is <b>not</b> allocated by a
 		 * {@link Singleton}, it is checked whether there already is a singleton for the
-		 * singletonId that has been instantiated on demand:
+		 * qualifier that has been instantiated on demand:
 		 * <ul>
 		 * <li>If there is none, it is tried to instantiate the type on demand; if that
 		 * is not possible, an {@link InjectionException} is thrown</li>
@@ -94,9 +94,9 @@ public @interface Inject {
 		 * <p>
 		 * For {@link Singleton} beans:
 		 * <ul>
-		 * <li>If the singletonId of the injection target is allocated by a
+		 * <li>If the qualifier of the injection target is allocated by a
 		 * {@link Singleton}, the injection is done using the allocation.</li>
-		 * <li>If the singletonId of the injection target is <b>not</b> allocated by a
+		 * <li>If the qualifier of the injection target is <b>not</b> allocated by a
 		 * {@link Singleton}, leave the target null.</li>
 		 * </ul>
 		 */
@@ -115,7 +115,7 @@ public @interface Inject {
 		 * Using this mode enables multiple different instances of the same
 		 * {@link Class} (instantiated by the same {@link Injector} in one injection
 		 * sequence each) to each have their own singleton instance while using the same
-		 * singletonId.
+		 * qualifier.
 		 * <p>
 		 * In addition, singleton instances of parent injection contexts will be
 		 * injected, but singletons introduced by child contexts do not bleed into
@@ -128,7 +128,7 @@ public @interface Inject {
 		 * <p>
 		 * Using this mode enables all beans injected by any {@link Injector} in any
 		 * injection sequence of the injection tree to share the same singleton by its
-		 * singletonId.
+		 * qualifier.
 		 * <p>
 		 * This mode is permitted for @{@link Context} sensitive types (such as
 		 * {@link Injector} itself), since it would allow context sensitive entities to
@@ -138,12 +138,12 @@ public @interface Inject {
 	}
 
 	/**
-	 * The singletonId.
+	 * The qualifier.
 	 * <p>
-	 * By default the used singletonId is "", meaning independent (no
+	 * By default the used qualifier is "", meaning independent (no
 	 * {@link Singleton}).
 	 * 
-	 * @return The singletonId under which the {@link Singleton} to inject into the
+	 * @return The qualifier under which the {@link Singleton} to inject into the
 	 *         annotated {@link Field}/{@link Parameter} is registered in its
 	 *         injection context; never null, might be blank if no {@link Singleton}
 	 *         but an independent bean is desired

@@ -260,7 +260,7 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 			
 			@Define
 			public Set<Predefinable> propertyDefinitionMethod() {
-				return new HashSet<>(Arrays.asList(Property.of("property.key", propertyValue), Singleton.of("singletonId", singleton)));
+				return new HashSet<>(Arrays.asList(Property.of("property.key", propertyValue), Singleton.of("qualifier", singleton)));
 			}
 		}));
 		

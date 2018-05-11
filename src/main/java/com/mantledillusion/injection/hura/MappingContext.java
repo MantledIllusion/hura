@@ -31,20 +31,20 @@ final class MappingContext {
 		}
 	}
 
-	boolean hasMapping(String singletonId, SingletonMode mode) {
-		return this.mappings.get(mode).containsKey(singletonId);
+	boolean hasMapping(String qualifier, SingletonMode mode) {
+		return this.mappings.get(mode).containsKey(qualifier);
 	}
 
-	String map(String singletonId, SingletonMode mode) {
-		while (this.mappings.get(mode).containsKey(singletonId)) {
-			singletonId = this.mappings.get(mode).get(singletonId);
+	String map(String qualifier, SingletonMode mode) {
+		while (this.mappings.get(mode).containsKey(qualifier)) {
+			qualifier = this.mappings.get(mode).get(qualifier);
 		}
-		return singletonId;
+		return qualifier;
 	}
 
 	void addMapping(String mappingBase, String mappingTarget, SingletonMode mode) {
-		List<String> singletonIds = new ArrayList<>();
-		singletonIds.add(mappingBase);
+		List<String> qualifiers = new ArrayList<>();
+		qualifiers.add(mappingBase);
 		Map<String, String> mappings = new HashMap<>(this.mappings.get(mode));
 		mappings.put(mappingBase, mappingTarget);
 
@@ -52,19 +52,19 @@ final class MappingContext {
 		while (mappings.containsKey(target)) {
 			target = mappings.get(target);
 			if (mappingBase.equals(target)) {
-				throw new MappingException("SingletonId mapping loop detected! Adding a mapping from '" + mappingBase
+				throw new MappingException("qualifier mapping loop detected! Adding a mapping from '" + mappingBase
 						+ "' to '" + mappingTarget + "' closes the mapping loop '"
-						+ StringUtils.join(singletonIds, "' -> '") + "'");
+						+ StringUtils.join(qualifiers, "' -> '") + "'");
 			}
 		}
 
 		this.mappings.get(mode).put(mappingBase, mappingTarget);
 	}
 
-	MappingContext merge(Map<SingletonMode, Map<String, String>> singletonIdAllocations) {
+	MappingContext merge(Map<SingletonMode, Map<String, String>> qualifierAllocations) {
 		MappingContext newContext = new MappingContext(this);
-		newContext.mappings.get(SingletonMode.GLOBAL).putAll(singletonIdAllocations.get(SingletonMode.GLOBAL));
-		newContext.mappings.get(SingletonMode.SEQUENCE).putAll(singletonIdAllocations.get(SingletonMode.SEQUENCE));
+		newContext.mappings.get(SingletonMode.GLOBAL).putAll(qualifierAllocations.get(SingletonMode.GLOBAL));
+		newContext.mappings.get(SingletonMode.SEQUENCE).putAll(qualifierAllocations.get(SingletonMode.SEQUENCE));
 		return newContext;
 	}
 

@@ -8,6 +8,6 @@ public class InjectableWithPropertyAndSingleton {
 	@Property("property.key")
 	public String propertyValue;
 	
-	@Inject("singletonId")
+	@Inject("qualifier")
 	public String singleton;
 }

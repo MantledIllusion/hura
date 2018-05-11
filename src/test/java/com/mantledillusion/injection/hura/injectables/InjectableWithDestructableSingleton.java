@@ -4,8 +4,8 @@ import com.mantledillusion.injection.hura.annotation.Inject;
 
 public class InjectableWithDestructableSingleton {
 
-	public static final String SINGLETON_ID = "singletonId";
+	public static final String QUALIFIER = "qualifier";
 	
-	@Inject(SINGLETON_ID)
+	@Inject(QUALIFIER)
 	public InjectableWithDestructionAwareness singleton;
 }

@@ -172,7 +172,7 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 		String singletonValue = "singletonValue";
 		String propertyValue = "propertyValue";
 		InjectableWithInjectedPropertyField injectable = this.suite.injectInSuiteContext(
-				InjectableWithInjectedPropertyField.class, Singleton.of("propertySingletonId", singletonValue),
+				InjectableWithInjectedPropertyField.class, Singleton.of("propertyQualifier", singletonValue),
 				Property.of("property.key", propertyValue));
 
 		assertEquals(propertyValue, injectable.valueAtConstruct);

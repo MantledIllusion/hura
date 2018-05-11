@@ -161,35 +161,35 @@ final class InjectionChain {
 		return (AbstractAllocator<T>) this.typeAllocations.get(type);
 	}
 
-	boolean hasSequenceSingletonAllocator(String singletonId) {
-		return this.sequenceSingletonAllocations.containsKey(singletonId);
+	boolean hasSequenceSingletonAllocator(String qualifier) {
+		return this.sequenceSingletonAllocations.containsKey(qualifier);
 	}
 
 	@SuppressWarnings("unchecked")
-	<T> AbstractAllocator<T> getSequenceSingletonAllocator(String singletonId) {
-		return (AbstractAllocator<T>) this.sequenceSingletonAllocations.get(singletonId);
+	<T> AbstractAllocator<T> getSequenceSingletonAllocator(String qualifier) {
+		return (AbstractAllocator<T>) this.sequenceSingletonAllocations.get(qualifier);
 	}
 
-	boolean hasGlobalSingletonAllocator(String singletonId) {
-		return this.globalSingletonAllocations.containsKey(singletonId);
+	boolean hasGlobalSingletonAllocator(String qualifier) {
+		return this.globalSingletonAllocations.containsKey(qualifier);
 	}
 
 	@SuppressWarnings("unchecked")
-	<T> AbstractAllocator<T> getGlobalSingletonAllocator(String singletonId) {
-		return (AbstractAllocator<T>) this.globalSingletonAllocations.get(singletonId);
+	<T> AbstractAllocator<T> getGlobalSingletonAllocator(String qualifier) {
+		return (AbstractAllocator<T>) this.globalSingletonAllocations.get(qualifier);
 	}
 
 	// Injection Context
-	boolean hasSingleton(String singletonId, Class<?> type, boolean allocatedOnly) {
-		return this.context.hasSingleton(singletonId, type, allocatedOnly);
+	boolean hasSingleton(String qualifier, Class<?> type, boolean allocatedOnly) {
+		return this.context.hasSingleton(qualifier, type, allocatedOnly);
 	}
 
-	<T> void addSingleton(String singletonId, T instance, boolean isAllocated) {
-		this.context.addSingleton(singletonId, instance, isAllocated);
+	<T> void addSingleton(String qualifier, T instance, boolean isAllocated) {
+		this.context.addSingleton(qualifier, instance, isAllocated);
 	}
 
-	<T> T retrieveSingleton(String singletonId) {
-		return this.context.retrieveSingleton(singletonId);
+	<T> T retrieveSingleton(String qualifier) {
+		return this.context.retrieveSingleton(qualifier);
 	}
 
 	// Resolving Context
@@ -202,12 +202,12 @@ final class InjectionChain {
 	}
 	
 	// Mapping Context
-	boolean hasMapping(String singletonId, SingletonMode mode) {
-		return this.mappingContext.hasMapping(singletonId, mode);
+	boolean hasMapping(String qualifier, SingletonMode mode) {
+		return this.mappingContext.hasMapping(qualifier, mode);
 	}
 	
-	String map(String singletonId, SingletonMode mode) {
-		return this.mappingContext.map(singletonId, mode);
+	String map(String qualifier, SingletonMode mode) {
+		return this.mappingContext.map(qualifier, mode);
 	}
 
 	// Injection Chain

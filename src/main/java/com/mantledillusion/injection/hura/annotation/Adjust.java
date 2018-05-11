@@ -75,18 +75,18 @@ public @interface Adjust {
 	public @interface MappingDef {
 
 		/**
-		 * The singletonId that is mapped. Singleton references to this mapping base ID
+		 * The qualifier that is mapped. Singleton references to this mapping base ID
 		 * will reference the mapping target singleton afterwards.
 		 * 
-		 * @return The singletonId to map; might <b>not</b> be null.
+		 * @return The qualifier to map; might <b>not</b> be null.
 		 */
 		String base();
 
 		/**
-		 * The singletonId that is mapped to. Singleton references to the mapping base
+		 * The qualifier that is mapped to. Singleton references to the mapping base
 		 * ID will reference this mapping target ID's singleton afterwards.
 		 * 
-		 * @return The singletonId to map to; might <b>not</b> be null.
+		 * @return The qualifier to map to; might <b>not</b> be null.
 		 */
 		String target();
 
@@ -123,7 +123,7 @@ public @interface Adjust {
 	 * {@link Mapping} adjustment is needed.
 	 * <p>
 	 * Note that if any of the {@link #extensions()} define a {@link Mapping} of the
-	 * same singletonId/mode pair, the {@link Mapping} defined here overrides it.
+	 * same qualifier/mode pair, the {@link Mapping} defined here overrides it.
 	 * <p>
 	 * 
 	 * 
