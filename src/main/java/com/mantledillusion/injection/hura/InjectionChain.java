@@ -249,12 +249,8 @@ final class InjectionChain {
 	}
 
 	// Resolving Context
-	boolean hasProperty(String propertyKey) {
-		return this.resolvingContext.hasProperty(propertyKey);
-	}
-
-	String getProperty(String propertyKey) {
-		return this.resolvingContext.getProperty(propertyKey);
+	String resolve(ResolvingSettings set) {
+		return this.resolvingContext.resolve(set);
 	}
 
 	// Mapping Context
