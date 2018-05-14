@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
@@ -39,8 +37,6 @@ import com.mantledillusion.injection.hura.annotation.Inject.InjectionMode;
 import com.mantledillusion.injection.hura.annotation.Inject.SingletonMode;
 import com.mantledillusion.injection.hura.annotation.Process;
 import com.mantledillusion.injection.hura.exception.ProcessorException;
-import com.mantledillusion.injection.hura.exception.ResolvingException;
-import com.mantledillusion.injection.hura.exception.ValidatorException;
 import com.mantledillusion.injection.hura.exception.InjectionException;
 
 /**
@@ -70,7 +66,7 @@ import com.mantledillusion.injection.hura.exception.InjectionException;
  * define {@link Singleton}s that will be available to the parent (or another
  * one of its children).
  */
-public class Injector {
+public class Injector extends InjectionProvider {
 
 	/**
 	 * The root {@link Injector} of an injection tree.
@@ -125,7 +121,7 @@ public class Injector {
 	 * will result in {@link IllegalStateException}s. The current state can be
 	 * checked with {@link TemporalInjectorCallback#isActive()}.
 	 */
-	public final class TemporalInjectorCallback {
+	public final class TemporalInjectorCallback extends InjectionProvider {
 
 		private final InjectionChain chain;
 		private boolean isActive = true;
@@ -142,8 +138,8 @@ public class Injector {
 		 * instantiate more beans in that sequence's context.
 		 * 
 		 * @return True if the sequence is still active, false otherwise; if false is
-		 *         returned, all calls to {@link #instantiate(Class)},
-		 *         {@link #instantiate(TypedBlueprint)} or any of the
+		 *         returned, all calls to any of the
+		 *         {@link #instantiate(Class, Predefinable...)} or
 		 *         {@link #resolve(String)} {@link Method}s will fail with
 		 *         {@link IllegalStateException}s
 		 */
@@ -155,163 +151,20 @@ public class Injector {
 			this.isActive = false;
 		}
 
-		/**
-		 * Convenience {@link Method} for not having to use
-		 * {@link #instantiate(TypedBlueprint)} with the result of
-		 * {@link Blueprint#of(Class, Predefinable...)} (without using any
-		 * {@link Predefinable}s).
-		 * 
-		 * @param <T>
-		 *            The bean type.
-		 * @param clazz
-		 *            The {@link Class} to instantiate and inject; might <b>not</b> be
-		 *            null.
-		 * @return An injected instance of the given {@link Class}; never null
-		 */
-		public <T> T instantiate(Class<T> clazz) {
-			return instantiate(Blueprint.of(clazz));
+		@Override
+		String resolve(ResolvingSettings set) {
+			checkActive();
+
+			return this.chain.resolve(set);
 		}
 
-		/**
-		 * Instantiates an injects an instance of the given {@link TypedBlueprint}'s
-		 * root type.
-		 * 
-		 * @param <T>
-		 *            The bean type.
-		 * @param blueprint
-		 *            The {@link TypedBlueprint} to use for instantiation and injection;
-		 *            might <b>not</b> be null.
-		 * @return An injected instance of the given {@link TypedBlueprint}'s root type;
-		 *         never null
-		 */
+		@Override
 		public <T> T instantiate(TypedBlueprint<T> blueprint) {
 			checkActive();
 
 			InjectionChain chain = this.chain.extendBy(blueprint);
 			InjectionSettings<T> set = InjectionSettings.of(blueprint);
 			return Injector.this.instantiate(chain, set);
-		}
-
-		/**
-		 * Resolves the given property key.
-		 * <p>
-		 * Resolving is not forced.
-		 * 
-		 * @param propertyKey
-		 *            The key to resolve; might <b>not</b> be null or empty.
-		 * @return The property value, never null
-		 */
-		public String resolve(String propertyKey) {
-			return resolve(propertyKey, com.mantledillusion.injection.hura.annotation.Property.DEFAULT_MATCHER, false);
-		}
-
-		/**
-		 * Resolves the given property key.
-		 * <p>
-		 * Resolving might be forced if desired.
-		 * 
-		 * @param propertyKey
-		 *            The key to resolve; might <b>not</b> be null or empty.
-		 * @param forced
-		 *            Determines whether the resolving has to be successful. If set to
-		 *            true, a {@link ResolvingException} will be thrown if the key
-		 *            cannot be resolved.
-		 * @return The property value, never null
-		 */
-		public String resolve(String propertyKey, boolean forced) {
-			return resolve(propertyKey, com.mantledillusion.injection.hura.annotation.Property.DEFAULT_MATCHER, forced);
-		}
-
-		/**
-		 * Resolves the given property key.
-		 * <p>
-		 * Resolving might be forced if desired.
-		 * 
-		 * @param propertyKey
-		 *            The key to resolve; might <b>not</b> be null or empty.
-		 * @param matcher
-		 *            The matcher for the property value; might <b>not</b> be null, must
-		 *            be parsable by {@link Pattern#compile(String)}.
-		 * @param forced
-		 *            Determines whether the resolving has to be successful. If set to
-		 *            true, a {@link ResolvingException} will be thrown if the key
-		 *            cannot be resolved.
-		 * @return The property value, never null
-		 */
-		public String resolve(String propertyKey, String matcher, boolean forced) {
-			checkActive();
-			checkKey(propertyKey);
-			checkMatcher(matcher, null);
-
-			ResolvingSettings set = ResolvingSettings.of(propertyKey, matcher, forced);
-			return Injector.this.resolve(this.chain, set);
-		}
-
-		/**
-		 * Resolves the given property key.
-		 * <p>
-		 * Resolving is not forced; if the property cannot be resolved, the given
-		 * default value is used.
-		 * 
-		 * @param propertyKey
-		 *            The key to resolve; might <b>not</b> be null or empty.
-		 * @param defaultValue
-		 *            The default value to return if the key cannot be resolved; might
-		 *            <b>not</b> be null.
-		 * @return The property value, never null
-		 */
-		public String resolve(String propertyKey, String defaultValue) {
-			return resolve(propertyKey, com.mantledillusion.injection.hura.annotation.Property.DEFAULT_MATCHER,
-					defaultValue);
-		}
-
-		/**
-		 * Resolves the given property key.
-		 * <p>
-		 * Resolving is not forced; if the property cannot be resolved or the matcher
-		 * fails, the given default value is used.
-		 * 
-		 * @param propertyKey
-		 *            The key to resolve; might <b>not</b> be null or empty.
-		 * @param matcher
-		 *            The matcher for the property value; might <b>not</b> be null, must
-		 *            be parsable by {@link Pattern#compile(String)}.
-		 * @param defaultValue
-		 *            The default value to return if the key cannot be resolved or the
-		 *            value does not match the matcher's pattern; might <b>not</b> be
-		 *            null.
-		 * @return The property value, never null
-		 */
-		public String resolve(String propertyKey, String matcher, String defaultValue) {
-			checkActive();
-			if (defaultValue == null) {
-				throw new IllegalArgumentException("Cannot fall back to a null default value.");
-			}
-			checkKey(propertyKey);
-			checkMatcher(matcher, defaultValue);
-
-			ResolvingSettings set = ResolvingSettings.of(propertyKey, matcher, defaultValue);
-			return Injector.this.resolve(this.chain, set);
-		}
-
-		private void checkKey(String propertyKey) {
-			if (StringUtils.isEmpty(propertyKey)) {
-				throw new IllegalArgumentException("Cannot resolve a property using a null key.");
-			}
-		}
-
-		private void checkMatcher(String matcher, String defaultValue) {
-			Pattern pattern;
-			try {
-				pattern = Pattern.compile(matcher);
-			} catch (PatternSyntaxException | NullPointerException e) {
-				throw new IllegalArgumentException("The matcher  '" + matcher + "' is no valid pattern", e);
-			}
-
-			if (defaultValue != null && !pattern.matcher(defaultValue).matches()) {
-				throw new ValidatorException("The the default value '" + defaultValue
-						+ "' does not match the specified matcher pattern '" + matcher + "'.");
-			}
 		}
 
 		private void checkActive() {
@@ -415,39 +268,12 @@ public class Injector {
 		this.mappingContext = mappingContext;
 	}
 
-	/**
-	 * Convenience {@link Method} for not having to use
-	 * {@link #instantiate(TypedBlueprint)} with the result of
-	 * {@link Blueprint#of(Class, Predefinable...)}.
-	 * 
-	 * @param <T>
-	 *            The bean type.
-	 * @param clazz
-	 *            The {@link Class} to instantiate and inject; might <b>not</b> be
-	 *            null.
-	 * @param predefinables
-	 *            The {@link Predefinable}s to be used during injection, such as
-	 *            {@link SingletonMode#SEQUENCE} {@link Singleton}s or
-	 *            {@link Property}s; might be null or contain nulls, both is
-	 *            ignored.
-	 * @return An injected instance of the given {@link Class}; never null
-	 */
-	public <T> T instantiate(Class<T> clazz, Predefinable... predefinables) {
-		return instantiate(Blueprint.of(clazz, predefinables));
+	@Override
+	String resolve(ResolvingSettings set) {
+		return this.resolvingContext.resolve(set);
 	}
 
-	/**
-	 * Instantiates and injects an instance of the given {@link TypedBlueprint}'s
-	 * root type.
-	 * 
-	 * @param <T>
-	 *            The bean type.
-	 * @param blueprint
-	 *            The {@link TypedBlueprint} to use for instantiation and injection;
-	 *            might <b>not</b> be null.
-	 * @return An injected instance of the given {@link TypedBlueprint}'s root type;
-	 *         never null
-	 */
+	@Override
 	public final <T> T instantiate(TypedBlueprint<T> blueprint) {
 		if (blueprint == null) {
 			throw new IllegalArgumentException("Unable to inject using a null blueprint.");
@@ -637,7 +463,7 @@ public class Injector {
 		for (int i = 0; i < injectableConstructor.getParamCount(); i++) {
 			ParamSettingType type = injectableConstructor.getSettingTypeOfParam(i);
 			if (type == ParamSettingType.RESOLVABLE || type == ParamSettingType.BOTH) {
-				parameters[i] = resolve(injectionChain, injectableConstructor.getResolvingSettings(i));
+				parameters[i] = injectionChain.resolve(injectableConstructor.getResolvingSettings(i));
 			}
 			if (type == ParamSettingType.INJECTABLE || type == ParamSettingType.BOTH) {
 				InjectionSettings<?> paramInjectionSettings = injectableConstructor.getInjectionSettings(i);
@@ -668,7 +494,7 @@ public class Injector {
 			Field field = resolvableField.getField();
 			ResolvingSettings fieldSet = resolvableField.getSettings();
 
-			String property = resolve(injectionChain, fieldSet);
+			String property = injectionChain.resolve(fieldSet);
 
 			try {
 				field.set(instance, property);
@@ -705,27 +531,6 @@ public class Injector {
 		process(instance, set.type, injectionChain, applicators.getPostProcessorsOfPhase(Phase.INJECT));
 
 		return instance;
-	}
-
-	private String resolve(InjectionChain injectionChain, ResolvingSettings set) {
-		if (injectionChain.hasProperty(set.propertyKey)) {
-			String property = injectionChain.getProperty(set.propertyKey);
-			if (!property.matches(set.matcher)) {
-				if (!set.forced && set.useDefault) {
-					return set.defaultValue;
-				} else {
-					throw new ResolvingException("The defined property '" + set.propertyKey + "' is set to the value '"
-							+ property + "', which does not match the required pattern '" + set.matcher + "'.");
-				}
-			}
-			return property;
-		} else if (set.forced) {
-			throw new ResolvingException("The property '" + set.propertyKey + "' is not set, but is required to be.");
-		} else if (set.useDefault) {
-			return set.defaultValue;
-		} else {
-			return set.propertyKey;
-		}
 	}
 
 	private <T> void handleDestroying(InjectionChain chain, InjectionSettings<?> set, T instance,
