@@ -263,7 +263,8 @@ public class Injector extends InjectionProvider {
 	private Injector(GlobalInjectionContext globalInjectionContext, ResolvingContext resolvingContext,
 			MappingContext mappingContext) {
 		this.globalInjectionContext = globalInjectionContext;
-		this.baseInjectionContext = new InjectionContext(resolvingContext, mappingContext);
+		this.baseInjectionContext = new InjectionContext(globalInjectionContext.getInjectionTreeLock(),
+				resolvingContext, mappingContext);
 		this.resolvingContext = resolvingContext;
 		this.mappingContext = mappingContext;
 	}
@@ -283,8 +284,8 @@ public class Injector extends InjectionProvider {
 				.merge(blueprint.getPropertyAllocations());
 		MappingContext mappingContext = new MappingContext(this.mappingContext)
 				.merge(blueprint.getMappingAllocations());
-		InjectionContext injectionContext = new InjectionContext(this.baseInjectionContext, resolvingContext,
-				mappingContext);
+		InjectionContext injectionContext = new InjectionContext(this.globalInjectionContext.getInjectionTreeLock(),
+				this.baseInjectionContext, resolvingContext, mappingContext);
 
 		InjectionChain chain = InjectionChain.forInjection(injectionContext, resolvingContext, mappingContext,
 				blueprint.getTypeAllocations(), blueprint.getSingletonAllocations());

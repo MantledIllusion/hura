@@ -1,17 +1,16 @@
-package com.mantledillusion.injection.hura.uninjectables;
+package com.mantledillusion.injection.hura.injectables;
 
 import com.mantledillusion.injection.hura.Injector;
 import com.mantledillusion.injection.hura.Processor.Phase;
 import com.mantledillusion.injection.hura.annotation.Inject;
 import com.mantledillusion.injection.hura.annotation.Process;
-import com.mantledillusion.injection.hura.injectables.Injectable;
 
-public class UninjectableWithManualInjectionsDuringInjectPhase {
+public class InjectableWithManualInjectionOnInjectedInjectorDuringFinalizePhase {
 	
 	@Inject
 	private Injector injector;
 	
-	@Process(Phase.INJECT)
+	@Process(Phase.FINALIZE)
 	private void init() {
 		this.injector.instantiate(Injectable.class);
 	}
