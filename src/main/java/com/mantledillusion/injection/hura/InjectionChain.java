@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -20,16 +21,48 @@ import com.mantledillusion.injection.hura.exception.InjectionException;
 
 final class InjectionChain {
 
+	private static final class InjectionLock {
+
+		private final IdentityHashMap<Object, ChainLock> locks;
+
+		private InjectionLock() {
+			this.locks = new IdentityHashMap<Object, ChainLock>();
+		}
+
+		private void register(InjectionChain chain) {
+			if (this.locks.containsKey(chain.context.getInjectionTreeLock())) {
+				ChainLock lock = this.locks.get(chain.context.getInjectionTreeLock());
+				if (lock.injectionSequenceLock != chain.chainLock.injectionSequenceLock) {
+					throw new InjectionException(
+							"Cannot begin a new injection sequence during another sequence already running. Use "
+									+ TemporalInjectorCallback.class.getSimpleName()
+									+ " for manually triggered in-sequence injection.");
+				}
+			} else {
+				this.locks.put(chain.context.getInjectionTreeLock(), chain.chainLock);
+			}
+		}
+
+		private boolean isFromChain(InjectionChain chain) {
+			return this.locks.containsKey(chain.context.getInjectionTreeLock())
+					&& this.locks.get(chain.context.getInjectionTreeLock()).isFromChain(chain);
+		}
+
+		private void unregister(InjectionChain chain) {
+			this.locks.remove(chain.context.getInjectionTreeLock());
+		}
+	}
+
 	private final class ChainLock {
 
-		private final Object lock;
+		private final Object injectionSequenceLock;
 
 		private ChainLock() {
-			this.lock = new Object();
+			this.injectionSequenceLock = new Object();
 		}
 
 		private ChainLock(ChainLock parentLock) {
-			this.lock = parentLock.lock;
+			this.injectionSequenceLock = parentLock.injectionSequenceLock;
 		}
 
 		private boolean isFromChain(InjectionChain other) {
@@ -37,7 +70,7 @@ final class InjectionChain {
 		}
 	}
 
-	private static final ThreadLocal<ChainLock> THREAD_CHAIN = new ThreadLocal<>();
+	private static final ThreadLocal<InjectionLock> THREAD_INJECTION_LOCK = new ThreadLocal<>();
 
 	private static enum DependencyContext {
 		INDEPENDENT, SEQUENCE, GLOBAL;
@@ -102,24 +135,20 @@ final class InjectionChain {
 	}
 
 	void hookOnThread() {
-		if (THREAD_CHAIN.get() == null) {
-			THREAD_CHAIN.set(this.chainLock);
-		} else if (THREAD_CHAIN.get().lock != this.chainLock.lock) {
-			throw new InjectionException(
-					"Cannot begin a new injection sequence during another sequence already running. Use "
-							+ TemporalInjectorCallback.class.getSimpleName()
-							+ " for manually triggered in-sequence injection.");
+		if (THREAD_INJECTION_LOCK.get() == null) {
+			THREAD_INJECTION_LOCK.set(new InjectionLock());
 		}
+		THREAD_INJECTION_LOCK.get().register(this);
 	}
 
 	void unhookFromThread() {
-		if (THREAD_CHAIN.get().isFromChain(this)) {
+		if (THREAD_INJECTION_LOCK.get().isFromChain(this)) {
 			clearHook();
 		}
 	}
-	
+
 	void clearHook() {
-		THREAD_CHAIN.remove();
+		THREAD_INJECTION_LOCK.get().unregister(this);
 	}
 
 	InjectionChain extendBy(Blueprint blueprint) {
@@ -186,7 +215,8 @@ final class InjectionChain {
 				DependencyContext.INDEPENDENT, null, new ArrayList<>(), new ArrayList<>());
 	}
 
-	static InjectionChain forGlobalSingletonResolving(GlobalInjectionContext globalInjectionContext, InjectionChain parent) {
+	static InjectionChain forGlobalSingletonResolving(GlobalInjectionContext globalInjectionContext,
+			InjectionChain parent) {
 		return forGlobalSingletonResolving(globalInjectionContext, new HashMap<>(), parent.chainLock);
 	}
 
@@ -196,15 +226,17 @@ final class InjectionChain {
 	}
 
 	private static InjectionChain forGlobalSingletonResolving(GlobalInjectionContext globalInjectionContext,
-			Map<String, AbstractAllocator<?>> globalSingletonAllocations, ChainLock lock) {
+			Map<String, AbstractAllocator<?>> globalSingletonAllocations, ChainLock chainLock) {
 		ResolvingContext resolvingContext = globalInjectionContext
 				.retrieveSingleton(ResolvingContext.RESOLVING_CONTEXT_SINGLETON_ID);
 		MappingContext mappingContext = globalInjectionContext
 				.retrieveSingleton(MappingContext.MAPPING_CONTEXT_SINGLETON_ID);
 
-		return new InjectionChain(new InjectionContext(resolvingContext, mappingContext), resolvingContext,
-				mappingContext, new HashMap<>(), new HashMap<>(), globalSingletonAllocations, lock,
-				new LinkedHashSet<>(), DependencyContext.INDEPENDENT, null, new ArrayList<>(), new ArrayList<>());
+		return new InjectionChain(
+				new InjectionContext(globalInjectionContext.getInjectionTreeLock(), resolvingContext, mappingContext),
+				resolvingContext, mappingContext, new HashMap<>(), new HashMap<>(), globalSingletonAllocations,
+				chainLock, new LinkedHashSet<>(), DependencyContext.INDEPENDENT, null, new ArrayList<>(),
+				new ArrayList<>());
 	}
 
 	// Blueprint

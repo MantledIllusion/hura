@@ -22,7 +22,7 @@ class InjectionContext {
 		private final Map<String, List<SelfSustaningProcessor>> destroyables = new HashMap<>();
 
 		GlobalInjectionContext(ResolvingContext resolvingContext, MappingContext mappingContext) {
-			super(resolvingContext, mappingContext);
+			super(new Object(), resolvingContext, mappingContext);
 		}
 
 		<T> void addGlobalSingleton(String qualifier, T instance, List<Processor<? super T>> destroyers) {
@@ -50,13 +50,15 @@ class InjectionContext {
 		}
 	}
 
+	private final Object injectionTreeLock;
 	private final Map<String, Pair<Object, Boolean>> singletonBeans;
 
-	InjectionContext(ResolvingContext resolvingContext, MappingContext mappingContext) {
-		this(null, resolvingContext, mappingContext);
+	InjectionContext(Object injectionTreeLock, ResolvingContext resolvingContext, MappingContext mappingContext) {
+		this(injectionTreeLock, null, resolvingContext, mappingContext);
 	}
 
-	InjectionContext(InjectionContext baseContext, ResolvingContext resolvingContext, MappingContext mappingContext) {
+	InjectionContext(Object injectionTreeLock, InjectionContext baseContext, ResolvingContext resolvingContext, MappingContext mappingContext) {
+		this.injectionTreeLock = injectionTreeLock;
 		this.singletonBeans = new HashMap<>();
 		if (baseContext != null) {
 			/*
@@ -76,6 +78,10 @@ class InjectionContext {
 		if (mappingContext != null) {
 			addSingleton(MappingContext.MAPPING_CONTEXT_SINGLETON_ID, mappingContext, false);
 		}
+	}
+
+	Object getInjectionTreeLock() {
+		return injectionTreeLock;
 	}
 
 	boolean hasSingleton(String qualifier, Class<?> type, boolean allocatedOnly) {
