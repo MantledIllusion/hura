@@ -4,6 +4,6 @@ import com.mantledillusion.injection.hura.annotation.Property;
 
 public class InjectableWithForcedProperty {
 
-	@Property(value="property.key", forced=true)
+	@Property("property.key")
 	public String forcedPropertyValue;
 }

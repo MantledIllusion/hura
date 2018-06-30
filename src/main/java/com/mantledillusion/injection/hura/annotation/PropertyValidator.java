@@ -5,8 +5,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
@@ -48,23 +46,6 @@ class PropertyValidator implements AnnotationValidator<Property, AnnotatedElemen
 			throw new ValidatorException("The " + annotatedElementName + " is annotated with @"
 					+ Property.class.getSimpleName() + ", but the property key '" + annotationInstance.value()
 					+ "' is empty, which is not allowed.");
-		}
-
-		Pattern pattern;
-		try {
-			pattern = Pattern.compile(annotationInstance.matcher());
-		} catch (PatternSyntaxException | NullPointerException e) {
-			throw new ValidatorException(
-					"The " + annotatedElementName + " is annotated with @" + Property.class.getSimpleName()
-							+ ", but the matcher  '" + annotationInstance.matcher() + "' is no valid pattern.",
-					e);
-		}
-
-		if (!annotationInstance.forced() && annotationInstance.useDefault()
-				&& !pattern.matcher(annotationInstance.defaultValue()).matches()) {
-			throw new ValidatorException("The " + annotatedElementName + " is annotated with @"
-					+ Property.class.getSimpleName() + ", but the default value '" + annotationInstance.defaultValue()
-					+ "' does not match the specified matcher pattern '" + annotationInstance.matcher() + "'.");
 		}
 	}
 }

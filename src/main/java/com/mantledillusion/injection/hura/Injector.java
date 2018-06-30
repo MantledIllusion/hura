@@ -32,9 +32,10 @@ import com.mantledillusion.injection.hura.ReflectionCache.InjectableField;
 import com.mantledillusion.injection.hura.ReflectionCache.ResolvableField;
 import com.mantledillusion.injection.hura.annotation.Construct;
 import com.mantledillusion.injection.hura.annotation.Context;
+import com.mantledillusion.injection.hura.annotation.Global;
+import com.mantledillusion.injection.hura.annotation.Global.SingletonMode;
 import com.mantledillusion.injection.hura.annotation.Inject;
-import com.mantledillusion.injection.hura.annotation.Inject.InjectionMode;
-import com.mantledillusion.injection.hura.annotation.Inject.SingletonMode;
+import com.mantledillusion.injection.hura.annotation.Optional.InjectionMode;
 import com.mantledillusion.injection.hura.annotation.Process;
 import com.mantledillusion.injection.hura.exception.ProcessorException;
 import com.mantledillusion.injection.hura.exception.InjectionException;
@@ -250,10 +251,10 @@ public class Injector extends InjectionProvider {
 
 	@Construct
 	private Injector(
-			@Inject(value = InjectionContext.INJECTION_CONTEXT_SINGLETON_ID, singletonMode = SingletonMode.GLOBAL) GlobalInjectionContext globalInjectionContext,
-			@Inject(value = InjectionContext.INJECTION_CONTEXT_SINGLETON_ID, singletonMode = SingletonMode.SEQUENCE) InjectionContext baseInjectionContext,
-			@Inject(value = ResolvingContext.RESOLVING_CONTEXT_SINGLETON_ID, singletonMode = SingletonMode.SEQUENCE) ResolvingContext resolvingContext,
-			@Inject(value = MappingContext.MAPPING_CONTEXT_SINGLETON_ID, singletonMode = SingletonMode.SEQUENCE) MappingContext mappingContext) {
+			@Inject(InjectionContext.INJECTION_CONTEXT_SINGLETON_ID) @Global GlobalInjectionContext globalInjectionContext,
+			@Inject(InjectionContext.INJECTION_CONTEXT_SINGLETON_ID) InjectionContext baseInjectionContext,
+			@Inject(ResolvingContext.RESOLVING_CONTEXT_SINGLETON_ID) ResolvingContext resolvingContext,
+			@Inject(MappingContext.MAPPING_CONTEXT_SINGLETON_ID) MappingContext mappingContext) {
 		this.globalInjectionContext = globalInjectionContext;
 		this.baseInjectionContext = baseInjectionContext;
 		this.resolvingContext = resolvingContext;
