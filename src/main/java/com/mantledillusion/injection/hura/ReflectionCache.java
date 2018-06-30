@@ -23,9 +23,13 @@ import com.mantledillusion.essentials.reflection.AnnotationEssentials.Annotation
 import com.mantledillusion.injection.hura.annotation.Adjust;
 import com.mantledillusion.injection.hura.annotation.Construct;
 import com.mantledillusion.injection.hura.annotation.Context;
+import com.mantledillusion.injection.hura.annotation.DefaultValue;
+import com.mantledillusion.injection.hura.annotation.Global;
+import com.mantledillusion.injection.hura.annotation.Global.SingletonMode;
 import com.mantledillusion.injection.hura.annotation.Inject;
+import com.mantledillusion.injection.hura.annotation.Matches;
+import com.mantledillusion.injection.hura.annotation.Optional;
 import com.mantledillusion.injection.hura.annotation.Property;
-import com.mantledillusion.injection.hura.annotation.Inject.SingletonMode;
 import com.mantledillusion.injection.hura.annotation.Validated;
 import com.mantledillusion.injection.hura.exception.InjectionException;
 import com.mantledillusion.injection.hura.exception.ValidatorException;
@@ -503,10 +507,12 @@ final class ReflectionCache {
 	// ###############################################################################################################
 
 	private static ResolvingSettings retrieveResolvingSettings(AnnotatedElement e) {
-		return ResolvingSettings.of(e.getAnnotation(Property.class));
+		return ResolvingSettings.of(e.getAnnotation(Property.class), e.getAnnotation(Matches.class), 
+				e.getAnnotation(DefaultValue.class), e.getAnnotation(Optional.class));
 	}
 
 	private static <T> InjectionSettings<T> retrieveInjectionSettings(Class<T> type, AnnotatedElement e) {
-		return InjectionSettings.of(type, e.getAnnotation(Inject.class), e.getAnnotation(Adjust.class));
+		return InjectionSettings.of(type, e.getAnnotation(Inject.class), e.getAnnotation(Global.class), 
+				e.getAnnotation(Optional.class), e.getAnnotation(Adjust.class));
 	}
 }

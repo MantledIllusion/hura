@@ -15,9 +15,11 @@ import com.mantledillusion.injection.hura.annotation.Adjust;
 import com.mantledillusion.injection.hura.annotation.Adjust.MappingDef;
 import com.mantledillusion.injection.hura.annotation.Adjust.PropertyDef;
 import com.mantledillusion.injection.hura.annotation.Context;
+import com.mantledillusion.injection.hura.annotation.Global;
+import com.mantledillusion.injection.hura.annotation.Global.SingletonMode;
 import com.mantledillusion.injection.hura.annotation.Inject;
-import com.mantledillusion.injection.hura.annotation.Inject.InjectionMode;
-import com.mantledillusion.injection.hura.annotation.Inject.SingletonMode;
+import com.mantledillusion.injection.hura.annotation.Optional;
+import com.mantledillusion.injection.hura.annotation.Optional.InjectionMode;
 
 final class InjectionSettings<T> {
 
@@ -68,8 +70,16 @@ final class InjectionSettings<T> {
 				Collections.emptyList());
 	}
 
-	static <T> InjectionSettings<T> of(Class<T> type, Inject inject, Adjust adjust) {
+	static <T> InjectionSettings<T> of(Class<T> type, Inject inject, Global global, Optional optional, Adjust adjust) {
 		List<Predefinable> predefinables = new ArrayList<>();
+		SingletonMode singletonMode = SingletonMode.SEQUENCE;
+		if (global != null) {
+			singletonMode = SingletonMode.GLOBAL;
+		}
+		InjectionMode injectionMode = InjectionMode.EAGER;
+		if (optional != null) {
+			injectionMode = InjectionMode.EXPLICIT;
+		}
 		List<Class<? extends BlueprintTemplate>> extensions = Collections.emptyList();
 		if (adjust != null) {
 			for (PropertyDef property : adjust.properties()) {
@@ -81,7 +91,7 @@ final class InjectionSettings<T> {
 			extensions = Arrays.asList(adjust.extensions());
 		}
 		return new InjectionSettings<>(type, StringUtils.isBlank(inject.value()), inject.value(), isContext(type),
-				inject.singletonMode(), inject.injectionMode(), inject.overwriteWithNull(), Blueprint.of(predefinables),
+				singletonMode, injectionMode, inject.overwriteWithNull(), Blueprint.of(predefinables),
 				extensions);
 	}
 

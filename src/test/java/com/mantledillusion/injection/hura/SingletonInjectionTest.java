@@ -8,8 +8,8 @@ import org.junit.Test;
 
 import com.mantledillusion.injection.hura.Injector.RootInjector;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
+import com.mantledillusion.injection.hura.annotation.Global.SingletonMode;
 import com.mantledillusion.injection.hura.Predefinable.Mapping;
-import com.mantledillusion.injection.hura.annotation.Inject.SingletonMode;
 import com.mantledillusion.injection.hura.exception.InjectionException;
 import com.mantledillusion.injection.hura.exception.MappingException;
 import com.mantledillusion.injection.hura.injectables.Injectable;

@@ -48,7 +48,7 @@ final class ResolvingContext {
 		if (hasProperty(set.propertyKey)) {
 			String property = getProperty(set.propertyKey);
 			if (!property.matches(set.matcher)) {
-				if (!set.forced && set.useDefault) {
+				if (!set.forced && set.defaultValue != null) {
 					return set.defaultValue;
 				} else {
 					throw new ResolvingException("The defined property '" + set.propertyKey + "' is set to the value '"
@@ -58,7 +58,7 @@ final class ResolvingContext {
 			return property;
 		} else if (set.forced) {
 			throw new ResolvingException("The property '" + set.propertyKey + "' is not set, but is required to be.");
-		} else if (set.useDefault) {
+		} else if (set.defaultValue != null) {
 			return set.defaultValue;
 		} else {
 			return set.propertyKey;

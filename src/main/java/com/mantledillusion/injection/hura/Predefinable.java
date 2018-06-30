@@ -8,7 +8,7 @@ import com.mantledillusion.injection.hura.BeanAllocation.BeanProvider;
 import com.mantledillusion.injection.hura.Injector.AbstractAllocator;
 import com.mantledillusion.injection.hura.Injector.InstanceAllocator;
 import com.mantledillusion.injection.hura.Injector.ProviderAllocator;
-import com.mantledillusion.injection.hura.annotation.Inject.SingletonMode;
+import com.mantledillusion.injection.hura.annotation.Global.SingletonMode;
 import com.mantledillusion.injection.hura.Injector.ClassAllocator;
 
 /**

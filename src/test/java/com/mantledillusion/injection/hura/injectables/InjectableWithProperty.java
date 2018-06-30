@@ -1,5 +1,6 @@
 package com.mantledillusion.injection.hura.injectables;
 
+import com.mantledillusion.injection.hura.annotation.Optional;
 import com.mantledillusion.injection.hura.annotation.Property;
 
 public class InjectableWithProperty {
@@ -7,5 +8,6 @@ public class InjectableWithProperty {
 	public static final String PROPERTY_KEY = "property.key";
 	
 	@Property(PROPERTY_KEY)
+	@Optional
 	public String propertyValue;
 }
