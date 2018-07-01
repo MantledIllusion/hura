@@ -12,8 +12,4 @@ public class ResolvingException extends RuntimeException {
 	public ResolvingException(String message) {
 		super(message);
 	}
-
-	public ResolvingException(String message, Throwable cause) {
-		super(message, cause);
-	}
 }

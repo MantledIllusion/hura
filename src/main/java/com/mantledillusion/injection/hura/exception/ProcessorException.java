@@ -10,10 +10,6 @@ public class ProcessorException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 
-	public ProcessorException(String message) {
-		super(message);
-	}
-
 	public ProcessorException(String message, Throwable t) {
 		super(message, t);
 	}
