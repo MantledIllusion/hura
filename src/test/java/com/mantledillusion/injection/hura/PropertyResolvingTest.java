@@ -12,8 +12,11 @@ import com.mantledillusion.injection.hura.exception.ValidatorException;
 import com.mantledillusion.injection.hura.injectables.InjectableWithProperty;
 import com.mantledillusion.injection.hura.injectables.InjectableWithResolvableConstructor;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithUnparsableMatcherProperty;
+import com.mantledillusion.injection.hura.uninjectables.UninjectableWithDefaultValueMissingProperty;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithFinalProperty;
+import com.mantledillusion.injection.hura.uninjectables.UninjectableWithMatcherAndMissingProperty;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithNonStringPropertyField;
+import com.mantledillusion.injection.hura.uninjectables.UninjectableWithOptionalPropertyAndDefaultValue;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithStaticProperty;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithUnmatchingDefaultValueProperty;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithoutPropertyKey;
@@ -72,6 +75,11 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 
 		assertEquals(propertyValue, injectable.propertyValue);
 	}
+	
+	@Test(expected = ValidatorException.class)
+	public void testMatchingWithoutProperty() {
+		this.suite.injectInSuiteContext(UninjectableWithMatcherAndMissingProperty.class);
+	}
 
 	@Test(expected = ResolvingException.class)
 	public void testPropertyMatching() {
@@ -84,6 +92,16 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 		propertyValue = "non2DigitPropertyValue";
 		this.suite.injectInSuiteContext(InjectableWithMatchedProperty.class,
 				Property.of("property.key", propertyValue));
+	}
+	
+	@Test(expected = ValidatorException.class)
+	public void testPropertyAnnotationMissingForDefaultValue() {
+		this.suite.injectInSuiteContext(UninjectableWithDefaultValueMissingProperty.class);
+	}
+	
+	@Test(expected = ValidatorException.class)
+	public void testOptionalPropertyWithDefaultValue() {
+		this.suite.injectInSuiteContext(UninjectableWithOptionalPropertyAndDefaultValue.class);
 	}
 
 	@Test

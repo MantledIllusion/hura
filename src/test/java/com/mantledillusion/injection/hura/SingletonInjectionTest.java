@@ -12,6 +12,7 @@ import com.mantledillusion.injection.hura.annotation.Global.SingletonMode;
 import com.mantledillusion.injection.hura.Predefinable.Mapping;
 import com.mantledillusion.injection.hura.exception.InjectionException;
 import com.mantledillusion.injection.hura.exception.MappingException;
+import com.mantledillusion.injection.hura.exception.ValidatorException;
 import com.mantledillusion.injection.hura.injectables.Injectable;
 import com.mantledillusion.injection.hura.injectables.InjectableWithExplicitAndEagerSingleton;
 import com.mantledillusion.injection.hura.injectables.InjectableWithExplicitSingleton;
@@ -21,6 +22,8 @@ import com.mantledillusion.injection.hura.injectables.InjectableWithInjector;
 import com.mantledillusion.injection.hura.injectables.InjectableWithSequenceSingleton;
 import com.mantledillusion.injection.hura.injectables.InjectableWithSequenceSingletonInjectables;
 import com.mantledillusion.injection.hura.injectables.InjectableWithSingletonAllocationRequired;
+import com.mantledillusion.injection.hura.uninjectables.UninjectableWithGlobalSingletonWithoutInject;
+import com.mantledillusion.injection.hura.uninjectables.UninjectableWithIndependentGlobalAnnotatedInjectable;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithWrongTypeSingleton;
 
 public class SingletonInjectionTest extends AbstractInjectionTest {
@@ -40,6 +43,16 @@ public class SingletonInjectionTest extends AbstractInjectionTest {
 
 		assertSame(singleton, childA.sequenceSingleton);
 		assertSame(singleton, childB.sequenceSingleton);
+	}
+	
+	@Test(expected = ValidatorException.class)
+	public void testGlobalSingletonInjectionWithoutInject() {
+		this.suite.injectInSuiteContext(UninjectableWithGlobalSingletonWithoutInject.class);
+	}
+
+	@Test(expected = ValidatorException.class)
+	public void testGlobalSingletonInjectionWithoutQualifier() {
+		this.suite.injectInSuiteContext(UninjectableWithIndependentGlobalAnnotatedInjectable.class);
 	}
 
 	@Test

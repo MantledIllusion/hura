@@ -29,6 +29,7 @@ import com.mantledillusion.injection.hura.injectables.InjectableWithProcessor;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithFailingProcessor;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithManualInjectionOnInjectedInjectorDuringInjectPhase;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithMultiParameterProcessMethod;
+import com.mantledillusion.injection.hura.uninjectables.UninjectableWithParameteredFinalizeProcessMethod;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithStaticProcessMethod;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithWrongTypeParameterProcessMethod;
 
@@ -150,6 +151,11 @@ public class ProcessingTest extends AbstractInjectionTest {
 		this.suite.injectInSuiteContext(UninjectableWithWrongTypeParameterProcessMethod.class);
 	}
 
+	@Test(expected=ValidatorException.class)
+	public void testParameteredFinalizeProcessMethodInjection() {
+		this.suite.injectInSuiteContext(UninjectableWithParameteredFinalizeProcessMethod.class);
+	}
+	
 	@Test(expected=BlueprintException.class)
 	public void testBlueprintPostProcessingWithoutPostProcessor() {
 		this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<InjectableWithProcessableFields>() {

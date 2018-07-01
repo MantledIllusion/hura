@@ -5,7 +5,6 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import com.mantledillusion.injection.hura.AnnotationValidator;
-import com.mantledillusion.injection.hura.exception.InjectionException;
 import com.mantledillusion.injection.hura.exception.ValidatorException;
 
 class MatchesValidator implements AnnotationValidator<Matches, AnnotatedElement> {
@@ -13,7 +12,7 @@ class MatchesValidator implements AnnotationValidator<Matches, AnnotatedElement>
 	@Override
 	public void validate(Matches annotationInstance, AnnotatedElement annotatedElement) throws Exception {
 		if (!annotatedElement.isAnnotationPresent(Property.class)) {
-			throw new InjectionException("The " + ValidatorUtils.getDescription(annotatedElement)
+			throw new ValidatorException("The " + ValidatorUtils.getDescription(annotatedElement)
 					+ " is not annotated with @" + Property.class.getSimpleName()
 					+ ", which it has to be to be annotated with @" + Matches.class.getSimpleName());
 		}

@@ -16,6 +16,7 @@ import com.mantledillusion.injection.hura.uninjectables.UninjectableWithExceptio
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithFinalWiredField;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithIncompleteUseAnnotatedConstructor;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithMissingUseAnnotationOnNonPublicNoArgsConstructor;
+import com.mantledillusion.injection.hura.uninjectables.UninjectableWithOptionalInjectableAndMissingInjectAnnotation;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithStaticWiredField;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithUninjectableConstructor;
 import com.mantledillusion.injection.hura.uninjectables.UninjectableWithWiredInterfaceField;
@@ -102,10 +103,15 @@ public class BasicInjectionTest extends AbstractInjectionTest {
 	}
 
 	@Test
-	public void testExplicitIndependentInjection() {
+	public void testOptionalIndependentInjection() {
 		InjectableWithExplicitIndependent injectable = this.suite
 				.injectInSuiteContext(InjectableWithExplicitIndependent.class);
 
 		assertTrue(injectable.explicitInjectable == null);
+	}
+	
+	@Test(expected = ValidatorException.class)
+	public void testOptionalIndependentInjectionWithMissingInjectAnnotation() {
+		this.suite.injectInSuiteContext(UninjectableWithOptionalInjectableAndMissingInjectAnnotation.class);
 	}
 }
