@@ -291,12 +291,12 @@ public class Injector extends InjectionProvider {
 		InjectionChain chain = InjectionChain.forInjection(injectionContext, resolvingContext, mappingContext,
 				blueprint.getTypeAllocations(), blueprint.getSingletonAllocations());
 
-		resolveSingletonsIntoChain(chain, blueprint.getSingletonAllocations().keySet(), SingletonMode.SEQUENCE);
-
-		InjectionSettings<T> settings = InjectionSettings.of(blueprint);
-
 		T instance;
 		try {
+			resolveSingletonsIntoChain(chain, blueprint.getSingletonAllocations().keySet(), SingletonMode.SEQUENCE);
+
+			InjectionSettings<T> settings = InjectionSettings.of(blueprint);
+			
 			instance = instantiate(chain, settings);
 			this.beans.put(instance, chain.getDestroyables());
 			finalize(chain.getFinalizables());

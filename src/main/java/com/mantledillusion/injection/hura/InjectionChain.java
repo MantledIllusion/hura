@@ -148,7 +148,9 @@ final class InjectionChain {
 	}
 
 	void clearHook() {
-		THREAD_INJECTION_LOCK.get().unregister(this);
+		if (THREAD_INJECTION_LOCK.get() != null) {
+			THREAD_INJECTION_LOCK.get().unregister(this);
+		}
 	}
 
 	InjectionChain extendBy(Blueprint blueprint) {
