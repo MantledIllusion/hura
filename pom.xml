@@ -36,7 +36,6 @@
 
 		<!-- maven dependency versions -->
 		<hydnora.version>1.0.0</hydnora.version>
-		<essentials.concurrency.version>1.1.0-SNAPSHOT</essentials.concurrency.version>
 		<essentials.reflection.version>1.1.0</essentials.reflection.version>
 		<org.apache.commons.lang.version>3.7</org.apache.commons.lang.version>
 		<org.apache.commons.collections.version>4.1</org.apache.commons.collections.version>
@@ -67,11 +66,6 @@
 			<groupId>com.mantledillusion.cache</groupId>
 			<artifactId>hydnora</artifactId>
 			<version>${hydnora.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.mantledillusion.essentials</groupId>
-			<artifactId>concurrency-essentials</artifactId>
-			<version>${essentials.concurrency.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.mantledillusion.essentials</groupId>
