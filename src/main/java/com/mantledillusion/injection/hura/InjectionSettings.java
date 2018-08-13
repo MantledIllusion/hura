@@ -23,10 +23,6 @@ import com.mantledillusion.injection.hura.annotation.Optional.InjectionMode;
 
 final class InjectionSettings<T> {
 
-	@SuppressWarnings("rawtypes")
-	static final InjectionSettings DEFAULTS = new InjectionSettings<>(null, true, StringUtils.EMPTY, false,
-			SingletonMode.SEQUENCE, InjectionMode.EAGER, false, Blueprint.EMPTY, Collections.emptyList());
-
 	final Class<T> type;
 	final boolean isIndependent;
 	final String qualifier;
@@ -52,13 +48,13 @@ final class InjectionSettings<T> {
 	}
 
 	<T2 extends T> InjectionSettings<T2> refine(Class<T2> type) {
-		return new InjectionSettings<>(type, this.isIndependent, this.qualifier, this.isContext, this.singletonMode,
-				this.injectionMode, this.overwriteWithNull, this.predefinitions, this.extensions);
+		return new InjectionSettings<>(type, this.isIndependent, this.qualifier, this.isContext,
+				this.singletonMode, this.injectionMode, this.overwriteWithNull, this.predefinitions, this.extensions);
 	}
 
 	InjectionSettings<T> refine(String qualifier) {
-		return new InjectionSettings<>(this.type, this.isIndependent, qualifier, this.isContext, this.singletonMode,
-				this.injectionMode, this.overwriteWithNull, this.predefinitions, this.extensions);
+		return new InjectionSettings<>(this.type, this.isIndependent, qualifier, this.isContext,
+				this.singletonMode, this.injectionMode, this.overwriteWithNull, this.predefinitions, this.extensions);
 	}
 
 	static <T> InjectionSettings<T> of(TypedBlueprint<T> blueprint) {
@@ -66,8 +62,8 @@ final class InjectionSettings<T> {
 			throw new IllegalArgumentException("Unable to inject using a null blueprint.");
 		}
 		return new InjectionSettings<>(blueprint.getRootType(), true, StringUtils.EMPTY,
-				isContext(blueprint.getRootType()), SingletonMode.SEQUENCE, InjectionMode.EAGER, false, Blueprint.EMPTY,
-				Collections.emptyList());
+				isContext(blueprint.getRootType()), SingletonMode.SEQUENCE, InjectionMode.EAGER, false,
+				Blueprint.EMPTY, Collections.emptyList());
 	}
 
 	static <T> InjectionSettings<T> of(Class<T> type, Inject inject, Global global, Optional optional, Adjust adjust) {
