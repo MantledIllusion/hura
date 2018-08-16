@@ -182,9 +182,9 @@ final class InjectionChain {
 			typeContext = typeContext.merge(extension.getTypeAllocations());
 		}
 		
-		resolvingContext = resolvingContext.merge(this.resolvingContext);
-		mappingContext = mappingContext.merge(this.mappingContext);
-		typeContext = typeContext.merge(this.typeContext);
+		resolvingContext = this.resolvingContext.merge(resolvingContext);
+		mappingContext = this.mappingContext.merge(mappingContext);
+		typeContext = this.typeContext.merge(typeContext);
 
 		return new InjectionChain(this.context, resolvingContext, mappingContext, typeContext,
 				this.sequenceSingletonAllocations, this.globalSingletonAllocations, this.chainLock,
