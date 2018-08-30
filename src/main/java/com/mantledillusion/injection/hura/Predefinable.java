@@ -20,6 +20,7 @@ import com.mantledillusion.injection.hura.Injector.ClassAllocator;
  * <li>{@link Singleton}</li>
  * <li>{@link Mapping}</li>
  * </ul>
+ * - {@link Mapping}<br>
  */
 public abstract class Predefinable {
 

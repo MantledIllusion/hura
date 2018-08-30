@@ -14,15 +14,15 @@ import com.mantledillusion.injection.hura.exception.InjectionException;
 import com.mantledillusion.injection.hura.exception.ProcessorException;
 
 class InjectionContext {
-
+	
 	static final String INJECTION_CONTEXT_SINGLETON_ID = "_injectionContext";
-
+	
 	static class GlobalInjectionContext extends InjectionContext {
 
 		private final Map<String, List<SelfSustaningProcessor>> destroyables = new HashMap<>();
 
-		GlobalInjectionContext(ResolvingContext resolvingContext, MappingContext mappingContext) {
-			super(new Object(), resolvingContext, mappingContext);
+		GlobalInjectionContext(ResolvingContext resolvingContext, MappingContext mappingContext, TypeContext typeContext) {
+			super(new Object(), resolvingContext, mappingContext, typeContext);
 		}
 
 		<T> void addGlobalSingleton(String qualifier, T instance, List<Processor<? super T>> destroyers) {
@@ -53,11 +53,11 @@ class InjectionContext {
 	private final Object injectionTreeLock;
 	private final Map<String, Pair<Object, Boolean>> singletonBeans;
 
-	InjectionContext(Object injectionTreeLock, ResolvingContext resolvingContext, MappingContext mappingContext) {
-		this(injectionTreeLock, null, resolvingContext, mappingContext);
+	InjectionContext(Object injectionTreeLock, ResolvingContext resolvingContext, MappingContext mappingContext, TypeContext typeContext) {
+		this(injectionTreeLock, null, resolvingContext, mappingContext, typeContext);
 	}
 
-	InjectionContext(Object injectionTreeLock, InjectionContext baseContext, ResolvingContext resolvingContext, MappingContext mappingContext) {
+	InjectionContext(Object injectionTreeLock, InjectionContext baseContext, ResolvingContext resolvingContext, MappingContext mappingContext, TypeContext typeContext) {
 		this.injectionTreeLock = injectionTreeLock;
 		this.singletonBeans = new HashMap<>();
 		if (baseContext != null) {
@@ -77,6 +77,9 @@ class InjectionContext {
 		}
 		if (mappingContext != null) {
 			addSingleton(MappingContext.MAPPING_CONTEXT_SINGLETON_ID, mappingContext, false);
+		}
+		if (typeContext != null) {
+			addSingleton(TypeContext.TYPE_CONTEXT_SINGLETON_ID, typeContext, false);
 		}
 	}
 
@@ -112,7 +115,7 @@ class InjectionContext {
 						+ "' instead of being allocated. As a result, it can be only injected into "
 						+ "targets of the same type in its injection sequence, but the same qualifier "
 						+ "is also required for a target of the type '" + type.getSimpleName() + "'.");
-			}
+	}
 		} else {
 			return false;
 		}

@@ -79,8 +79,8 @@ public class Injector extends InjectionProvider {
 	public static final class RootInjector extends Injector {
 
 		private RootInjector(GlobalInjectionContext globalInjectionContext, ResolvingContext resolvingContext,
-				MappingContext mappingContext) {
-			super(globalInjectionContext, resolvingContext, mappingContext);
+				MappingContext mappingContext, TypeContext typeContext) {
+			super(globalInjectionContext, resolvingContext, mappingContext, typeContext);
 		}
 
 		/**
@@ -246,6 +246,7 @@ public class Injector extends InjectionProvider {
 	private final InjectionContext baseInjectionContext;
 	private final ResolvingContext resolvingContext;
 	private final MappingContext mappingContext;
+	private final TypeContext typeContext;
 
 	private final IdentityHashMap<Object, List<SelfSustaningProcessor>> beans = new IdentityHashMap<>();
 
@@ -254,20 +255,23 @@ public class Injector extends InjectionProvider {
 			@Inject(InjectionContext.INJECTION_CONTEXT_SINGLETON_ID) @Global GlobalInjectionContext globalInjectionContext,
 			@Inject(InjectionContext.INJECTION_CONTEXT_SINGLETON_ID) InjectionContext baseInjectionContext,
 			@Inject(ResolvingContext.RESOLVING_CONTEXT_SINGLETON_ID) ResolvingContext resolvingContext,
-			@Inject(MappingContext.MAPPING_CONTEXT_SINGLETON_ID) MappingContext mappingContext) {
+			@Inject(MappingContext.MAPPING_CONTEXT_SINGLETON_ID) MappingContext mappingContext,
+			@Inject(TypeContext.TYPE_CONTEXT_SINGLETON_ID) TypeContext typeContext) {
 		this.globalInjectionContext = globalInjectionContext;
 		this.baseInjectionContext = baseInjectionContext;
 		this.resolvingContext = resolvingContext;
 		this.mappingContext = mappingContext;
+		this.typeContext = typeContext;
 	}
 
 	private Injector(GlobalInjectionContext globalInjectionContext, ResolvingContext resolvingContext,
-			MappingContext mappingContext) {
+			MappingContext mappingContext, TypeContext typeContext) {
 		this.globalInjectionContext = globalInjectionContext;
 		this.baseInjectionContext = new InjectionContext(globalInjectionContext.getInjectionTreeLock(),
-				resolvingContext, mappingContext);
+				resolvingContext, mappingContext, typeContext);
 		this.resolvingContext = resolvingContext;
 		this.mappingContext = mappingContext;
+		this.typeContext = typeContext;
 	}
 
 	@Override
@@ -281,22 +285,25 @@ public class Injector extends InjectionProvider {
 			throw new IllegalArgumentException("Unable to inject using a null blueprint.");
 		}
 
+		InjectionSettings<T> settings = InjectionSettings.of(blueprint);
+
 		ResolvingContext resolvingContext = new ResolvingContext(this.resolvingContext)
 				.merge(blueprint.getPropertyAllocations());
 		MappingContext mappingContext = new MappingContext(this.mappingContext)
 				.merge(blueprint.getMappingAllocations());
+		TypeContext typeContext = new TypeContext(this.typeContext)
+				.merge(blueprint.getTypeAllocations());
+
 		InjectionContext injectionContext = new InjectionContext(this.globalInjectionContext.getInjectionTreeLock(),
-				this.baseInjectionContext, resolvingContext, mappingContext);
+				this.baseInjectionContext, resolvingContext, mappingContext, typeContext);
 
 		InjectionChain chain = InjectionChain.forInjection(injectionContext, resolvingContext, mappingContext,
-				blueprint.getTypeAllocations(), blueprint.getSingletonAllocations());
+				typeContext, blueprint.getSingletonAllocations());
 
 		T instance;
 		try {
 			resolveSingletonsIntoChain(chain, blueprint.getSingletonAllocations().keySet(), SingletonMode.SEQUENCE);
 
-			InjectionSettings<T> settings = InjectionSettings.of(blueprint);
-			
 			instance = instantiate(chain, settings);
 			this.beans.put(instance, chain.getDestroyables());
 			finalize(chain.getFinalizables());
@@ -323,6 +330,7 @@ public class Injector extends InjectionProvider {
 			}
 		}
 		return instance;
+
 	}
 
 	private void finalize(List<SelfSustaningProcessor> finalizables) {
@@ -688,10 +696,12 @@ public class Injector extends InjectionProvider {
 	public static RootInjector of(Collection<Predefinable> predefinables) {
 		ResolvingContext globalResolvingContext = new ResolvingContext();
 		MappingContext globalMappingContext = new MappingContext();
+		TypeContext globalTypeContext = new TypeContext();
 		GlobalInjectionContext globalInjectionContext = new GlobalInjectionContext(globalResolvingContext,
-				globalMappingContext);
+				globalMappingContext, globalTypeContext);
 
-		RootInjector injector = new RootInjector(globalInjectionContext, globalResolvingContext, globalMappingContext);
+		RootInjector injector = new RootInjector(globalInjectionContext, globalResolvingContext, globalMappingContext,
+				globalTypeContext);
 
 		if (predefinables != null) {
 			Map<String, AbstractAllocator<?>> globalSingletonAllocations = new HashMap<>();
