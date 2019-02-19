@@ -1,5 +1,6 @@
 package com.mantledillusion.injection.hura;
 
+import java.io.File;
 import java.lang.reflect.Method;
 
 import org.apache.commons.lang3.StringUtils;
@@ -148,7 +149,7 @@ public abstract class Predefinable {
 		 * Factory {@link Method} for {@link Singleton} instances.
 		 * <p>
 		 * Allocates the qualifier to the specified {@link Class}.
-		 * 
+		 *
 		 * @param <T>
 		 *            The type of the singleton.
 		 * @param qualifier
@@ -166,6 +167,42 @@ public abstract class Predefinable {
 				throw new IllegalArgumentException("Cannot create singleton with a null bean class");
 			}
 			return new Singleton(qualifier, new ClassAllocator<>(beanClass, InjectionProcessors.of()));
+		}
+
+		/**
+		 * Factory {@link Method} for {@link Singleton} instances.
+		 * <p>
+		 * Allocates the qualifier to the specified {@link Class}.
+		 *
+		 * @param <T>
+		 *            The type of the singleton.
+		 * @param qualifier
+		 *            The qualifier on whose injections the given instance may be
+		 *            referenced at; might <b>not</b> be null.
+		 * @param beanClass
+		 *            The {@link Class} of the {@link Singleton} to find a plugin for;
+		 *            might <b>not</b> be null.
+		 * @param directory
+		 *            The directory to find the plugin in; might <b>not</b> be null and
+		 *            {@link File#isDirectory()} has to return true.
+		 * @param pluginId
+		 *            The ID of the plugin to use, with which it can be found in the
+		 *            given directory; might <b>not</b> be null.
+		 * @return A new {@link Singleton} instance; never null
+		 */
+		public static <T> Singleton of(String qualifier, Class<T> beanClass, File directory, String pluginId) {
+			if (qualifier == null) {
+				throw new IllegalArgumentException("Cannot create singleton with a null qualifier");
+			} else if (beanClass == null) {
+				throw new IllegalArgumentException("Cannot create singleton with a null bean class");
+			} else if (directory == null) {
+				throw new IllegalArgumentException("Cannot create singleton with a plugin from a null directory.");
+			} else if (!directory.isDirectory()) {
+				throw new IllegalArgumentException("Cannot create singleton with a plugin from a non-directory.");
+			} else if (pluginId == null) {
+				throw new IllegalArgumentException("Cannot create singleton with a plugin with a null ID.");
+			}
+			return new Singleton(qualifier, new Injector.PluginAllocator<>(directory, pluginId, beanClass));
 		}
 	}
 

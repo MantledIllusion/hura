@@ -4,7 +4,7 @@
 
 	<groupId>com.mantledillusion.injection</groupId>
 	<artifactId>hura</artifactId>
-	<version>1.1.0-SNAPSHOT</version>
+	<version>2.0.0-SNAPSHOT</version>
 
 	<name>Hura</name>
 	<description>Hura is a dependency injection framework focused on sequential injection and bean lifecycle management.</description>
@@ -35,7 +35,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<!-- maven dependency versions -->
-		<hydnora.version>1.0.0</hydnora.version>
+		<hydnora.version>1.2.0</hydnora.version>
 		<essentials.reflection.version>1.1.0</essentials.reflection.version>
 		<org.apache.commons.lang.version>3.7</org.apache.commons.lang.version>
 		<org.apache.commons.collections.version>4.1</org.apache.commons.collections.version>

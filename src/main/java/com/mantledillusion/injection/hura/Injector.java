@@ -1,5 +1,6 @@
 package com.mantledillusion.injection.hura;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -229,11 +230,44 @@ public class Injector extends InjectionProvider {
 		}
 
 		@Override
-		T allocate(Injector injector, InjectionChain chain, InjectionSettings<T> set,
+		T allocate(Injector injector, InjectionChain injectionChain, InjectionSettings<T> set,
 				InjectionProcessors<T> applicators) {
 			InjectionSettings<T2> refinedSettings = set.refine(this.clazz);
-			InjectionProcessors<T2> refinedApplicators = injector.buildApplicators(chain, refinedSettings);
-			return injector.createAndInject(chain, refinedSettings, this.applicators.merge(refinedApplicators), true);
+			InjectionProcessors<T2> refinedApplicators = injector.buildApplicators(injectionChain, refinedSettings);
+			return injector.createAndInject(injectionChain, refinedSettings, this.applicators.merge(refinedApplicators),
+					true);
+		}
+	}
+
+	static final class PluginAllocator<T> extends AbstractAllocator<T> {
+
+		private final File directory;
+		private final String pluginId;
+		private final InjectionProcessors<T> applicators;
+		private final Class<T> presetType;
+
+		PluginAllocator(File directory, String pluginId, InjectionProcessors<T> applicators) {
+			this.directory = directory;
+			this.pluginId = pluginId;
+			this.applicators = applicators;
+			this.presetType = null;
+		}
+
+		PluginAllocator(File directory, String pluginId, Class<T> presetType) {
+			this.directory = directory;
+			this.pluginId = pluginId;
+			this.applicators = InjectionProcessors.of();
+			this.presetType = presetType;
+		}
+
+		@Override
+		T allocate(Injector injector, InjectionChain injectionChain, InjectionSettings<T> set,
+				InjectionProcessors<T> applicators) {
+			Class<T> pluggableType = PluginCache.findPluggable(this.directory, this.pluginId, this.presetType == null ? set.type : this.presetType);
+			InjectionSettings<T> refinedSettings = set.refine(pluggableType);
+			InjectionProcessors<T> refinedApplicators = injector.buildApplicators(injectionChain, refinedSettings);
+			return injector.createAndInject(injectionChain, refinedSettings, this.applicators.merge(refinedApplicators),
+					true);
 		}
 	}
 
@@ -291,8 +325,7 @@ public class Injector extends InjectionProvider {
 				.merge(blueprint.getPropertyAllocations());
 		MappingContext mappingContext = new MappingContext(this.mappingContext)
 				.merge(blueprint.getMappingAllocations());
-		TypeContext typeContext = new TypeContext(this.typeContext)
-				.merge(blueprint.getTypeAllocations());
+		TypeContext typeContext = new TypeContext(this.typeContext).merge(blueprint.getTypeAllocations());
 
 		InjectionContext injectionContext = new InjectionContext(this.globalInjectionContext.getInjectionTreeLock(),
 				this.baseInjectionContext, resolvingContext, mappingContext, typeContext);
@@ -697,6 +730,7 @@ public class Injector extends InjectionProvider {
 		ResolvingContext globalResolvingContext = new ResolvingContext();
 		MappingContext globalMappingContext = new MappingContext();
 		TypeContext globalTypeContext = new TypeContext();
+
 		GlobalInjectionContext globalInjectionContext = new GlobalInjectionContext(globalResolvingContext,
 				globalMappingContext, globalTypeContext);
 

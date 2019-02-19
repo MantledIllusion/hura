@@ -4,10 +4,12 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.mantledillusion.injection.hura.injectables.*;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
@@ -18,12 +20,6 @@ import com.mantledillusion.injection.hura.Predefinable.Singleton;
 import com.mantledillusion.injection.hura.annotation.Define;
 import com.mantledillusion.injection.hura.exception.BlueprintException;
 import com.mantledillusion.injection.hura.exception.ValidatorException;
-import com.mantledillusion.injection.hura.injectables.Injectable;
-import com.mantledillusion.injection.hura.injectables.InjectableWithExplicitIndependent;
-import com.mantledillusion.injection.hura.injectables.InjectableWithExplicitSingleton;
-import com.mantledillusion.injection.hura.injectables.InjectableWithInjectableField;
-import com.mantledillusion.injection.hura.injectables.InjectableWithProperty;
-import com.mantledillusion.injection.hura.injectables.InjectableWithPropertyAndSingleton;
 import com.mantledillusion.injection.hura.misc.InjectableInterface;
 
 public class BlueprintInjectionTest extends AbstractInjectionTest {
@@ -125,7 +121,7 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 			}
 			
 			@Define
-			public Singleton singletonAllocationMethod() {
+			public Singleton singletonInstanceAllocationMethod() {
 				return Singleton.of(InjectableWithExplicitSingleton.SINGLETON, instance);
 			}
 		}));
@@ -144,7 +140,7 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 			}
 			
 			@Define
-			public Singleton singletonAllocationMethod() {
+			public Singleton singletonProviderAllocationMethod() {
 				return Singleton.of(InjectableWithExplicitSingleton.SINGLETON, callback -> instance);
 			}
 		}));
@@ -162,11 +158,29 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 			}
 			
 			@Define
-			public Singleton singletonAllocationMethod() {
+			public Singleton singletonTypeAllocationMethod() {
 				return Singleton.of(InjectableWithExplicitSingleton.SINGLETON, Injectable.class);
 			}
 		}));
 		
+		assertTrue(injectable.explicitInjectable != null);
+	}
+
+	@Test
+	public void testBlueprintPluginSingletonInjection() {
+		InjectableWithExplicitSingleton injectable = this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<InjectableWithExplicitSingleton>() {
+
+			@Override
+			public Class<InjectableWithExplicitSingleton> getRootType() {
+				return InjectableWithExplicitSingleton.class;
+			}
+
+			@Define
+			public Singleton singletonTypeAllocationMethod() {
+				return Singleton.of(InjectableWithExplicitSingleton.SINGLETON, InjectableInterface.class, new File("src/test/resources/plugins"), "InjectableInterfacePlugin");
+			}
+		}));
+
 		assertTrue(injectable.explicitInjectable != null);
 	}
 	
@@ -181,7 +195,7 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 			}
 			
 			@Define
-			public BeanAllocation<InjectableInterface> typeAllocationMethod() {
+			public BeanAllocation<InjectableInterface> instanceAllocationMethod() {
 				return BeanAllocation.allocateToInstance(instance);
 			}
 		}));
@@ -200,7 +214,7 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 			}
 			
 			@Define
-			public BeanAllocation<InjectableInterface> typeAllocationMethod() {
+			public BeanAllocation<InjectableInterface> providerAllocationMethod() {
 				return BeanAllocation.allocateToProvider(callback -> instance);
 			}
 		}));
@@ -223,6 +237,24 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 			}
 		}));
 		
+		assertTrue(injectable.explicitInjectable != null);
+	}
+
+	@Test
+	public void testBlueprintPluginIndependentInjection() {
+		InjectableWithExplicitIndependent injectable = this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<InjectableWithExplicitIndependent>() {
+
+			@Override
+			public Class<InjectableWithExplicitIndependent> getRootType() {
+				return InjectableWithExplicitIndependent.class;
+			}
+
+			@Define
+			public BeanAllocation<InjectableInterface> pluginAllocationMethod() {
+				return BeanAllocation.allocateToPlugin(new File("src/test/resources/plugins"), "InjectableInterfacePlugin");
+			}
+		}));
+
 		assertTrue(injectable.explicitInjectable != null);
 	}
 	

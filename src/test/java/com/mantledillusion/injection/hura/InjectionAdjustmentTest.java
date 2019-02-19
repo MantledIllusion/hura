@@ -13,7 +13,7 @@ import com.mantledillusion.injection.hura.Predefinable.Singleton;
 import com.mantledillusion.injection.hura.annotation.Define;
 import com.mantledillusion.injection.hura.annotation.Global.SingletonMode;
 import com.mantledillusion.injection.hura.exception.ValidatorException;
-import com.mantledillusion.injection.hura.injectables.InjectabeWithMappingAdjustment;
+import com.mantledillusion.injection.hura.injectables.InjectableWithMappingAdjustment;
 import com.mantledillusion.injection.hura.injectables.Injectable;
 import com.mantledillusion.injection.hura.injectables.Injectable2;
 import com.mantledillusion.injection.hura.injectables.InjectableWithExtendingAdjustment;
@@ -49,9 +49,9 @@ public class InjectionAdjustmentTest extends AbstractInjectionTest {
 	@Test
 	public void testMappingAdjustment() {
 		Injectable singleton = new Injectable();
-		InjectabeWithMappingAdjustment injectable = this.suite.injectInSuiteContext(
-				InjectabeWithMappingAdjustment.class,
-				Singleton.of(InjectabeWithMappingAdjustment.SOME_QUALIFIER, singleton),
+		InjectableWithMappingAdjustment injectable = this.suite.injectInSuiteContext(
+				InjectableWithMappingAdjustment.class,
+				Singleton.of(InjectableWithMappingAdjustment.SOME_QUALIFIER, singleton),
 				Mapping.of(InjectableWithSequenceSingleton.SINGLETON, "predefinitionQualifier", SingletonMode.SEQUENCE));
 		
 		assertSame(singleton, injectable.singletonedInjectable.sequenceSingleton);

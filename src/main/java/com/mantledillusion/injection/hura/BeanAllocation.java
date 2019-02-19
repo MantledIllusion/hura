@@ -1,11 +1,13 @@
 package com.mantledillusion.injection.hura;
 
+import java.io.File;
 import java.lang.reflect.Method;
 
 import com.mantledillusion.injection.hura.Blueprint.BlueprintTemplate;
 import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
 import com.mantledillusion.injection.hura.Injector.AbstractAllocator;
 import com.mantledillusion.injection.hura.Injector.ClassAllocator;
+import com.mantledillusion.injection.hura.Injector.PluginAllocator;
 import com.mantledillusion.injection.hura.Injector.InstanceAllocator;
 import com.mantledillusion.injection.hura.Injector.ProviderAllocator;
 import com.mantledillusion.injection.hura.Injector.TemporalInjectorCallback;
@@ -102,5 +104,34 @@ public final class BeanAllocation<T> {
 			throw new IllegalArgumentException("Unable to allocate a bean to a null class.");
 		}
 		return new BeanAllocation<>(new ClassAllocator<>(clazz, InjectionProcessors.of(applicators)));
+	}
+
+	/**
+	 * Allocate to the plugin with the given ID that should be used upon injection.
+	 * 
+	 * @param <T>
+	 *            The bean type.
+	 * @param directory
+	 *            The directory to find the plugin in; might <b>not</b> be null and
+	 *            {@link File#isDirectory()} has to return true.
+	 * @param pluginId
+	 *            The ID of the plugin to use, with which it can be found in the
+	 *            given directory; might <b>not</b> be null.
+	 * @param applicators
+	 *            The {@link PhasedProcessor}s to apply on every instantiated bean;
+	 *            might be null or contain nulls, both is ignored.
+	 * @return A newly build allocation, never null
+	 */
+	@SafeVarargs
+	public static final <T> BeanAllocation<T> allocateToPlugin(File directory, String pluginId,
+			PhasedProcessor<? super T>... applicators) {
+		if (directory == null) {
+			throw new IllegalArgumentException("Unable to allocate a bean to a plugin from a null directory.");
+		} else if (!directory.isDirectory()) {
+			throw new IllegalArgumentException("Unable to allocate a bean to a plugin from a non-directory.");
+		} else if (pluginId == null) {
+			throw new IllegalArgumentException("Unable to allocate a bean to a plugin with a null ID.");
+		}
+		return new BeanAllocation<>(new PluginAllocator<>(directory, pluginId, InjectionProcessors.of(applicators)));
 	}
 }
