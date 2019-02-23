@@ -84,17 +84,17 @@ final class PluginCache {
 	private static final class PluggableCache extends HydnoraCache<Plugin, PluginId> {
 
 		@SuppressWarnings("unchecked")
-		private <T> Class<T> retrieve(PluginId id, Class<? super T> pluggableType) {
+		private <T> Class<T> retrieve(PluginId id, Class<? super T> spiType) {
 			return get(id, plugin -> {
-				if (!plugin.pluggables.containsKey(pluggableType)) {
-					throw new PluginException("The plugin '" + id + "' does not offer a pluggable implementing '"
-							+ pluggableType.getName() + "'");
+				if (!plugin.pluggables.containsKey(spiType)) {
+					throw new PluginException("The plugin '" + id + "' does not offer a pluggable implementing the SPI '"
+							+ spiType.getName() + "'");
 				}
 
-				List<Class<?>> pluggableTypes = plugin.pluggables.get(pluggableType);
+				List<Class<?>> pluggableTypes = plugin.pluggables.get(spiType);
 				if (pluggableTypes.size() > 1) {
-					throw new PluginException("The plugin '" + id + "' provides " + pluggableTypes.size() + " pluggables implementing '"
-							+ pluggableType.getName() + "'; cannot decide which one to inject");
+					throw new PluginException("The plugin '" + id + "' provides " + pluggableTypes.size() + " pluggables implementing the SPI '"
+							+ spiType.getName() + "'; cannot decide which one to inject");
 				}
 
 				return (Class<T>) pluggableTypes.get(0);
@@ -181,7 +181,12 @@ final class PluginCache {
 	private PluginCache() {
 	}
 
-	static <T, T2 extends T> Class<T2> findPluggable(File directory, String pluginId, Class<T> pluggableType) {
+	static <T, T2 extends T> Class<T2> findPluggable(File directory, String pluginId, Class<T> spiType) {
+	    if (spiType.getClassLoader() instanceof PluginClassLoader) {
+	        throw new PluginException("Cannot load a plugin for the SPI '" + spiType.getName()
+                    + "'; the type originates from a plugin itself and plugins cannot be chained");
+        }
+
 		PluginId requiredPlugin = PluginId.from(directory, pluginId);
 
 		PluginId foundPlugin = null;
@@ -209,6 +214,6 @@ final class PluginCache {
 					+ pluginId + "' in the directory '" + directory.getAbsolutePath() + "'");
 		}
 
-		return CACHE.retrieve(foundPlugin, pluggableType);
+		return CACHE.retrieve(foundPlugin, spiType);
 	}
 }
