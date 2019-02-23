@@ -12,6 +12,7 @@ import java.util.stream.StreamSupport;
 import com.mantledillusion.cache.hydnora.HydnoraCache;
 import com.mantledillusion.essentials.concurrency.locks.LockIdentifier;
 import com.mantledillusion.injection.hura.exception.PluginException;
+import sun.misc.Ref;
 
 import javax.lang.model.SourceVersion;
 
@@ -60,15 +61,14 @@ final class PluginCache {
 	
 	static final class PluginClassLoader extends URLClassLoader {
 
-		private final PluginId id;
+		private final ReflectionCache pluginReflectionCache = new ReflectionCache();
 		
 		private PluginClassLoader(PluginId id) throws MalformedURLException {
 			super(new URL[] { id.toFile().toURI().toURL() }, Injector.class.getClassLoader());
-			this.id = id;
 		}
-		
-		PluginId getPluginId() {
-			return this.id;
+
+		ReflectionCache getPluginReflectionCache() {
+			return this.pluginReflectionCache;
 		}
 	}
 
@@ -86,12 +86,18 @@ final class PluginCache {
 		@SuppressWarnings("unchecked")
 		private <T> Class<T> retrieve(PluginId id, Class<? super T> pluggableType) {
 			return get(id, plugin -> {
-				if (plugin.pluggables.containsKey(pluggableType)) {
-					return (Class<T>) plugin.pluggables.get(pluggableType).get(0); // TODO really use the next best?
+				if (!plugin.pluggables.containsKey(pluggableType)) {
+					throw new PluginException("The plugin '" + id + "' does not offer a pluggable implementing '"
+							+ pluggableType.getName() + "'");
 				}
 
-				throw new PluginException("The plugin '" + id + "' does not offer a pluggable implementing '"
-						+ pluggableType.getName() + "'");
+				List<Class<?>> pluggableTypes = plugin.pluggables.get(pluggableType);
+				if (pluggableTypes.size() > 1) {
+					throw new PluginException("The plugin '" + id + "' provides " + pluggableTypes.size() + " pluggables implementing '"
+							+ pluggableType.getName() + "'; cannot decide which one to inject");
+				}
+
+				return (Class<T>) pluggableTypes.get(0);
 			});
 		}
 
@@ -113,9 +119,11 @@ final class PluginCache {
 									+ entry.getName() + "' does not have the name of a valid class name");
 						} else {
 							try {
-								spiClass = pluginClassLoader.getParent().loadClass(spiClassName);
+								spiClass = pluginClassLoader.loadClass(spiClassName);
 							} catch (ClassNotFoundException e2) {
-								continue; // If the parent class loader does not know the class the service providers implement, th
+								throw new PluginException("The .jar '" + id + "' is no valid plugin; its service provider file '"
+										+ entry.getName() + "' refers to an SPI class that is unknown to the class loader of the "
+										+ ".jar itself as well as all parent class loaders", e2);
 							}
 						}
 
@@ -148,14 +156,13 @@ final class PluginCache {
 				}
 
 				if (id.isVersioned()) {
-					for (int i=id.version-1; i>= 0; i++) {
-						outdate(new PluginId(id.directory, id.pluginName, i));
+					for (int i=id.version-1; i>= 0; i--) {
+						invalidate(new PluginId(id.directory, id.pluginName, i));
 					}
 				}
 				
 				return new Plugin(pluggables);
 			} catch (Exception e) {
-				// TODO: here: trigger ReflectionCache to invalidate everything with the given pluginId
 				boolean closedPluginClassloader = true;
 				try {
 					pluginClassLoader.close();
@@ -166,14 +173,6 @@ final class PluginCache {
 				throw new PluginException("Unable to load plugin '" + id + "' (closing the plugin's classloader "
 						+ (closedPluginClassloader ? "succeeded" : "failed") + ")", e);
 			}
-		}
-		
-		private void outdate(PluginId id) {
-			invalidate(id, plugin -> {
-				// TODO: in ReflectionCache: make it remember all plugin classes by their plugin id; ((PluginClassLoader) object.getClass().getClassLoader()).getPluginId()
-				// TODO: here: trigger ReflectionCache to invalidate everything with the given pluginId
-				return true;
-			});
 		}
 	}
 
@@ -190,26 +189,26 @@ final class PluginCache {
 			throw new PluginException("Cannot load a specific version of a plugin (requested: plugin '"
 					+ requiredPlugin.pluginName + "' version " + requiredPlugin.version
 					+ "); plugins should always be requested in unversioned manner.");
-		} else {
-			for (File file : directory
-					.listFiles((dir, name) -> name.startsWith(pluginId) && name.endsWith(FILE_EXTENSION_JAR))) {
-				String fileName = file.getName();
-				String version = fileName.substring(pluginId.length(), fileName.length() - 4);
+		}
 
-				if (version.isEmpty() || version.matches(FILE_SUFFIX_VERSION)) {
-					PluginId filePlugin = PluginId.from(directory, fileName.substring(0, fileName.length() - 4));
-					if (foundPlugin == null || foundPlugin.version < filePlugin.version) {
-						foundPlugin = filePlugin;
-					}
+		for (File file : directory
+				.listFiles((dir, name) -> name.startsWith(pluginId) && name.endsWith(FILE_EXTENSION_JAR))) {
+			String fileName = file.getName();
+			String version = fileName.substring(pluginId.length(), fileName.length() - 4);
+
+			if (version.isEmpty() || version.matches(FILE_SUFFIX_VERSION)) {
+				PluginId filePlugin = PluginId.from(directory, fileName.substring(0, fileName.length() - 4));
+				if (foundPlugin == null || foundPlugin.version < filePlugin.version) {
+					foundPlugin = filePlugin;
 				}
 			}
 		}
 
-		if (foundPlugin != null) {
-			return CACHE.retrieve(foundPlugin, pluggableType);
+		if (foundPlugin == null) {
+			throw new PluginException("Unable to find a name-matching " + FILE_EXTENSION_JAR + " file for the plugin '"
+					+ pluginId + "' in the directory '" + directory.getAbsolutePath() + "'");
 		}
 
-		throw new PluginException("Unable to find a name-matching " + FILE_EXTENSION_JAR + " file for the plugin '"
-				+ pluginId + "' in the directory '" + directory.getAbsolutePath() + "'");
+		return CACHE.retrieve(foundPlugin, pluggableType);
 	}
 }

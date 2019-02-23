@@ -66,7 +66,7 @@ final class ReflectionCache {
 		}
 	}
 	
-	private ReflectionCache() {}
+	ReflectionCache() {}
 
 	// ###############################################################################################################
 	// ############################################### VALIDATION ####################################################
@@ -128,10 +128,10 @@ final class ReflectionCache {
 		}
 	};
 
-	private static final ValidationCache VALIDATION_CACHE = new ValidationCache();
+	private final ValidationCache validationCache = new ValidationCache();
 
 	static <T> void validate(Class<T> id) {
-		VALIDATION_CACHE.validate(new TypeIdentifier<>(id));
+		determineCacheFor(id).validationCache.validate(new TypeIdentifier<>(id));
 	}
 
 	// ###############################################################################################################
@@ -280,12 +280,12 @@ final class ReflectionCache {
 		private <T> InjectableConstructor<T> retrieve(TypeIdentifier<T> id) {
 			return (InjectableConstructor<T>) get(id);
 		}
-	};
+	}
 
-	private static final ConstructorCache CONSTRUCTOR_CACHE = new ConstructorCache();
+	private final ConstructorCache constructorCache = new ConstructorCache();
 
 	static <T> InjectableConstructor<T> getInjectableConstructor(Class<T> type) {
-		return CONSTRUCTOR_CACHE.retrieve(new TypeIdentifier<>(type));
+		return determineCacheFor(type).constructorCache.retrieve(new TypeIdentifier<>(type));
 	}
 
 	// ###############################################################################################################
@@ -351,10 +351,10 @@ final class ReflectionCache {
 		}
 	}
 
-	private static final ResolvableFieldCache RESOLVABLE_FIELD_CACHE = new ResolvableFieldCache();
+	private final ResolvableFieldCache resolvableFieldCache = new ResolvableFieldCache();
 
 	static <T> List<ResolvableField> getResolvableFields(Class<T> type) {
-		return RESOLVABLE_FIELD_CACHE.retrieve(new TypeIdentifier<>(type));
+		return determineCacheFor(type).resolvableFieldCache.retrieve(new TypeIdentifier<>(type));
 	}
 
 	// ###############################################################################################################
@@ -430,10 +430,10 @@ final class ReflectionCache {
 		}
 	}
 
-	private static final InjectableFieldCache INJECTABLE_FIELD_CACHE = new InjectableFieldCache();
+	private final InjectableFieldCache injectableFieldCache = new InjectableFieldCache();
 
 	static <T> List<InjectableField> getInjectableFields(Class<T> type) {
-		return INJECTABLE_FIELD_CACHE.retrieve(new TypeIdentifier<>(type));
+		return determineCacheFor(type).injectableFieldCache.retrieve(new TypeIdentifier<>(type));
 	}
 
 	// ###############################################################################################################
@@ -452,10 +452,10 @@ final class ReflectionCache {
 		}
 	}
 
-	private static final AnnotatedTypeCache ANNOTATED_TYPE_CACHE = new AnnotatedTypeCache();
+	private final AnnotatedTypeCache annotatedTypeCache = new AnnotatedTypeCache();
 
 	static List<Class<?>> getSuperTypesAnnotatedWith(Class<?> type, Class<? extends Annotation> annotationType) {
-		return ANNOTATED_TYPE_CACHE.retrieve(new AnnotatedTypeIdentifier(type, annotationType));
+		return determineCacheFor(type).annotatedTypeCache.retrieve(new AnnotatedTypeIdentifier(type, annotationType));
 	}
 
 	// ###############################################################################################################
@@ -474,10 +474,10 @@ final class ReflectionCache {
 		}
 	}
 
-	private static final AnnotatedMethodCache ANNOTATED_METHOD_CACHE = new AnnotatedMethodCache();
+	private final AnnotatedMethodCache annotatedMethodCache = new AnnotatedMethodCache();
 
 	static List<Method> getMethodsAnnotatedWith(Class<?> type, Class<? extends Annotation> annotationType) {
-		return ANNOTATED_METHOD_CACHE.retrieve(new AnnotatedTypeIdentifier(type, annotationType));
+		return determineCacheFor(type).annotatedMethodCache.retrieve(new AnnotatedTypeIdentifier(type, annotationType));
 	}
 
 	// ###############################################################################################################
@@ -497,16 +497,26 @@ final class ReflectionCache {
 		}
 	}
 
-	private static final AnnotatedAnnotationCache ANNOTATED_ANNOTATION_CACHE = new AnnotatedAnnotationCache();
+	private final AnnotatedAnnotationCache annotatedAnnotationCache = new AnnotatedAnnotationCache();
 
 	static List<AnnotationOccurrence> getAnnotationsAnnotatedWith(Class<?> type,
 			Class<? extends Annotation> annotationType) {
-		return ANNOTATED_ANNOTATION_CACHE.retrieve(new AnnotatedTypeIdentifier(type, annotationType));
+		return determineCacheFor(type).annotatedAnnotationCache.retrieve(new AnnotatedTypeIdentifier(type, annotationType));
 	}
 
 	// ###############################################################################################################
 	// ################################################## MISC #######################################################
 	// ###############################################################################################################
+
+	private static ReflectionCache DEFAULT = new ReflectionCache();
+
+	private static ReflectionCache determineCacheFor(Class<?> type) {
+		if (type.getClassLoader() instanceof PluginCache.PluginClassLoader) {
+			return ((PluginCache.PluginClassLoader) type.getClassLoader()).getPluginReflectionCache();
+		} else {
+			return DEFAULT;
+		}
+	}
 
 	private static ResolvingSettings retrieveResolvingSettings(AnnotatedElement e) {
 		return ResolvingSettings.of(e.getAnnotation(Property.class), e.getAnnotation(Matches.class), 
