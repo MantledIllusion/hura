@@ -11,7 +11,7 @@ import com.mantledillusion.injection.hura.Injector.PluginAllocator;
 import com.mantledillusion.injection.hura.Injector.InstanceAllocator;
 import com.mantledillusion.injection.hura.Injector.ProviderAllocator;
 import com.mantledillusion.injection.hura.Injector.TemporalInjectorCallback;
-import com.mantledillusion.injection.hura.annotation.Define;
+import com.mantledillusion.injection.hura.annotation.instruction.Define;
 
 /**
  * Type to use as return types of @{@link Define} annotated {@link Method}s of
@@ -90,16 +90,17 @@ public final class BeanAllocation<T> {
 	 * 
 	 * @param <T>
 	 *            The bean type.
+	 * @param <T2>
+	 *            The allocated type.
 	 * @param clazz
 	 *            The {@link Class} to use; might <b>not</b> be null.
 	 * @param applicators
-	 *            The {@link PhasedProcessor}s to apply on every instantiated bean;
+	 *            The {@link PhasedBeanProcessor}s to apply on every instantiated bean;
 	 *            might be null or contain nulls, both is ignored.
 	 * @return A newly build allocation, never null
 	 */
 	@SafeVarargs
-	public static final <T> BeanAllocation<T> allocateToType(Class<? extends T> clazz,
-			PhasedProcessor<? super T>... applicators) {
+	public static final <T, T2 extends T> BeanAllocation<T> allocateToType(Class<T2> clazz, PhasedBeanProcessor<? super T2>... applicators) {
 		if (clazz == null) {
 			throw new IllegalArgumentException("Unable to allocate a bean to a null class.");
 		}
@@ -118,13 +119,12 @@ public final class BeanAllocation<T> {
 	 *            The ID of the plugin to use, with which it can be found in the
 	 *            given directory; might <b>not</b> be null.
 	 * @param applicators
-	 *            The {@link PhasedProcessor}s to apply on every instantiated bean;
+	 *            The {@link PhasedBeanProcessor}s to apply on every instantiated bean;
 	 *            might be null or contain nulls, both is ignored.
 	 * @return A newly build allocation, never null
 	 */
 	@SafeVarargs
-	public static final <T> BeanAllocation<T> allocateToPlugin(File directory, String pluginId,
-			PhasedProcessor<? super T>... applicators) {
+	public static final <T> BeanAllocation<T> allocateToPlugin(File directory, String pluginId, PhasedBeanProcessor<? super T>... applicators) {
 		if (directory == null) {
 			throw new IllegalArgumentException("Unable to allocate a bean to a plugin from a null directory.");
 		} else if (!directory.isDirectory()) {

@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.mantledillusion.injection.hura.annotation.lifecycle.Phase;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
@@ -26,18 +27,16 @@ import com.mantledillusion.injection.hura.InjectionContext.GlobalInjectionContex
 import com.mantledillusion.injection.hura.Predefinable.Property;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
 import com.mantledillusion.injection.hura.Predefinable.Mapping;
-import com.mantledillusion.injection.hura.Processor.Phase;
 import com.mantledillusion.injection.hura.ReflectionCache.InjectableConstructor;
 import com.mantledillusion.injection.hura.ReflectionCache.InjectableConstructor.ParamSettingType;
 import com.mantledillusion.injection.hura.ReflectionCache.InjectableField;
 import com.mantledillusion.injection.hura.ReflectionCache.ResolvableField;
-import com.mantledillusion.injection.hura.annotation.Construct;
-import com.mantledillusion.injection.hura.annotation.Context;
-import com.mantledillusion.injection.hura.annotation.Global;
-import com.mantledillusion.injection.hura.annotation.Global.SingletonMode;
-import com.mantledillusion.injection.hura.annotation.Inject;
-import com.mantledillusion.injection.hura.annotation.Optional.InjectionMode;
-import com.mantledillusion.injection.hura.annotation.Process;
+import com.mantledillusion.injection.hura.annotation.instruction.Construct;
+import com.mantledillusion.injection.hura.annotation.instruction.Context;
+import com.mantledillusion.injection.hura.annotation.injection.Global;
+import com.mantledillusion.injection.hura.annotation.injection.Global.SingletonMode;
+import com.mantledillusion.injection.hura.annotation.injection.Inject;
+import com.mantledillusion.injection.hura.annotation.instruction.Optional.InjectionMode;
 import com.mantledillusion.injection.hura.exception.ProcessorException;
 import com.mantledillusion.injection.hura.exception.InjectionException;
 
@@ -470,10 +469,10 @@ public class Injector extends InjectionProvider {
 	}
 
 	private <T> InjectionProcessors<T> buildApplicators(InjectionChain chain, InjectionSettings<T> set) {
-		ReflectionCache.validate(set.type);
 		TemporalInjectorCallback callback = new TemporalInjectorCallback(chain);
 		InjectionProcessors<T> applicators = InjectionProcessors.of(set.type, callback);
 		callback.deactivate();
+
 		return applicators;
 	}
 
@@ -489,10 +488,12 @@ public class Injector extends InjectionProvider {
 					+ " as any kind of singleton, as that would allow taking their sequence context out of itself.");
 		}
 
+		process(null, set.type, injectionChain, applicators.getProcessorsOfPhase(Phase.PRE_CONSTRUCT));
+
 		InjectableConstructor<T> injectableConstructor = ReflectionCache.getInjectableConstructor(set.type);
 
 		if (injectionChain.containsConstructor(injectableConstructor.getConstructor())) {
-			throw new InjectionException("Injection dependecy cycle detected: "
+			throw new InjectionException("Injection dependency cycle detected: "
 					+ injectionChain.getStringifiedChainSinceConstructor(injectableConstructor.getConstructor()));
 		}
 
@@ -526,12 +527,10 @@ public class Injector extends InjectionProvider {
 					+ "' with constructor '" + injectableConstructor.getConstructor() + "'", e);
 		}
 
-		handleDestroying(injectionChain, set, instance, applicators.getPostProcessorsOfPhase(Phase.DESTROY),
+		handleDestroying(injectionChain, set, instance, applicators.getProcessorsOfPhase(Phase.PRE_DESTROY),
 				isAllocatedInjection);
 
-		registerFinalizers(instance, injectionChain, applicators.getPostProcessorsOfPhase(Phase.FINALIZE));
-
-		process(instance, set.type, injectionChain, applicators.getPostProcessorsOfPhase(Phase.INSPECT));
+		registerPostConstructProcessors(instance, injectionChain, applicators.getProcessorsOfPhase(Phase.POST_CONSTRUCT));
 
 		for (ResolvableField resolvableField : ReflectionCache.getResolvableFields(set.type)) {
 			Field field = resolvableField.getField();
@@ -546,8 +545,6 @@ public class Injector extends InjectionProvider {
 						+ field.getDeclaringClass().getSimpleName() + "; unable to gain access", e);
 			}
 		}
-
-		process(instance, set.type, injectionChain, applicators.getPostProcessorsOfPhase(Phase.CONSTRUCT));
 
 		for (InjectableField injectableField : ReflectionCache.getInjectableFields(set.type)) {
 			Field field = injectableField.getField();
@@ -571,40 +568,40 @@ public class Injector extends InjectionProvider {
 			}
 		}
 
-		process(instance, set.type, injectionChain, applicators.getPostProcessorsOfPhase(Phase.INJECT));
+		process(instance, set.type, injectionChain, applicators.getProcessorsOfPhase(Phase.POST_INJECT));
 
 		return instance;
 	}
 
 	private <T> void handleDestroying(InjectionChain chain, InjectionSettings<?> set, T instance,
-			List<Processor<? super T>> destroyers, boolean isAllocatedInjection) {
+									  List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> destroyers, boolean isAllocatedInjection) {
 		if (set.isIndependent) {
-			registerDestroyers(instance, chain, destroyers);
+			registerPreDestroyProcessors(instance, chain, destroyers);
 		} else if (set.singletonMode == SingletonMode.SEQUENCE) {
-			registerDestroyers(instance, chain, destroyers);
+			registerPreDestroyProcessors(instance, chain, destroyers);
 			chain.addSingleton(set.qualifier, instance, isAllocatedInjection);
 		} else {
 			this.globalInjectionContext.addGlobalSingleton(set.qualifier, instance, destroyers);
 		}
 	}
 
-	private <T> void registerDestroyers(T instance, InjectionChain injectionChain,
-			List<Processor<? super T>> destroyers) {
-		for (Processor<? super T> destroyer : destroyers) {
+	private <T> void registerPreDestroyProcessors(T instance, InjectionChain injectionChain,
+												  List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> destroyers) {
+		for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> destroyer : destroyers) {
 			injectionChain.addDestoryable(() -> destroyer.process(instance, null));
 		}
 	}
 
-	private <T> void registerFinalizers(T instance, InjectionChain injectionChain,
-			List<Processor<? super T>> finalizers) {
-		for (Processor<? super T> finalizer : finalizers) {
+	private <T> void registerPostConstructProcessors(T instance, InjectionChain injectionChain,
+													 List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> finalizers) {
+		for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> finalizer : finalizers) {
 			injectionChain.addFinalizable(() -> finalizer.process(instance, null));
 		}
 	}
 
 	private <T> void process(T instance, Class<T> type, InjectionChain chain,
-			List<Processor<? super T>> injectionProcessors) {
-		for (Processor<? super T> postProcessor : injectionProcessors) {
+							 List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> injectionProcessors) {
+		for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> postProcessor : injectionProcessors) {
 			TemporalInjectorCallback callback = new TemporalInjectorCallback(chain);
 			try {
 				postProcessor.process(instance, callback);
@@ -647,7 +644,6 @@ public class Injector extends InjectionProvider {
 		}
 	}
 
-	@Process(Phase.DESTROY)
 	private synchronized void releaseReferences() {
 		destroyAll();
 	}

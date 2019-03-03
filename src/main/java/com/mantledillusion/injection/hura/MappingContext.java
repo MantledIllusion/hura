@@ -7,8 +7,8 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.mantledillusion.injection.hura.annotation.Construct;
-import com.mantledillusion.injection.hura.annotation.Global.SingletonMode;
+import com.mantledillusion.injection.hura.annotation.instruction.Construct;
+import com.mantledillusion.injection.hura.annotation.injection.Global.SingletonMode;
 import com.mantledillusion.injection.hura.exception.MappingException;
 
 final class MappingContext {

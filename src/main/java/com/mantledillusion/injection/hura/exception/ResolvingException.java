@@ -1,6 +1,6 @@
 package com.mantledillusion.injection.hura.exception;
 
-import com.mantledillusion.injection.hura.annotation.Property;
+import com.mantledillusion.injection.hura.annotation.property.Property;
 
 /**
  * Type for {@link RuntimeException}s that occur during {@link Property} resolving.

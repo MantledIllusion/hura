@@ -4,170 +4,154 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Parameter;
+import java.util.*;
+import java.util.function.Function;
 
 import com.mantledillusion.essentials.reflection.AnnotationEssentials.AnnotationOccurrence;
 import com.mantledillusion.injection.hura.Injector.TemporalInjectorCallback;
-import com.mantledillusion.injection.hura.Processor.Phase;
-import com.mantledillusion.injection.hura.annotation.Inspected;
-import com.mantledillusion.injection.hura.annotation.Process;
-import com.mantledillusion.injection.hura.annotation.Processed;
+import com.mantledillusion.injection.hura.annotation.lifecycle.Phase;
+import com.mantledillusion.injection.hura.annotation.lifecycle.annotation.AnnotationProcessor;
+import com.mantledillusion.injection.hura.annotation.lifecycle.bean.BeanProcessor;
 import com.mantledillusion.injection.hura.exception.ProcessorException;
 
 final class InjectionProcessors<T> {
 
-	@SuppressWarnings("rawtypes")
-	static final InjectionProcessors EMPTY = of();
+	interface LifecycleAnnotationProcessor<T> {
 
-	private final Map<Processor.Phase, List<Processor<? super T>>> postProcessors;
-
-	private InjectionProcessors(Map<Processor.Phase, List<Processor<? super T>>> postProcessors) {
-		this.postProcessors = postProcessors;
+		void process(T bean, TemporalInjectorCallback callback) throws Exception;
 	}
 
-	List<Processor<? super T>> getPostProcessorsOfPhase(Phase phase) {
-		return this.postProcessors.get(phase);
+	private final Map<Phase, List<LifecycleAnnotationProcessor<? super T>>> processors;
+
+	private InjectionProcessors(Map<Phase, List<LifecycleAnnotationProcessor<? super T>>> processors) {
+		this.processors = processors;
+	}
+
+	List<LifecycleAnnotationProcessor<? super T>> getProcessorsOfPhase(Phase phase) {
+		return this.processors.get(phase);
 	}
 
 	InjectionProcessors<T> merge(InjectionProcessors<T> other) {
-		Map<Processor.Phase, List<Processor<? super T>>> postProcessors = new HashMap<>();
+		Map<Phase, List<LifecycleAnnotationProcessor<? super T>>> processors = new HashMap<>();
 
-		List<Processor<? super T>> inspectProcessors = new ArrayList<>();
-		List<Processor<? super T>> constructProcessors = new ArrayList<>();
-		List<Processor<? super T>> injectProcessors = new ArrayList<>();
-		List<Processor<? super T>> finalizers = new ArrayList<>();
-		List<Processor<? super T>> preDestroyers = new ArrayList<>();
+		List<LifecycleAnnotationProcessor<? super T>> preConstructProcessors = new ArrayList<>();
+		List<LifecycleAnnotationProcessor<? super T>> postInjectProcessors = new ArrayList<>();
+		List<LifecycleAnnotationProcessor<? super T>> postConstructProcessors = new ArrayList<>();
+		List<LifecycleAnnotationProcessor<? super T>> preDestroyProcessors = new ArrayList<>();
 
 		for (InjectionProcessors<T> applicator : Arrays.asList(this, other)) {
-			inspectProcessors.addAll(applicator.postProcessors.get(Phase.INSPECT));
-			constructProcessors.addAll(applicator.postProcessors.get(Phase.CONSTRUCT));
-			injectProcessors.addAll(applicator.postProcessors.get(Phase.INJECT));
-			finalizers.addAll(applicator.postProcessors.get(Phase.FINALIZE));
-			preDestroyers.addAll(applicator.postProcessors.get(Phase.DESTROY));
+			preConstructProcessors.addAll(applicator.processors.get(Phase.PRE_CONSTRUCT));
+			postInjectProcessors.addAll(applicator.processors.get(Phase.POST_INJECT));
+			postConstructProcessors.addAll(applicator.processors.get(Phase.POST_CONSTRUCT));
+			preDestroyProcessors.addAll(applicator.processors.get(Phase.PRE_DESTROY));
 		}
 
-		postProcessors.put(Phase.INSPECT, Collections.unmodifiableList(inspectProcessors));
-		postProcessors.put(Phase.CONSTRUCT, Collections.unmodifiableList(constructProcessors));
-		postProcessors.put(Phase.INJECT, Collections.unmodifiableList(injectProcessors));
-		postProcessors.put(Phase.FINALIZE, Collections.unmodifiableList(finalizers));
-		postProcessors.put(Phase.DESTROY, Collections.unmodifiableList(preDestroyers));
+		processors.put(Phase.PRE_CONSTRUCT, Collections.unmodifiableList(preConstructProcessors));
+		processors.put(Phase.POST_INJECT, Collections.unmodifiableList(postInjectProcessors));
+		processors.put(Phase.POST_CONSTRUCT, Collections.unmodifiableList(postConstructProcessors));
+		processors.put(Phase.PRE_DESTROY, Collections.unmodifiableList(preDestroyProcessors));
 
-		return new InjectionProcessors<>(postProcessors);
+		return new InjectionProcessors<>(processors);
 	}
 
 	@SafeVarargs
-	static <T> InjectionProcessors<T> of(PhasedProcessor<? super T>... applicators) {
-		Map<Processor.Phase, List<Processor<? super T>>> postProcessors = new HashMap<>();
+	static <T> InjectionProcessors<T> of(PhasedBeanProcessor<? super T>... applicators) {
+		Map<Phase, List<LifecycleAnnotationProcessor<? super T>>> processors = new HashMap<>();
 
-		List<Processor<? super T>> inspectProcessors = new ArrayList<>();
-		List<Processor<? super T>> constructProcessors = new ArrayList<>();
-		List<Processor<? super T>> injectProcessors = new ArrayList<>();
-		List<Processor<? super T>> finalizers = new ArrayList<>();
-		List<Processor<? super T>> preDestroyers = new ArrayList<>();
+		List<LifecycleAnnotationProcessor<? super T>> preConstructProcessors = new ArrayList<>();
+		List<LifecycleAnnotationProcessor<? super T>> postInjectProcessors = new ArrayList<>();
+		List<LifecycleAnnotationProcessor<? super T>> postConstructProcessors = new ArrayList<>();
+		List<LifecycleAnnotationProcessor<? super T>> preDestroyProcessors = new ArrayList<>();
 
 		if (applicators != null) {
-			for (PhasedProcessor<? super T> applicator : applicators) {
+			for (PhasedBeanProcessor<? super T> applicator : applicators) {
 				if (applicator != null) {
+					LifecycleAnnotationProcessor<T> annotationProcessor = (bean, tCallback) ->
+							applicator.getPostProcessor().process(applicator.getPhase(), bean, tCallback);
 					switch (applicator.getPhase()) {
-					case INSPECT:
-						inspectProcessors.add(applicator.getPostProcessor());
-						break;
-					case CONSTRUCT:
-						constructProcessors.add(applicator.getPostProcessor());
-						break;
-					case INJECT:
-						injectProcessors.add(applicator.getPostProcessor());
-						break;
-					case FINALIZE:
-						finalizers.add(applicator.getPostProcessor());
-						break;
-					case DESTROY:
-						preDestroyers.add(applicator.getPostProcessor());
-						break;
+						case PRE_CONSTRUCT:
+							preConstructProcessors.add(annotationProcessor);
+							break;
+						case POST_INJECT:
+							postInjectProcessors.add(annotationProcessor);
+							break;
+						case POST_CONSTRUCT:
+							postConstructProcessors.add(annotationProcessor);
+							break;
+						case PRE_DESTROY:
+							preDestroyProcessors.add(annotationProcessor);
+							break;
 					}
 				}
 			}
 		}
 
-		postProcessors.put(Phase.INSPECT, Collections.unmodifiableList(inspectProcessors));
-		postProcessors.put(Phase.CONSTRUCT, Collections.unmodifiableList(constructProcessors));
-		postProcessors.put(Phase.INJECT, Collections.unmodifiableList(injectProcessors));
-		postProcessors.put(Phase.FINALIZE, Collections.unmodifiableList(finalizers));
-		postProcessors.put(Phase.DESTROY, Collections.unmodifiableList(preDestroyers));
+		processors.put(Phase.PRE_CONSTRUCT, Collections.unmodifiableList(preConstructProcessors));
+		processors.put(Phase.POST_INJECT, Collections.unmodifiableList(postInjectProcessors));
+		processors.put(Phase.POST_CONSTRUCT, Collections.unmodifiableList(postConstructProcessors));
+		processors.put(Phase.PRE_DESTROY, Collections.unmodifiableList(preDestroyProcessors));
 
-		return new InjectionProcessors<>(postProcessors);
+		return new InjectionProcessors<>(processors);
 	}
 
 	static <T> InjectionProcessors<T> of(Class<T> clazz, TemporalInjectorCallback callback) {
-		Map<Processor.Phase, List<Processor<? super T>>> postProcessors = new HashMap<>();
+		Map<Phase, List<LifecycleAnnotationProcessor<? super T>>> processors = new HashMap<>();
 
-		List<Processor<? super T>> inspectProcessors = new ArrayList<>();
-		List<Processor<? super T>> constructProcessors = new ArrayList<>();
-		List<Processor<? super T>> injectProcessors = new ArrayList<>();
-		List<Processor<? super T>> finalizers = new ArrayList<>();
-		List<Processor<? super T>> preDestroyers = new ArrayList<>();
+		List<LifecycleAnnotationProcessor<? super T>> preConstructProcessors = new ArrayList<>();
+		List<LifecycleAnnotationProcessor<? super T>> postInjectProcessors = new ArrayList<>();
+		List<LifecycleAnnotationProcessor<? super T>> postConstructProcessors = new ArrayList<>();
+		List<LifecycleAnnotationProcessor<? super T>> preDestroyProcessors = new ArrayList<>();
 
-		// PROCESSING
+		addBeanProcessorsFromAnnotation(Phase.PRE_CONSTRUCT, clazz, callback,
+				com.mantledillusion.injection.hura.annotation.lifecycle.bean.PreConstruct.class, a -> a.value(), preConstructProcessors);
+		addAnnotationProcessorsFromAnnotation(Phase.PRE_CONSTRUCT, clazz, callback,
+				com.mantledillusion.injection.hura.annotation.lifecycle.annotation.PreConstruct.class, a -> a.value(), preConstructProcessors);
 
-		for (AnnotationOccurrence annotationEntry : ReflectionCache.getAnnotationsAnnotatedWith(clazz,
-				Inspected.class)) {
-			Inspected inspected = annotationEntry.getAnnotation().annotationType().getAnnotation(Inspected.class);
+		addBeanProcessorsFromAnnotation(Phase.POST_INJECT, clazz, callback,
+				com.mantledillusion.injection.hura.annotation.lifecycle.bean.PostInject.class, a -> a.value(), postInjectProcessors);
+		addAnnotationProcessorsFromAnnotation(Phase.POST_INJECT, clazz, callback,
+				com.mantledillusion.injection.hura.annotation.lifecycle.annotation.PostInject.class, a -> a.value(), postInjectProcessors);
 
-			Processor<T> postProcessor = toPostProcessor(inspected, annotationEntry.getAnnotation(),
-					annotationEntry.getAnnotatedElement(), callback);
+		addBeanProcessorsFromAnnotation(Phase.POST_CONSTRUCT, clazz, callback,
+				com.mantledillusion.injection.hura.annotation.lifecycle.bean.PostConstruct.class, a -> a.value(), postConstructProcessors);
+		addAnnotationProcessorsFromAnnotation(Phase.POST_CONSTRUCT, clazz, callback,
+				com.mantledillusion.injection.hura.annotation.lifecycle.annotation.PostConstruct.class, a -> a.value(), postConstructProcessors);
 
-			switch (inspected.phase()) {
-			case INSPECT:
-				inspectProcessors.add(postProcessor);
-				break;
-			case CONSTRUCT:
-				constructProcessors.add(postProcessor);
-				break;
-			case INJECT:
-				injectProcessors.add(postProcessor);
-				break;
-			case FINALIZE:
-				finalizers.add(postProcessor);
-				break;
-			case DESTROY:
-				preDestroyers.add(postProcessor);
-				break;
+		addBeanProcessorsFromAnnotation(Phase.PRE_DESTROY, clazz, callback,
+				com.mantledillusion.injection.hura.annotation.lifecycle.bean.PreDestroy.class, a -> a.value(), preDestroyProcessors);
+		addAnnotationProcessorsFromAnnotation(Phase.PRE_DESTROY, clazz, callback,
+				com.mantledillusion.injection.hura.annotation.lifecycle.annotation.PreDestroy.class, a -> a.value(), preDestroyProcessors);
+
+		processors.put(Phase.PRE_CONSTRUCT, Collections.unmodifiableList(preConstructProcessors));
+		processors.put(Phase.POST_INJECT, Collections.unmodifiableList(postInjectProcessors));
+		processors.put(Phase.POST_CONSTRUCT, Collections.unmodifiableList(postConstructProcessors));
+		processors.put(Phase.PRE_DESTROY, Collections.unmodifiableList(preDestroyProcessors));
+
+		return new InjectionProcessors<>(processors);
+	}
+
+	private static <T, A extends Annotation> void addBeanProcessorsFromAnnotation(Phase phase, Class<T> clazz, TemporalInjectorCallback callback, Class<A> annotationType,
+																				  Function<A, Class<? extends BeanProcessor>[]> processorTypeRetriever,
+																				  List<LifecycleAnnotationProcessor<? super T>> processorList) {
+
+		// PROCESSOR ANNOTATIONS ON SUPER CLASSES
+		for (Class<?> type : ReflectionCache.getSuperTypesAnnotatedWith(clazz, annotationType)) {
+			A a = type.getAnnotation(annotationType);
+			for (Class<? extends BeanProcessor> processorType: processorTypeRetriever.apply(a)) {
+				BeanProcessor<T> postProcessor = (BeanProcessor<T>) callback.instantiate(processorType);
+				processorList.add((bean, tCallback) -> postProcessor.process(phase, bean, tCallback));
 			}
 		}
 
-		for (Class<?> type : ReflectionCache.getSuperTypesAnnotatedWith(clazz, Processed.class)) {
-			Processed a = type.getAnnotation(Processed.class);
-			for (Processed.PhasedProcessor processor : a.value()) {
-
-				@SuppressWarnings("unchecked")
-				Processor<T> postProcessor = (Processor<T>) callback.instantiate(processor.value());
-
-				switch (processor.phase()) {
-				case INSPECT:
-					inspectProcessors.add(postProcessor);
-					break;
-				case CONSTRUCT:
-					constructProcessors.add(postProcessor);
-					break;
-				case INJECT:
-					injectProcessors.add(postProcessor);
-					break;
-				case FINALIZE:
-					finalizers.add(postProcessor);
-					break;
-				case DESTROY:
-					preDestroyers.add(postProcessor);
-					break;
-				}
+		// PROCESSOR ANNOTATIONS ON METHODS
+		for (Method m : ReflectionCache.getMethodsAnnotatedWith(clazz, annotationType)) {
+			A a = m.getAnnotation(annotationType);
+			for (Class<? extends BeanProcessor> processorType: processorTypeRetriever.apply(a)) {
+				BeanProcessor<T> postProcessor = (BeanProcessor<T>) callback.instantiate(processorType);
+				processorList.add((bean, tCallback) -> postProcessor.process(phase, bean, tCallback));
 			}
-		}
 
-		for (Method m : ReflectionCache.getMethodsAnnotatedWith(clazz, Process.class)) {
 			if (!m.isAccessible()) {
 				try {
 					m.setAccessible(true);
@@ -177,61 +161,44 @@ final class InjectionProcessors<T> {
 				}
 			}
 
-			Processor<T> postProcessor;
-			if (m.getParameterCount() == 0) {
-				postProcessor = (bean, tCallback) -> {
-					try {
-						m.invoke(bean);
-					} catch (InvocationTargetException e) {
-						throw new ProcessorException("Unable to invoke method '" + m.getName() + "' for processing",
-								e.getTargetException());
-					}
-				};
-			} else {
-				postProcessor = (bean, tCallback) -> {
-					try {
-						m.invoke(bean, tCallback);
-					} catch (InvocationTargetException e) {
-						throw new ProcessorException("Unable to invoke method '" + m.getName() + "' for processing",
-								e.getTargetException());
-					}
-				};
-			}
+			LifecycleAnnotationProcessor<T> processor = (bean, tCallback) -> {
+				Object[] parameters = new Object[m.getParameterCount()];
 
-			switch (m.getAnnotation(Process.class).value()) {
-			case INSPECT:
-				inspectProcessors.add(postProcessor);
-				break;
-			case CONSTRUCT:
-				constructProcessors.add(postProcessor);
-				break;
-			case INJECT:
-				injectProcessors.add(postProcessor);
-				break;
-			case FINALIZE:
-				finalizers.add(postProcessor);
-				break;
-			case DESTROY:
-				preDestroyers.add(postProcessor);
-				break;
-			}
+				int parameterIndex=0;
+				for (Parameter parameter: m.getParameters()) {
+					Object instance = null;
+					if (parameter.getType().isAssignableFrom(Phase.class)) {
+						instance = phase;
+					} else if (parameter.getType().isAssignableFrom(TemporalInjectorCallback.class)) {
+						instance = tCallback;
+					}
+					parameters[parameterIndex] = instance;
+					parameterIndex++;
+				}
+
+				try {
+					m.invoke(bean, parameters);
+				} catch (InvocationTargetException e) {
+					throw new ProcessorException("Unable to invoke method '" + m.getName() + "' for processing",
+							e.getTargetException());
+				}
+			};
+
+			processorList.add(processor);
 		}
-
-		// DESTRUCTION
-
-		postProcessors.put(Phase.INSPECT, Collections.unmodifiableList(inspectProcessors));
-		postProcessors.put(Phase.CONSTRUCT, Collections.unmodifiableList(constructProcessors));
-		postProcessors.put(Phase.INJECT, Collections.unmodifiableList(injectProcessors));
-		postProcessors.put(Phase.FINALIZE, Collections.unmodifiableList(finalizers));
-		postProcessors.put(Phase.DESTROY, Collections.unmodifiableList(preDestroyers));
-
-		return new InjectionProcessors<>(postProcessors);
 	}
 
-	private static <A extends Annotation, E extends AnnotatedElement, T> Processor<T> toPostProcessor(
-			Inspected inspected, A annotationInstance, E annotatedElement, TemporalInjectorCallback callback) {
-		@SuppressWarnings("unchecked")
-		Inspector<A, E> inspector = (Inspector<A, E>) callback.instantiate(inspected.value());
-		return (bean, beanCallback) -> inspector.inspect(bean, annotationInstance, annotatedElement, beanCallback);
+	private static <T, LifecycleAnnotationType extends Annotation, AnnotatedAnnotationType extends Annotation, AnnotatedElementType extends AnnotatedElement> void
+	addAnnotationProcessorsFromAnnotation(Phase phase, Class<T> clazz, TemporalInjectorCallback callback, Class<LifecycleAnnotationType> annotationType,
+										  Function<LifecycleAnnotationType, Class<? extends AnnotationProcessor>[]> processorTypeRetriever,
+										  List<LifecycleAnnotationProcessor<? super T>> processorList) {
+		// PROCESSOR ANNOTATIONS ON ANNOTATIONS
+		for (AnnotationOccurrence occurrence : ReflectionCache.getAnnotationsAnnotatedWith(clazz, annotationType)) {
+			LifecycleAnnotationType a = occurrence.getAnnotation().annotationType().getAnnotation(annotationType);
+			for (Class<? extends AnnotationProcessor> processorType: processorTypeRetriever.apply(a)) {
+				AnnotationProcessor<AnnotatedAnnotationType, AnnotatedElementType> processor = (AnnotationProcessor<AnnotatedAnnotationType, AnnotatedElementType>) callback.instantiate(processorType);
+				processorList.add((bean, tCallback) -> processor.process(phase, bean, (AnnotatedAnnotationType) occurrence.getAnnotation(), (AnnotatedElementType) occurrence.getAnnotatedElement(), tCallback));
+			}
+		}
 	}
 }

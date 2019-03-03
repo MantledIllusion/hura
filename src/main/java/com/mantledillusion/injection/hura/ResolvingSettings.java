@@ -1,9 +1,9 @@
 package com.mantledillusion.injection.hura;
 
-import com.mantledillusion.injection.hura.annotation.DefaultValue;
-import com.mantledillusion.injection.hura.annotation.Matches;
-import com.mantledillusion.injection.hura.annotation.Optional;
-import com.mantledillusion.injection.hura.annotation.Property;
+import com.mantledillusion.injection.hura.annotation.property.DefaultValue;
+import com.mantledillusion.injection.hura.annotation.property.Matches;
+import com.mantledillusion.injection.hura.annotation.instruction.Optional;
+import com.mantledillusion.injection.hura.annotation.property.Property;
 
 final class ResolvingSettings {
 

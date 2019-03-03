@@ -4,12 +4,13 @@ import java.lang.reflect.Method;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import com.mantledillusion.injection.hura.annotation.property.Matches;
 import org.apache.commons.lang3.StringUtils;
 
 import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
 import com.mantledillusion.injection.hura.Predefinable.Property;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
-import com.mantledillusion.injection.hura.annotation.Global.SingletonMode;
+import com.mantledillusion.injection.hura.annotation.injection.Global.SingletonMode;
 import com.mantledillusion.injection.hura.exception.ResolvingException;
 import com.mantledillusion.injection.hura.exception.ValidatorException;
 
@@ -25,7 +26,7 @@ abstract class InjectionProvider {
 	 * @return The property value, never null
 	 */
 	public final String resolve(String propertyKey) {
-		return resolve(propertyKey, com.mantledillusion.injection.hura.annotation.Matches.DEFAULT_MATCHER, false);
+		return resolve(propertyKey, Matches.DEFAULT_MATCHER, false);
 	}
 
 	/**
@@ -42,7 +43,7 @@ abstract class InjectionProvider {
 	 * @return The property value, never null
 	 */
 	public final String resolve(String propertyKey, boolean forced) {
-		return resolve(propertyKey, com.mantledillusion.injection.hura.annotation.Matches.DEFAULT_MATCHER, forced);
+		return resolve(propertyKey, Matches.DEFAULT_MATCHER, forced);
 	}
 
 	/**
@@ -83,7 +84,7 @@ abstract class InjectionProvider {
 	 * @return The property value, never null
 	 */
 	public final String resolve(String propertyKey, String defaultValue) {
-		return resolve(propertyKey, com.mantledillusion.injection.hura.annotation.Matches.DEFAULT_MATCHER,
+		return resolve(propertyKey, Matches.DEFAULT_MATCHER,
 				defaultValue);
 	}
 

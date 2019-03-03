@@ -3,7 +3,7 @@ package com.mantledillusion.injection.hura;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.mantledillusion.injection.hura.annotation.Construct;
+import com.mantledillusion.injection.hura.annotation.instruction.Construct;
 import com.mantledillusion.injection.hura.exception.ResolvingException;
 
 final class ResolvingContext {

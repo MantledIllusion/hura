@@ -20,19 +20,17 @@ import com.mantledillusion.essentials.reflection.ConstructorEssentials;
 import com.mantledillusion.essentials.reflection.MethodEssentials;
 import com.mantledillusion.essentials.reflection.TypeEssentials;
 import com.mantledillusion.essentials.reflection.AnnotationEssentials.AnnotationOccurrence;
-import com.mantledillusion.injection.hura.annotation.Adjust;
-import com.mantledillusion.injection.hura.annotation.Construct;
-import com.mantledillusion.injection.hura.annotation.Context;
-import com.mantledillusion.injection.hura.annotation.DefaultValue;
-import com.mantledillusion.injection.hura.annotation.Global;
-import com.mantledillusion.injection.hura.annotation.Global.SingletonMode;
-import com.mantledillusion.injection.hura.annotation.Inject;
-import com.mantledillusion.injection.hura.annotation.Matches;
-import com.mantledillusion.injection.hura.annotation.Optional;
-import com.mantledillusion.injection.hura.annotation.Property;
-import com.mantledillusion.injection.hura.annotation.Validated;
+import com.mantledillusion.injection.hura.annotation.instruction.Adjust;
+import com.mantledillusion.injection.hura.annotation.instruction.Construct;
+import com.mantledillusion.injection.hura.annotation.instruction.Context;
+import com.mantledillusion.injection.hura.annotation.property.DefaultValue;
+import com.mantledillusion.injection.hura.annotation.injection.Global;
+import com.mantledillusion.injection.hura.annotation.injection.Global.SingletonMode;
+import com.mantledillusion.injection.hura.annotation.injection.Inject;
+import com.mantledillusion.injection.hura.annotation.property.Matches;
+import com.mantledillusion.injection.hura.annotation.instruction.Optional;
+import com.mantledillusion.injection.hura.annotation.property.Property;
 import com.mantledillusion.injection.hura.exception.InjectionException;
-import com.mantledillusion.injection.hura.exception.ValidatorException;
 
 final class ReflectionCache {
 
@@ -67,72 +65,6 @@ final class ReflectionCache {
 	}
 	
 	ReflectionCache() {}
-
-	// ###############################################################################################################
-	// ############################################### VALIDATION ####################################################
-	// ###############################################################################################################
-
-	private static final class ValidationCache extends NonWrappingCache<Void, TypeIdentifier<?>> {
-
-		@Override
-		public Void load(TypeIdentifier<?> id) throws Exception {
-			for (AnnotationOccurrence ae : AnnotationEssentials.getAnnotationsAnnotatedWith(id.type, Validated.class)) {
-				Validated validated = ae.getAnnotation().annotationType().getAnnotation(Validated.class);
-				validate(id.type, ae, validated);
-			}
-			return null;
-		}
-
-		@SuppressWarnings("unchecked")
-		private <A extends Annotation, E extends AnnotatedElement> void validate(Class<?> type, AnnotationOccurrence ae,
-				Validated validated) {
-
-			Constructor<? extends AnnotationValidator<A, E>> c;
-			try {
-				c = ((Class<? extends AnnotationValidator<A, E>>) validated.value()).getDeclaredConstructor();
-			} catch (NoSuchMethodException | SecurityException e) {
-				throw new ValidatorException("Unable to find no-args constructor for the annotation validator type '"
-						+ validated.value().getSimpleName() + "'", e);
-			}
-
-			if (!c.isAccessible()) {
-				try {
-					c.setAccessible(true);
-				} catch (SecurityException e) {
-					throw new ValidatorException(
-							"Unable to gain access to the no-args constructor of the annotation validator type '"
-									+ validated.value().getSimpleName() + "'",
-							e);
-				}
-			}
-
-			AnnotationValidator<A, E> validator;
-			try {
-				validator = c.newInstance();
-			} catch (Exception e) {
-				throw new ValidatorException("Unable to instantiate the annotation validator type '"
-						+ validated.value().getSimpleName() + "' ", e);
-			}
-			try {
-				validator.validate((A) ae.getAnnotation(), (E) ae.getAnnotatedElement());
-			} catch (Exception e) {
-				throw new ValidatorException(
-						"Validation of @" + ae.getAnnotation().annotationType().getSimpleName() + " annotation on '"
-								+ ae.getAnnotatedElement() + "' in the type '" + type.getSimpleName() + "' failed",
-						e);
-			}
-		}
-
-		private <T> void validate(TypeIdentifier<T> id) {
-			get(id);
-		}
-	};
-
-	private final ValidationCache validationCache = new ValidationCache();
-
-	static <T> void validate(Class<T> id) {
-		determineCacheFor(id).validationCache.validate(new TypeIdentifier<>(id));
-	}
 
 	// ###############################################################################################################
 	// ######################################### CONSTRUCTOR INJECTION ###############################################
@@ -211,7 +143,7 @@ final class ReflectionCache {
 								} else {
 									throw new InjectionException("Multiple constructors found in the type "
 											+ type.getSimpleName()
-											+ "who either have no parameters or whose parameters are all injectable; use the "
+											+ "who either have no parameters or whose parameters are all injectables; use the "
 											+ Construct.class.getSimpleName()
 											+ " annotation on the one meant to be used for injection.");
 								}
@@ -223,7 +155,7 @@ final class ReflectionCache {
 									+ " who either has no parameters or whose parameters are fully annotated; no "
 									+ " constructor suitable for injection could be found.");
 						} else if (c.getParameterCount() == 0 && !Modifier.isPublic(c.getModifiers())) {
-							throw new InjectionException("The only injectable constructor in the type "
+							throw new InjectionException("The only injectables constructor in the type "
 									+ type.getSimpleName()
 									+ " is a non-public no-args constructor. If this constructor should be used for"
 									+ " instantiation during injection, it has to be annotated with the @"

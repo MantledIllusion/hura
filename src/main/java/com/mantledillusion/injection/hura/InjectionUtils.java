@@ -4,8 +4,8 @@ import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Parameter;
 
-import com.mantledillusion.injection.hura.annotation.Inject;
-import com.mantledillusion.injection.hura.annotation.Property;
+import com.mantledillusion.injection.hura.annotation.injection.Inject;
+import com.mantledillusion.injection.hura.annotation.property.Property;
 
 /**
  * Utilities for injection.
@@ -17,12 +17,12 @@ public final class InjectionUtils {
 
 	/**
 	 * Checks whether all of the given {@link Executable}'s {@link Parameter}s are
-	 * injectable, which means that all of the defined {@link Parameter}s either
+	 * injectables, which means that all of the defined {@link Parameter}s either
 	 * have to be annotated with @{@link Inject} or @{@link Property}.
 	 * 
 	 * @param executable
 	 *            The executable to check; might <b>not</b> be null.
-	 * @return True if all of the 0-&gt;n {@link Parameter}s are injectable, false
+	 * @return True if all of the 0-&gt;n {@link Parameter}s are injectables, false
 	 *         otherwise
 	 */
 	public static boolean hasAllParametersDefinable(Executable executable) {

@@ -1,10 +1,10 @@
 package com.mantledillusion.injection.hura.exception;
 
-import com.mantledillusion.injection.hura.Processor;
+import com.mantledillusion.injection.hura.annotation.lifecycle.bean.BeanProcessor;
 
 /**
  * Type for {@link RuntimeException}s that occur during executing
- * {@link Processor}s.
+ * {@link BeanProcessor}s.
  */
 public class ProcessorException extends RuntimeException {
 

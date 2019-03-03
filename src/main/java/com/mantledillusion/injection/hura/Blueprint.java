@@ -1,9 +1,6 @@
 package com.mantledillusion.injection.hura;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
@@ -14,9 +11,12 @@ import com.mantledillusion.injection.hura.Injector.AbstractAllocator;
 import com.mantledillusion.injection.hura.Predefinable.Property;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
 import com.mantledillusion.injection.hura.Predefinable.Mapping;
-import com.mantledillusion.injection.hura.annotation.Define;
-import com.mantledillusion.injection.hura.annotation.Global.SingletonMode;
+import com.mantledillusion.injection.hura.annotation.ValidatorUtils;
+import com.mantledillusion.injection.hura.annotation.instruction.Define;
+import com.mantledillusion.injection.hura.annotation.injection.Global.SingletonMode;
 import com.mantledillusion.injection.hura.exception.BlueprintException;
+import com.mantledillusion.injection.hura.exception.ValidatorException;
+import org.apache.commons.lang3.reflect.TypeUtils;
 
 /**
  * A {@link Blueprint} is an injection instruction for an {@link Injector}.
@@ -284,8 +284,6 @@ public class Blueprint {
 			throw new IllegalArgumentException("Cannot process a null template");
 		}
 
-		ReflectionCache.validate(template.getClass());
-
 		Blueprint blueprint = new Blueprint();
 		buildAllocations(template, blueprint);
 		return blueprint;
@@ -307,8 +305,6 @@ public class Blueprint {
 			throw new IllegalArgumentException("Cannot process a null template");
 		}
 
-		ReflectionCache.validate(template.getClass());
-
 		Class<T> rootType = template.getRootType();
 		if (rootType == null) {
 			throw new BlueprintException("The root type of a type blueprint template may not be null.");
@@ -321,6 +317,22 @@ public class Blueprint {
 
 	private static void buildAllocations(BlueprintTemplate template, Blueprint blueprint) {
 		for (Method m : ReflectionCache.getMethodsAnnotatedWith(template.getClass(), Define.class)) {
+			Map<TypeVariable<?>, Type> collectionGenericType = TypeUtils.getTypeArguments(m.getGenericReturnType(),
+					Collection.class);
+			if (!TypeUtils.isAssignable(m.getGenericReturnType(), BeanAllocation.class)
+					&& !TypeUtils.isAssignable(m.getGenericReturnType(), Predefinable.class)
+					&& !(TypeUtils.isAssignable(m.getGenericReturnType(), Collection.class) && TypeUtils.isAssignable(
+					TypeUtils.parameterize(Collection.class, collectionGenericType).getActualTypeArguments()[0],
+					Predefinable.class))) {
+				throw new ValidatorException(
+						"The " + ValidatorUtils.getDescription(m) + " is annotated with '" + Define.class.getSimpleName()
+								+ "', but does neither declare " + BeanAllocation.class.getSimpleName() + " nor a "
+								+ Predefinable.class.getSimpleName() + " implementation as its return type.");
+			} else if (m.getParameterCount() != 0) {
+				throw new ValidatorException("The " + ValidatorUtils.getDescription(m) + " is annotated with '"
+						+ Define.class.getSimpleName() + "', but is not parameterless as required.");
+			}
+
 			if (!m.isAccessible()) {
 				try {
 					m.setAccessible(true);

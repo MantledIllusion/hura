@@ -25,9 +25,9 @@ class InjectionContext {
 			super(new Object(), resolvingContext, mappingContext, typeContext);
 		}
 
-		<T> void addGlobalSingleton(String qualifier, T instance, List<Processor<? super T>> destroyers) {
+		<T> void addGlobalSingleton(String qualifier, T instance, List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> destroyers) {
 			List<SelfSustaningProcessor> destroyables = new ArrayList<>();
-			for (Processor<? super T> destroyer : destroyers) {
+			for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> destroyer : destroyers) {
 				destroyables.add(() -> destroyer.process(instance, null));
 			}
 			this.destroyables.put(qualifier, destroyables);

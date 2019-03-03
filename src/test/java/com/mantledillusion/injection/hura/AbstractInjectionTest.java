@@ -4,9 +4,9 @@ import org.junit.Before;
 
 import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
-import com.mantledillusion.injection.hura.annotation.Construct;
-import com.mantledillusion.injection.hura.annotation.Inject;
-import com.mantledillusion.injection.hura.misc.ExampleContext;
+import com.mantledillusion.injection.hura.annotation.instruction.Construct;
+import com.mantledillusion.injection.hura.annotation.injection.Inject;
+import com.mantledillusion.injection.hura.context.misc.ExampleContext;
 
 public class AbstractInjectionTest {
 

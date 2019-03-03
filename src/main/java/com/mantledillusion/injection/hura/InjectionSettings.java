@@ -11,15 +11,15 @@ import com.mantledillusion.injection.hura.Blueprint.BlueprintTemplate;
 import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
 import com.mantledillusion.injection.hura.Predefinable.Property;
 import com.mantledillusion.injection.hura.Predefinable.Mapping;
-import com.mantledillusion.injection.hura.annotation.Adjust;
-import com.mantledillusion.injection.hura.annotation.Adjust.MappingDef;
-import com.mantledillusion.injection.hura.annotation.Adjust.PropertyDef;
-import com.mantledillusion.injection.hura.annotation.Context;
-import com.mantledillusion.injection.hura.annotation.Global;
-import com.mantledillusion.injection.hura.annotation.Global.SingletonMode;
-import com.mantledillusion.injection.hura.annotation.Inject;
-import com.mantledillusion.injection.hura.annotation.Optional;
-import com.mantledillusion.injection.hura.annotation.Optional.InjectionMode;
+import com.mantledillusion.injection.hura.annotation.instruction.Adjust;
+import com.mantledillusion.injection.hura.annotation.instruction.Adjust.MappingDef;
+import com.mantledillusion.injection.hura.annotation.instruction.Adjust.PropertyDef;
+import com.mantledillusion.injection.hura.annotation.instruction.Context;
+import com.mantledillusion.injection.hura.annotation.injection.Global;
+import com.mantledillusion.injection.hura.annotation.injection.Global.SingletonMode;
+import com.mantledillusion.injection.hura.annotation.injection.Inject;
+import com.mantledillusion.injection.hura.annotation.instruction.Optional;
+import com.mantledillusion.injection.hura.annotation.instruction.Optional.InjectionMode;
 
 final class InjectionSettings<T> {
 
