@@ -11,37 +11,23 @@ import java.lang.reflect.AnnotatedElement;
 
 import com.mantledillusion.injection.hura.annotation.instruction.Construct;
 import com.mantledillusion.injection.hura.annotation.injection.Inject;
+import com.mantledillusion.injection.hura.annotation.lifecycle.Phase;
 
 /**
- * {@link Annotation} for other {@link Annotation}s whose occurrences need to be
- * validated by an {@link AnnotationProcessor} when the {@link Class} the
- * {@link Annotation} is somewhere used on is analyzed before its first
- * injection.
- * <p>
- * This {@link Annotation} is used to ensure correct use of framework
- * {@link Annotation}s such as {@link Inject}, {@link Construct}, etc, but it
- * can also be used on any other custom {@link Annotation}.
+ * {@link Annotation} for {@link Annotation}s that need to be called at the
+ * {@link Phase#PRE_CONSTRUCT} phase of a bean's life cycle.
  */
 @Retention(RUNTIME)
 @Target(ANNOTATION_TYPE)
 public @interface PreConstruct {
 
 	/**
-	 * The {@link AnnotationProcessor} that will be used for {@link Annotation}
-	 * occurrence validation.
-	 * <p>
-	 * The validator's generic {@link Annotation} type should be exactly the type
-	 * the {@link Annotation} this @{@link PreConstruct} is annotated on; just as the
-	 * {@link AnnotatedElement} type should be set according to the {@link Target}'s
-	 * {@link ElementType} the annotated {@link Annotation} can be annotated to.
-	 * <p>
-	 * Note that the validator will be instantiated, <b>not</b> injected,
-	 * since @{@link PreConstruct} might do type based validation only. For per-bean
-	 * validation, use lifecycle annotations whose processors are executed during the
-	 * injected bean's life time.
-	 * 
-	 * @return The {@link AnnotationProcessor} implementing type that should be used
-	 *         for validation; never null
+	 * The {@link AnnotationProcessor} implementations to instantiate and apply on bean
+	 * instances of a {@link Class} somewhere annotated with an annotation that itself
+	 * is annotated with @{@link PreConstruct}.
+	 *
+	 * @return The {@link AnnotationProcessor} implementations to inject and
+	 *         execute on a bean; never null, might be empty
 	 */
 	Class<? extends AnnotationProcessor<?, ?>>[] value() default {};
 }

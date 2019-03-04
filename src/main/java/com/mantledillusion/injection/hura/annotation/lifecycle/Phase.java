@@ -3,10 +3,19 @@ package com.mantledillusion.injection.hura.annotation.lifecycle;
 import com.mantledillusion.injection.hura.Predefinable;
 
 /**
- * Describes phases of the instantiation of a bean for an injection.
+ * Describes phases of a bean's lifecycle that are significant for its dependency injection.
  */
 public enum Phase {
 
+    /**
+     * The phase before the bean is constructed.
+     * <p>
+     * The bean is not existent at this point, but its {@link Class} type is being inspected.
+     * <p>
+     * Availability:<br>
+     * - Bean: <b>NO</b>
+     * - {@link com.mantledillusion.injection.hura.Injector.TemporalInjectorCallback}: <b>YES</b>
+     */
     PRE_CONSTRUCT,
 
     /**
@@ -15,6 +24,10 @@ public enum Phase {
      * <p>
      * The bean is fully initialized at this point, in a sense that it can now be
      * processed in relation to its sub beans.
+     * <p>
+     * Availability:<br>
+     * - Bean: <b>YES</b>
+     * - {@link com.mantledillusion.injection.hura.Injector.TemporalInjectorCallback}: <b>YES</b>
      */
     POST_INJECT,
 
@@ -25,6 +38,10 @@ public enum Phase {
      * The bean is finalized at this point, in a sense that it can now be
      * ready-for-operation processed in relation to all other beans of its
      * injection sequence.
+     * <p>
+     * Availability:<br>
+     * - Bean: <b>YES</b>
+     * - {@link com.mantledillusion.injection.hura.Injector.TemporalInjectorCallback}: <b>NO</b>
      */
     POST_CONSTRUCT,
 
@@ -33,6 +50,10 @@ public enum Phase {
      * <p>
      * The bean is ready to be deconstructed at this point, in a sense that it
      * will be ready-for-garbage-collection afterwards.
+     * <p>
+     * Availability:<br>
+     * - Bean: <b>YES</b>
+     * - {@link com.mantledillusion.injection.hura.Injector.TemporalInjectorCallback}: <b>NO</b>
      */
     PRE_DESTROY
 }

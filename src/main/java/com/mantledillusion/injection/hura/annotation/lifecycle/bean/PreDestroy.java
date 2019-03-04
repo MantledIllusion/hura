@@ -13,15 +13,14 @@ import static java.lang.annotation.ElementType.*;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * {@link Annotation} for {@link Annotation}s, {@link Class}es or {@link Method}s that need to be called at the
+ * {@link Annotation} for {@link Class}es and {@link Method}s that need to be called at the
  * {@link Phase#PRE_DESTROY} phase of a bean's life cycle.
  * <p>
- * {@link Method}s annotated with @{@link PreDestroy} may not:<br>
+ * {@link Method}s annotated with @{@link com.mantledillusion.injection.hura.annotation.lifecycle.bean.PreDestroy} may not:<br>
  * <ul>
  * <li>be static</li>
- * <li>be having one parameter other than of the type
+ * <li>be having a parameter other than of the types {@link Phase} or
  * {@link TemporalInjectorCallback}</li>
- * <li>be having more than one parameter</li>
  * </ul>
  */
 @Retention(RUNTIME)
@@ -30,12 +29,11 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface PreDestroy {
 
 	/**
-	 * The {@link BeanProcessor} implementations to instantiate and apply on bean
-	 * instances of a {@link Class} annotated with @{@link PreDestroy}.
+	 * The {@link BeanProcessor} implementations to inject and apply on bean
+	 * instances of a {@link Class} or {@link Method}'s {@link Class} annotated with @{@link PreDestroy}.
 	 *
-	 * @return The {@link BeanProcessor} implementation to instantiate, inject and
-	 *         execute on a bean of the {@link Class} annotated with
-	 *         {@link PreDestroy}; never null
+	 * @return The {@link BeanProcessor} implementation to inject and
+	 * execute on a bean; never null
 	 */
 	Class<? extends BeanProcessor<?>>[] value() default {};
 }
