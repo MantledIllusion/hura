@@ -6,12 +6,12 @@ import static org.junit.Assert.assertTrue;
 
 import com.mantledillusion.injection.hura.AbstractInjectionTest;
 import com.mantledillusion.injection.hura.Injector;
+import com.mantledillusion.injection.hura.annotation.injection.SingletonMode;
 import com.mantledillusion.injection.hura.exception.ProcessorException;
 import org.junit.Test;
 
 import com.mantledillusion.injection.hura.Injector.RootInjector;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
-import com.mantledillusion.injection.hura.annotation.injection.Global.SingletonMode;
 import com.mantledillusion.injection.hura.Predefinable.Mapping;
 import com.mantledillusion.injection.hura.exception.InjectionException;
 import com.mantledillusion.injection.hura.exception.MappingException;
@@ -24,8 +24,7 @@ import com.mantledillusion.injection.hura.singleton.injectables.InjectableWithIn
 import com.mantledillusion.injection.hura.singleton.injectables.InjectableWithSequenceSingleton;
 import com.mantledillusion.injection.hura.singleton.injectables.InjectableWithSequenceSingletonInjectables;
 import com.mantledillusion.injection.hura.singleton.injectables.InjectableWithSingletonAllocationRequired;
-import com.mantledillusion.injection.hura.singleton.uninjectables.UninjectableWithGlobalSingletonWithoutInject;
-import com.mantledillusion.injection.hura.singleton.uninjectables.UninjectableWithIndependentGlobalAnnotatedInjectable;
+import com.mantledillusion.injection.hura.singleton.uninjectables.UninjectableWithSingletonWithoutInject;
 import com.mantledillusion.injection.hura.singleton.uninjectables.UninjectableWithWrongTypeSingleton;
 
 public class SingletonInjectionTest extends AbstractInjectionTest {
@@ -48,13 +47,8 @@ public class SingletonInjectionTest extends AbstractInjectionTest {
 	}
 	
 	@Test(expected = ProcessorException.class)
-	public void testGlobalSingletonInjectionWithoutInject() {
-		this.suite.injectInSuiteContext(UninjectableWithGlobalSingletonWithoutInject.class);
-	}
-
-	@Test(expected = ProcessorException.class)
-	public void testGlobalSingletonInjectionWithoutQualifier() {
-		this.suite.injectInSuiteContext(UninjectableWithIndependentGlobalAnnotatedInjectable.class);
+	public void testSingletonInjectionWithoutInject() {
+		this.suite.injectInSuiteContext(UninjectableWithSingletonWithoutInject.class);
 	}
 
 	@Test

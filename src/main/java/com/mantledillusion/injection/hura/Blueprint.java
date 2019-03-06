@@ -13,7 +13,7 @@ import com.mantledillusion.injection.hura.Predefinable.Singleton;
 import com.mantledillusion.injection.hura.Predefinable.Mapping;
 import com.mantledillusion.injection.hura.annotation.ValidatorUtils;
 import com.mantledillusion.injection.hura.annotation.instruction.Define;
-import com.mantledillusion.injection.hura.annotation.injection.Global.SingletonMode;
+import com.mantledillusion.injection.hura.annotation.injection.SingletonMode;
 import com.mantledillusion.injection.hura.exception.BlueprintException;
 import com.mantledillusion.injection.hura.exception.ValidatorException;
 import org.apache.commons.lang3.reflect.TypeUtils;

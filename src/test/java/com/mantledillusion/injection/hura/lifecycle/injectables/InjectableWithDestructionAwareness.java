@@ -2,6 +2,7 @@ package com.mantledillusion.injection.hura.lifecycle.injectables;
 
 import com.mantledillusion.injection.hura.Injector;
 import com.mantledillusion.injection.hura.annotation.injection.Inject;
+import com.mantledillusion.injection.hura.annotation.injection.Qualifier;
 import com.mantledillusion.injection.hura.annotation.lifecycle.bean.PreDestroy;
 
 public class InjectableWithDestructionAwareness {
@@ -10,7 +11,8 @@ public class InjectableWithDestructionAwareness {
 
 		public static final String QUALIFIER = "qualifier";
 
-		@Inject(QUALIFIER)
+		@Inject
+		@Qualifier(QUALIFIER)
 		public InjectableWithDestructionAwareness singleton;
 	}
 
@@ -18,7 +20,8 @@ public class InjectableWithDestructionAwareness {
 
 		public static final String QUALIFIER = "qualifier";
 
-		@Inject(QUALIFIER)
+		@Inject
+		@Qualifier(QUALIFIER)
 		public InjectableWithDestructionAwareness singleton;
 		@Inject
 		public Injector injector;

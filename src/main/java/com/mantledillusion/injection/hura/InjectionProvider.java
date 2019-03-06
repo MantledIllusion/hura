@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
 import com.mantledillusion.injection.hura.Predefinable.Property;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
-import com.mantledillusion.injection.hura.annotation.injection.Global.SingletonMode;
+import com.mantledillusion.injection.hura.annotation.injection.SingletonMode;
 import com.mantledillusion.injection.hura.exception.ResolvingException;
 import com.mantledillusion.injection.hura.exception.ValidatorException;
 

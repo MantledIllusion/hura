@@ -12,7 +12,6 @@ import java.lang.reflect.Parameter;
 
 import com.mantledillusion.injection.hura.annotation.instruction.Optional;
 import com.mantledillusion.injection.hura.annotation.lifecycle.annotation.PreConstruct;
-import org.apache.commons.lang3.StringUtils;
 
 import com.mantledillusion.injection.hura.BeanAllocation;
 import com.mantledillusion.injection.hura.Injector;
@@ -31,7 +30,7 @@ import com.mantledillusion.injection.hura.Predefinable.Singleton;
  * <p>
  * Extensions to this {@link Annotation} are:
  * <ul>
- * <li>@{@link Global}</li>
+ * <li>@{@link Qualifier}</li>
  * <li>@{@link Optional}</li>
  * </ul>
  */
@@ -39,19 +38,6 @@ import com.mantledillusion.injection.hura.Predefinable.Singleton;
 @Target({ FIELD, PARAMETER })
 @PreConstruct(InjectValidator.class)
 public @interface Inject {
-
-	/**
-	 * The qualifier.
-	 * <p>
-	 * By default the used qualifier is "", meaning independent (no
-	 * {@link Singleton}).
-	 * 
-	 * @return The qualifier under which the {@link Singleton} to inject into the
-	 *         annotated {@link Field}/{@link Parameter} is registered in its
-	 *         injection context; never null, might be blank if no {@link Singleton}
-	 *         but an independent bean is desired
-	 */
-	String value() default StringUtils.EMPTY;
 
 	/**
 	 * Flag that indicates whether to overwrite the value of an annotated

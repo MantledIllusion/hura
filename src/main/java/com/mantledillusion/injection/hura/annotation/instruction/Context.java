@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 
 import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
 import com.mantledillusion.injection.hura.Injector;
-import com.mantledillusion.injection.hura.annotation.injection.Global.SingletonMode;
+import com.mantledillusion.injection.hura.annotation.injection.SingletonMode;
 
 /**
  * {@link Annotation} for beans that represent a context sensitive entity.

@@ -16,7 +16,7 @@ import com.mantledillusion.injection.hura.InjectionContext.GlobalInjectionContex
 import com.mantledillusion.injection.hura.Injector.AbstractAllocator;
 import com.mantledillusion.injection.hura.Injector.SelfSustaningProcessor;
 import com.mantledillusion.injection.hura.Injector.TemporalInjectorCallback;
-import com.mantledillusion.injection.hura.annotation.injection.Global.SingletonMode;
+import com.mantledillusion.injection.hura.annotation.injection.SingletonMode;
 import com.mantledillusion.injection.hura.exception.InjectionException;
 
 final class InjectionChain {

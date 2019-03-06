@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import com.mantledillusion.injection.hura.AbstractInjectionTest;
 import com.mantledillusion.injection.hura.BeanAllocation;
 import com.mantledillusion.injection.hura.Blueprint;
+import com.mantledillusion.injection.hura.annotation.injection.SingletonMode;
 import com.mantledillusion.injection.hura.exception.ProcessorException;
 import org.junit.Test;
 
@@ -15,7 +16,6 @@ import com.mantledillusion.injection.hura.Predefinable.Mapping;
 import com.mantledillusion.injection.hura.Predefinable.Property;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
 import com.mantledillusion.injection.hura.annotation.instruction.Define;
-import com.mantledillusion.injection.hura.annotation.injection.Global.SingletonMode;
 import com.mantledillusion.injection.hura.adjustment.injectables.InjectableWithMappingAdjustment;
 import com.mantledillusion.injection.hura.Injectable;
 import com.mantledillusion.injection.hura.adjustment.injectables.InjectableAlternative;

@@ -1,10 +1,10 @@
 package com.mantledillusion.injection.hura.singleton.uninjectables;
 
-import com.mantledillusion.injection.hura.annotation.injection.Global;
 import com.mantledillusion.injection.hura.Injectable;
+import com.mantledillusion.injection.hura.annotation.injection.Qualifier;
 
-public class UninjectableWithGlobalSingletonWithoutInject {
+public class UninjectableWithSingletonWithoutInject {
 
-	@Global
+	@Qualifier("qualifier")
 	public Injectable singleton;
 }

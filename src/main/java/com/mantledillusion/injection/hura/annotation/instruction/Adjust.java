@@ -16,7 +16,7 @@ import com.mantledillusion.injection.hura.Blueprint.BlueprintTemplate;
 import com.mantledillusion.injection.hura.Predefinable.Mapping;
 import com.mantledillusion.injection.hura.Predefinable.Property;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
-import com.mantledillusion.injection.hura.annotation.injection.Global.SingletonMode;
+import com.mantledillusion.injection.hura.annotation.injection.SingletonMode;
 import com.mantledillusion.injection.hura.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.annotation.lifecycle.annotation.PreConstruct;
 import com.mantledillusion.injection.hura.exception.InjectionException;

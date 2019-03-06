@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import com.mantledillusion.injection.hura.annotation.injection.Qualifier;
 import com.mantledillusion.injection.hura.annotation.lifecycle.Phase;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
@@ -33,8 +34,7 @@ import com.mantledillusion.injection.hura.ReflectionCache.InjectableField;
 import com.mantledillusion.injection.hura.ReflectionCache.ResolvableField;
 import com.mantledillusion.injection.hura.annotation.instruction.Construct;
 import com.mantledillusion.injection.hura.annotation.instruction.Context;
-import com.mantledillusion.injection.hura.annotation.injection.Global;
-import com.mantledillusion.injection.hura.annotation.injection.Global.SingletonMode;
+import com.mantledillusion.injection.hura.annotation.injection.SingletonMode;
 import com.mantledillusion.injection.hura.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.annotation.instruction.Optional.InjectionMode;
 import com.mantledillusion.injection.hura.exception.ProcessorException;
@@ -285,11 +285,11 @@ public class Injector extends InjectionProvider {
 
 	@Construct
 	private Injector(
-			@Inject(InjectionContext.INJECTION_CONTEXT_SINGLETON_ID) @Global GlobalInjectionContext globalInjectionContext,
-			@Inject(InjectionContext.INJECTION_CONTEXT_SINGLETON_ID) InjectionContext baseInjectionContext,
-			@Inject(ResolvingContext.RESOLVING_CONTEXT_SINGLETON_ID) ResolvingContext resolvingContext,
-			@Inject(MappingContext.MAPPING_CONTEXT_SINGLETON_ID) MappingContext mappingContext,
-			@Inject(TypeContext.TYPE_CONTEXT_SINGLETON_ID) TypeContext typeContext) {
+			@Inject @Qualifier(value=InjectionContext.INJECTION_CONTEXT_SINGLETON_ID, mode=SingletonMode.GLOBAL) GlobalInjectionContext globalInjectionContext,
+			@Inject @Qualifier(InjectionContext.INJECTION_CONTEXT_SINGLETON_ID) InjectionContext baseInjectionContext,
+			@Inject @Qualifier(ResolvingContext.RESOLVING_CONTEXT_SINGLETON_ID) ResolvingContext resolvingContext,
+			@Inject @Qualifier(MappingContext.MAPPING_CONTEXT_SINGLETON_ID) MappingContext mappingContext,
+			@Inject @Qualifier(TypeContext.TYPE_CONTEXT_SINGLETON_ID) TypeContext typeContext) {
 		this.globalInjectionContext = globalInjectionContext;
 		this.baseInjectionContext = baseInjectionContext;
 		this.resolvingContext = resolvingContext;

@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.mantledillusion.injection.hura.annotation.injection.Qualifier;
 import org.apache.commons.lang3.StringUtils;
 
 import com.mantledillusion.injection.hura.Blueprint.BlueprintTemplate;
@@ -15,8 +16,7 @@ import com.mantledillusion.injection.hura.annotation.instruction.Adjust;
 import com.mantledillusion.injection.hura.annotation.instruction.Adjust.MappingDef;
 import com.mantledillusion.injection.hura.annotation.instruction.Adjust.PropertyDef;
 import com.mantledillusion.injection.hura.annotation.instruction.Context;
-import com.mantledillusion.injection.hura.annotation.injection.Global;
-import com.mantledillusion.injection.hura.annotation.injection.Global.SingletonMode;
+import com.mantledillusion.injection.hura.annotation.injection.SingletonMode;
 import com.mantledillusion.injection.hura.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.annotation.instruction.Optional;
 import com.mantledillusion.injection.hura.annotation.instruction.Optional.InjectionMode;
@@ -66,11 +66,13 @@ final class InjectionSettings<T> {
 				Blueprint.EMPTY, Collections.emptyList());
 	}
 
-	static <T> InjectionSettings<T> of(Class<T> type, Inject inject, Global global, Optional optional, Adjust adjust) {
+	static <T> InjectionSettings<T> of(Class<T> type, Inject inject, Qualifier qualifier, Optional optional, Adjust adjust) {
 		List<Predefinable> predefinables = new ArrayList<>();
+		String singletonQualifier = StringUtils.EMPTY;
 		SingletonMode singletonMode = SingletonMode.SEQUENCE;
-		if (global != null) {
-			singletonMode = SingletonMode.GLOBAL;
+		if (qualifier != null) {
+			singletonQualifier = qualifier.value();
+			singletonMode = qualifier.mode();
 		}
 		InjectionMode injectionMode = InjectionMode.EAGER;
 		if (optional != null) {
@@ -86,7 +88,7 @@ final class InjectionSettings<T> {
 			}
 			extensions = Arrays.asList(adjust.extensions());
 		}
-		return new InjectionSettings<>(type, StringUtils.isBlank(inject.value()), inject.value(), isContext(type),
+		return new InjectionSettings<>(type, qualifier == null, singletonQualifier, isContext(type),
 				singletonMode, injectionMode, inject.overwriteWithNull(), Blueprint.of(predefinables),
 				extensions);
 	}
