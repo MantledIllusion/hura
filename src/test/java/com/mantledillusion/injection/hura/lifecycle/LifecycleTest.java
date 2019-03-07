@@ -17,8 +17,8 @@ import java.util.List;
 
 public class LifecycleTest extends AbstractInjectionTest {
 
-    private static final List<Phase> PHASES_WITH_PRECONSTRUCT = Arrays.asList(Phase.PRE_CONSTRUCT, Phase.POST_INJECT, Phase.POST_CONSTRUCT, Phase.PRE_DESTROY);
-    private static final List<Phase> PHASES_WITHOUT_PRECONSTRUCT = Arrays.asList(Phase.POST_INJECT, Phase.POST_CONSTRUCT, Phase.PRE_DESTROY);
+    private static final List<Phase> PHASES_WITH_PRECONSTRUCT = Arrays.asList(Phase.PRE_CONSTRUCT, Phase.POST_INJECT, Phase.POST_CONSTRUCT, Phase.PRE_DESTROY, Phase.POST_DESTROY);
+    private static final List<Phase> PHASES_WITHOUT_PRECONSTRUCT = Arrays.asList(Phase.POST_INJECT, Phase.POST_CONSTRUCT, Phase.PRE_DESTROY, Phase.POST_DESTROY);
 
     @Test
     public void testAnnotatedClassProcessing() {

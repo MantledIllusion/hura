@@ -196,7 +196,8 @@ public class Injector extends InjectionProvider {
 		@Override
 		T allocate(Injector injector, InjectionChain injectionChain, InjectionSettings<T> set,
 				InjectionProcessors<T> applicators) {
-			injector.handleDestroying(injectionChain, set, this.instance, Collections.emptyList(), true);
+			injector.handleDestroying(injectionChain, set, this.instance, true,
+					Collections.emptyList(), Collections.emptyList());
 			return this.instance;
 		}
 	}
@@ -213,7 +214,8 @@ public class Injector extends InjectionProvider {
 		T allocate(Injector injector, InjectionChain injectionChain, InjectionSettings<T> set,
 				InjectionProcessors<T> applicators) {
 			T bean = this.provider.provide(injector.new TemporalInjectorCallback(injectionChain));
-			injector.handleDestroying(injectionChain, set, bean, Collections.emptyList(), true);
+			injector.handleDestroying(injectionChain, set, bean, true,
+					Collections.emptyList(), Collections.emptyList());
 			return bean;
 		}
 	}
@@ -281,7 +283,7 @@ public class Injector extends InjectionProvider {
 	private final MappingContext mappingContext;
 	private final TypeContext typeContext;
 
-	private final IdentityHashMap<Object, List<SelfSustaningProcessor>> beans = new IdentityHashMap<>();
+	private final IdentityHashMap<Object, Map<Phase, List<SelfSustaningProcessor>>> beans = new IdentityHashMap<>();
 
 	@Construct
 	private Injector(
@@ -337,13 +339,27 @@ public class Injector extends InjectionProvider {
 			resolveSingletonsIntoChain(chain, blueprint.getSingletonAllocations().keySet(), SingletonMode.SEQUENCE);
 
 			instance = instantiate(chain, settings);
-			this.beans.put(instance, chain.getDestroyables());
-			finalize(chain.getFinalizables());
+
+			Map<Phase, List<SelfSustaningProcessor>> destroyables = new HashMap<>();
+			destroyables.put(Phase.PRE_DESTROY, chain.getPreDestroyables());
+			destroyables.put(Phase.POST_DESTROY, chain.getPostDestroyables());
+
+			this.beans.put(instance, destroyables);
+			finalize(chain.getPostConstructables());
 		} catch (Exception e) {
 			chain.clearHook();
 
 			int failingDestructionCount = 0;
-			for (SelfSustaningProcessor destroyable : chain.getDestroyables()) {
+			for (SelfSustaningProcessor destroyable : chain.getPreDestroyables()) {
+				try {
+					destroyable.process();
+				} catch (Exception e1) {
+					failingDestructionCount++;
+					// Do nothing; If proper injection has failed, a failing destroying might just
+					// be a consequence.
+				}
+			}
+			for (SelfSustaningProcessor destroyable : chain.getPostDestroyables()) {
 				try {
 					destroyable.process();
 				} catch (Exception e1) {
@@ -354,9 +370,10 @@ public class Injector extends InjectionProvider {
 			}
 
 			if (failingDestructionCount > 0) {
-				throw new InjectionException("Injection failed; " + chain.getDestroyables().size()
-						+ " destructions were executed on already injected beans (with " + failingDestructionCount
-						+ " of them failing as well)", e);
+				throw new InjectionException("Injection failed; " + chain.getPreDestroyables().size()
+						+ " " + Phase.PRE_DESTROY.name() + " processors and " + chain.getPostDestroyables().size()
+						+ " " + Phase.POST_DESTROY.name() +" processors were executed on already injected beans (with "
+						+ failingDestructionCount + " of them failing as well)", e);
 			} else {
 				throw e;
 			}
@@ -527,8 +544,9 @@ public class Injector extends InjectionProvider {
 					+ "' with constructor '" + injectableConstructor.getConstructor() + "'", e);
 		}
 
-		handleDestroying(injectionChain, set, instance, applicators.getProcessorsOfPhase(Phase.PRE_DESTROY),
-				isAllocatedInjection);
+		handleDestroying(injectionChain, set, instance, isAllocatedInjection,
+				applicators.getProcessorsOfPhase(Phase.PRE_DESTROY),
+				applicators.getProcessorsOfPhase(Phase.POST_DESTROY));
 
 		registerPostConstructProcessors(instance, injectionChain, applicators.getProcessorsOfPhase(Phase.POST_CONSTRUCT));
 
@@ -573,29 +591,34 @@ public class Injector extends InjectionProvider {
 		return instance;
 	}
 
-	private <T> void handleDestroying(InjectionChain chain, InjectionSettings<?> set, T instance,
-									  List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> destroyers, boolean isAllocatedInjection) {
+	private <T> void handleDestroying(InjectionChain chain, InjectionSettings<?> set, T instance, boolean isAllocatedInjection,
+									  List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> preDestroyables,
+									  List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> postDestroyables) {
 		if (set.isIndependent) {
-			registerPreDestroyProcessors(instance, chain, destroyers);
+			registerPreDestroyProcessors(instance, chain, preDestroyables, postDestroyables);
 		} else if (set.singletonMode == SingletonMode.SEQUENCE) {
-			registerPreDestroyProcessors(instance, chain, destroyers);
+			registerPreDestroyProcessors(instance, chain, preDestroyables, postDestroyables);
 			chain.addSingleton(set.qualifier, instance, isAllocatedInjection);
 		} else {
-			this.globalInjectionContext.addGlobalSingleton(set.qualifier, instance, destroyers);
+			this.globalInjectionContext.addGlobalSingleton(set.qualifier, instance, preDestroyables);
 		}
 	}
 
 	private <T> void registerPreDestroyProcessors(T instance, InjectionChain injectionChain,
-												  List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> destroyers) {
-		for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> destroyer : destroyers) {
-			injectionChain.addDestoryable(() -> destroyer.process(instance, null));
+												  List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> preDestroyables,
+												  List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> postDestroyables) {
+		for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> destroyer : preDestroyables) {
+			injectionChain.addPreDestoryable(() -> destroyer.process(instance, null));
+		}
+		for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> destroyer : postDestroyables) {
+			injectionChain.addPostDestoryable(() -> destroyer.process(instance, null));
 		}
 	}
 
 	private <T> void registerPostConstructProcessors(T instance, InjectionChain injectionChain,
 													 List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> finalizers) {
 		for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> finalizer : finalizers) {
-			injectionChain.addFinalizable(() -> finalizer.process(instance, null));
+			injectionChain.addPostConstructables(() -> finalizer.process(instance, null));
 		}
 	}
 
@@ -635,8 +658,10 @@ public class Injector extends InjectionProvider {
 	 */
 	public void destroy(Object rootBean) {
 		if (this.beans.containsKey(rootBean)) {
-			destroy(rootBean, this.beans.get(rootBean));
+			Map<Phase, List<SelfSustaningProcessor>> destroyers = this.beans.get(rootBean);
+			destroy(rootBean, destroyers.get(Phase.PRE_DESTROY));
 			this.beans.remove(rootBean);
+			destroy(rootBean, destroyers.get(Phase.POST_DESTROY));
 		} else {
 			throw new IllegalArgumentException(
 					"The given " + rootBean.getClass().getSimpleName() + " (@" + System.identityHashCode(rootBean)
@@ -653,11 +678,15 @@ public class Injector extends InjectionProvider {
 	 * instantiated by this {@link Injector} at the moment of calling.
 	 */
 	public void destroyAll() {
-		Iterator<Entry<Object, List<SelfSustaningProcessor>>> beanIter = this.beans.entrySet().iterator();
+		Iterator<Entry<Object, Map<Phase, List<SelfSustaningProcessor>>>> beanIter = this.beans.entrySet().iterator();
 		while (beanIter.hasNext()) {
-			Entry<Object, List<SelfSustaningProcessor>> entry = beanIter.next();
-			destroy(entry.getKey(), entry.getValue());
+			Entry<Object, Map<Phase, List<SelfSustaningProcessor>>> entry = beanIter.next();
+			Object bean = entry.getKey();
+			Map<Phase, List<SelfSustaningProcessor>> destroyers = entry.getValue();
+
+			destroy(bean, destroyers.get(Phase.PRE_DESTROY));
 			beanIter.remove();
+			destroy(bean, destroyers.get(Phase.POST_DESTROY));
 		}
 	}
 

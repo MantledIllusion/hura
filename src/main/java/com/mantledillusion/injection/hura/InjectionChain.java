@@ -103,16 +103,17 @@ final class InjectionChain {
 	private final Constructor<?> dependencyConstructor;
 
 	// Processability
-	private final List<SelfSustaningProcessor> finalizables;
-	private final List<SelfSustaningProcessor> destroyables;
+	private final List<SelfSustaningProcessor> postConstructables;
+	private final List<SelfSustaningProcessor> preDestroyables;
+	private final List<SelfSustaningProcessor> postDestroyables;
 
 	private InjectionChain(InjectionContext context, ResolvingContext resolvingContext, MappingContext mappingContext,
 			TypeContext typeContext,
 			Map<String, AbstractAllocator<?>> sequenceSingletonAllocations,
 			Map<String, AbstractAllocator<?>> globalSingletonAllocations, ChainLock chainLock,
 			LinkedHashSet<Constructor<?>> constructorChain, DependencyContext dependency,
-			Constructor<?> dependencyConstructor, List<SelfSustaningProcessor> finalizables,
-			List<SelfSustaningProcessor> destroyables) {
+			Constructor<?> dependencyConstructor, List<SelfSustaningProcessor> postConstructables,
+			List<SelfSustaningProcessor> preDestroyables, List<SelfSustaningProcessor> postDestroyables) {
 		this.context = context;
 		this.resolvingContext = resolvingContext;
 		this.mappingContext = mappingContext;
@@ -130,8 +131,9 @@ final class InjectionChain {
 		this.dependency = dependency;
 		this.dependencyConstructor = dependencyConstructor;
 
-		this.finalizables = finalizables;
-		this.destroyables = destroyables;
+		this.postConstructables = postConstructables;
+		this.preDestroyables = preDestroyables;
+		this.postDestroyables = postDestroyables;
 	}
 
 	void hookOnThread() {
@@ -168,7 +170,8 @@ final class InjectionChain {
 
 		return new InjectionChain(this.context, resolvingContext, mappingContext, typeContext,
 				sequenceSingletonAllocations, this.globalSingletonAllocations, this.chainLock, this.constructorChain,
-				this.dependency, this.dependencyConstructor, this.finalizables, this.destroyables);
+				this.dependency, this.dependencyConstructor, this.postConstructables, this.preDestroyables,
+				this.postDestroyables);
 	}
 
 	InjectionChain adjustBy(List<Blueprint> adjustments) {
@@ -188,8 +191,8 @@ final class InjectionChain {
 
 		return new InjectionChain(this.context, resolvingContext, mappingContext, typeContext,
 				this.sequenceSingletonAllocations, this.globalSingletonAllocations, this.chainLock,
-				this.constructorChain, this.dependency, this.dependencyConstructor, this.finalizables,
-				this.destroyables);
+				this.constructorChain, this.dependency, this.dependencyConstructor, this.postConstructables,
+				this.preDestroyables, this.postDestroyables);
 	}
 
 	InjectionChain extendBy(Constructor<?> c, InjectionSettings<?> set) {
@@ -206,7 +209,7 @@ final class InjectionChain {
 
 		return new InjectionChain(this.context, this.resolvingContext, this.mappingContext, this.typeContext,
 				this.sequenceSingletonAllocations, this.globalSingletonAllocations, this.chainLock, constructorChain,
-				dependency, dependencyConstructor, this.finalizables, this.destroyables);
+				dependency, dependencyConstructor, this.postConstructables, this.preDestroyables, this.postDestroyables);
 	}
 
 	static InjectionChain forInjection(InjectionContext injectionContext, ResolvingContext resolvingContext,
@@ -214,7 +217,8 @@ final class InjectionChain {
 			Map<String, AbstractAllocator<?>> sequenceSingletonAllocations) {
 		return new InjectionChain(injectionContext, resolvingContext, mappingContext, typeContext,
 				sequenceSingletonAllocations, new HashMap<>(), null, new LinkedHashSet<>(),
-				DependencyContext.INDEPENDENT, null, new ArrayList<>(), new ArrayList<>());
+				DependencyContext.INDEPENDENT, null,
+				new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
 	}
 
 	static InjectionChain forGlobalSingletonResolving(GlobalInjectionContext globalInjectionContext,
@@ -240,7 +244,7 @@ final class InjectionChain {
 				new InjectionContext(globalInjectionContext.getInjectionTreeLock(), resolvingContext, mappingContext, typeContext),
 				resolvingContext, mappingContext, typeContext, new HashMap<>(), globalSingletonAllocations,
 				chainLock, new LinkedHashSet<>(), DependencyContext.INDEPENDENT, null, new ArrayList<>(),
-				new ArrayList<>());
+				new ArrayList<>(), new ArrayList<>());
 	}
 
 	// Singleton
@@ -317,19 +321,27 @@ final class InjectionChain {
 	}
 
 	// Processables
-	void addFinalizable(SelfSustaningProcessor finalizable) {
-		this.finalizables.add(finalizable);
+	void addPostConstructables(SelfSustaningProcessor postConstructable) {
+		this.postConstructables.add(postConstructable);
 	}
 
-	List<SelfSustaningProcessor> getFinalizables() {
-		return this.finalizables;
+	List<SelfSustaningProcessor> getPostConstructables() {
+		return this.postConstructables;
 	}
 
-	void addDestoryable(SelfSustaningProcessor destroyable) {
-		this.destroyables.add(destroyable);
+	void addPreDestoryable(SelfSustaningProcessor destroyable) {
+		this.preDestroyables.add(destroyable);
 	}
 
-	List<SelfSustaningProcessor> getDestroyables() {
-		return this.destroyables;
+	List<SelfSustaningProcessor> getPreDestroyables() {
+		return this.preDestroyables;
+	}
+
+	void addPostDestoryable(SelfSustaningProcessor destroyable) {
+		this.postDestroyables.add(destroyable);
+	}
+
+	List<SelfSustaningProcessor> getPostDestroyables() {
+		return this.postDestroyables;
 	}
 }

@@ -39,18 +39,21 @@ final class InjectionProcessors<T> {
 		List<LifecycleAnnotationProcessor<? super T>> postInjectProcessors = new ArrayList<>();
 		List<LifecycleAnnotationProcessor<? super T>> postConstructProcessors = new ArrayList<>();
 		List<LifecycleAnnotationProcessor<? super T>> preDestroyProcessors = new ArrayList<>();
+		List<LifecycleAnnotationProcessor<? super T>> postDestroyProcessors = new ArrayList<>();
 
 		for (InjectionProcessors<T> applicator : Arrays.asList(this, other)) {
 			preConstructProcessors.addAll(applicator.processors.get(Phase.PRE_CONSTRUCT));
 			postInjectProcessors.addAll(applicator.processors.get(Phase.POST_INJECT));
 			postConstructProcessors.addAll(applicator.processors.get(Phase.POST_CONSTRUCT));
 			preDestroyProcessors.addAll(applicator.processors.get(Phase.PRE_DESTROY));
+			postDestroyProcessors.addAll(applicator.processors.get(Phase.POST_DESTROY));
 		}
 
 		processors.put(Phase.PRE_CONSTRUCT, Collections.unmodifiableList(preConstructProcessors));
 		processors.put(Phase.POST_INJECT, Collections.unmodifiableList(postInjectProcessors));
 		processors.put(Phase.POST_CONSTRUCT, Collections.unmodifiableList(postConstructProcessors));
 		processors.put(Phase.PRE_DESTROY, Collections.unmodifiableList(preDestroyProcessors));
+		processors.put(Phase.POST_DESTROY, Collections.unmodifiableList(postDestroyProcessors));
 
 		return new InjectionProcessors<>(processors);
 	}
@@ -63,6 +66,7 @@ final class InjectionProcessors<T> {
 		List<LifecycleAnnotationProcessor<? super T>> postInjectProcessors = new ArrayList<>();
 		List<LifecycleAnnotationProcessor<? super T>> postConstructProcessors = new ArrayList<>();
 		List<LifecycleAnnotationProcessor<? super T>> preDestroyProcessors = new ArrayList<>();
+		List<LifecycleAnnotationProcessor<? super T>> postDestroyProcessors = new ArrayList<>();
 
 		if (applicators != null) {
 			for (PhasedBeanProcessor<? super T> applicator : applicators) {
@@ -82,6 +86,9 @@ final class InjectionProcessors<T> {
 						case PRE_DESTROY:
 							preDestroyProcessors.add(annotationProcessor);
 							break;
+						case POST_DESTROY:
+							postDestroyProcessors.add(annotationProcessor);
+							break;
 					}
 				}
 			}
@@ -91,6 +98,7 @@ final class InjectionProcessors<T> {
 		processors.put(Phase.POST_INJECT, Collections.unmodifiableList(postInjectProcessors));
 		processors.put(Phase.POST_CONSTRUCT, Collections.unmodifiableList(postConstructProcessors));
 		processors.put(Phase.PRE_DESTROY, Collections.unmodifiableList(preDestroyProcessors));
+		processors.put(Phase.POST_DESTROY, Collections.unmodifiableList(postDestroyProcessors));
 
 		return new InjectionProcessors<>(processors);
 	}
@@ -102,6 +110,7 @@ final class InjectionProcessors<T> {
 		List<LifecycleAnnotationProcessor<? super T>> postInjectProcessors = new ArrayList<>();
 		List<LifecycleAnnotationProcessor<? super T>> postConstructProcessors = new ArrayList<>();
 		List<LifecycleAnnotationProcessor<? super T>> preDestroyProcessors = new ArrayList<>();
+		List<LifecycleAnnotationProcessor<? super T>> postDestroyProcessors = new ArrayList<>();
 
 		addBeanProcessorsFromAnnotation(Phase.PRE_CONSTRUCT, clazz, callback,
 				com.mantledillusion.injection.hura.annotation.lifecycle.bean.PreConstruct.class, a -> a.value(), preConstructProcessors);
@@ -123,10 +132,16 @@ final class InjectionProcessors<T> {
 		addAnnotationProcessorsFromAnnotation(Phase.PRE_DESTROY, clazz, callback,
 				com.mantledillusion.injection.hura.annotation.lifecycle.annotation.PreDestroy.class, a -> a.value(), preDestroyProcessors);
 
+		addBeanProcessorsFromAnnotation(Phase.POST_DESTROY, clazz, callback,
+				com.mantledillusion.injection.hura.annotation.lifecycle.bean.PostDestroy.class, a -> a.value(), postDestroyProcessors);
+		addAnnotationProcessorsFromAnnotation(Phase.POST_DESTROY, clazz, callback,
+				com.mantledillusion.injection.hura.annotation.lifecycle.annotation.PostDestroy.class, a -> a.value(), postDestroyProcessors);
+
 		processors.put(Phase.PRE_CONSTRUCT, Collections.unmodifiableList(preConstructProcessors));
 		processors.put(Phase.POST_INJECT, Collections.unmodifiableList(postInjectProcessors));
 		processors.put(Phase.POST_CONSTRUCT, Collections.unmodifiableList(postConstructProcessors));
 		processors.put(Phase.PRE_DESTROY, Collections.unmodifiableList(preDestroyProcessors));
+		processors.put(Phase.POST_DESTROY, Collections.unmodifiableList(postDestroyProcessors));
 
 		return new InjectionProcessors<>(processors);
 	}

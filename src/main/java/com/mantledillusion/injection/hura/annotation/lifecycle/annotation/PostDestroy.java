@@ -11,16 +11,16 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * {@link Annotation} for {@link Annotation}s that need to be called at the
- * {@link Phase#PRE_DESTROY} phase of a bean's life cycle.
+ * {@link Phase#POST_DESTROY} phase of a bean's life cycle.
  */
 @Retention(RUNTIME)
 @Target(ANNOTATION_TYPE)
-public @interface PreDestroy {
+public @interface PostDestroy {
 
 	/**
 	 * The {@link AnnotationProcessor} implementations to instantiate and apply on bean
 	 * instances of a {@link Class} somewhere annotated with an annotation that itself
-	 * is annotated with @{@link PreDestroy}.
+	 * is annotated with @{@link PostDestroy}.
 	 *
 	 * @return The {@link AnnotationProcessor} implementations to inject and
 	 *         execute on a bean; never null, might be empty

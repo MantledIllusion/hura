@@ -34,6 +34,7 @@ public class PhasedProcessedLifecycleInjectableBlueprintTemplate implements Blue
                 PhasedBeanProcessor.of(processor, Phase.PRE_CONSTRUCT),
                 PhasedBeanProcessor.of(processor, Phase.POST_INJECT),
                 PhasedBeanProcessor.of(processor, Phase.POST_CONSTRUCT),
-                PhasedBeanProcessor.of(processor, Phase.PRE_DESTROY));
+                PhasedBeanProcessor.of(processor, Phase.PRE_DESTROY),
+                PhasedBeanProcessor.of(processor, Phase.POST_DESTROY));
     }
 }

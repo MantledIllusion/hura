@@ -55,5 +55,17 @@ public enum Phase {
      * - Bean: <b>YES</b>
      * - {@link com.mantledillusion.injection.hura.Injector.TemporalInjectorCallback}: <b>NO</b>
      */
-    PRE_DESTROY
+    PRE_DESTROY,
+
+    /**
+     * The phase right after the processed bean's end-of-life.
+     * <p>
+     * The bean has been deconstructed at this point, it is not even known to the
+     * {@link com.mantledillusion.injection.hura.Injector} that injected it anymore.
+     * <p>
+     * Availability:<br>
+     * - Bean: <b>YES</b>
+     * - {@link com.mantledillusion.injection.hura.Injector.TemporalInjectorCallback}: <b>NO</b>
+     */
+    POST_DESTROY
 }
