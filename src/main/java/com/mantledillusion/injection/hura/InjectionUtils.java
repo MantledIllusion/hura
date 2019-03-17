@@ -5,6 +5,7 @@ import java.lang.reflect.Executable;
 import java.lang.reflect.Parameter;
 
 import com.mantledillusion.injection.hura.annotation.injection.Inject;
+import com.mantledillusion.injection.hura.annotation.injection.Plugin;
 import com.mantledillusion.injection.hura.annotation.property.Property;
 
 /**
@@ -38,8 +39,8 @@ public final class InjectionUtils {
 	}
 
 	/**
-	 * Checks whether the given {@link AnnotatedElement} is annotated
-	 * with @{@link Inject}.
+	 * Checks whether the given {@link AnnotatedElement} is either annotated
+	 * with @{@link Inject} or @{@link Plugin}.
 	 * 
 	 * @param e
 	 *            The {@link AnnotatedElement} to check; might <b>not</b> be null.
@@ -49,7 +50,7 @@ public final class InjectionUtils {
 		if (e == null) {
 			throw new IllegalArgumentException("Cannot check injectability of a null annotated element.");
 		}
-		return e.isAnnotationPresent(Inject.class);
+		return e.isAnnotationPresent(Inject.class) || e.isAnnotationPresent(Plugin.class);
 	}
 
 	/**

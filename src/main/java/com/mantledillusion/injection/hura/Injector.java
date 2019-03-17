@@ -669,10 +669,6 @@ public class Injector extends InjectionProvider {
 		}
 	}
 
-	private synchronized void releaseReferences() {
-		destroyAll();
-	}
-
 	/**
 	 * Shorthand for calling {@link #destroy(Object)} with all beans that have been
 	 * instantiated by this {@link Injector} at the moment of calling.

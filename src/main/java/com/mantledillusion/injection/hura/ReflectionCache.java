@@ -20,6 +20,7 @@ import com.mantledillusion.essentials.reflection.ConstructorEssentials;
 import com.mantledillusion.essentials.reflection.MethodEssentials;
 import com.mantledillusion.essentials.reflection.TypeEssentials;
 import com.mantledillusion.essentials.reflection.AnnotationEssentials.AnnotationOccurrence;
+import com.mantledillusion.injection.hura.annotation.injection.Plugin;
 import com.mantledillusion.injection.hura.annotation.injection.Qualifier;
 import com.mantledillusion.injection.hura.annotation.injection.SingletonMode;
 import com.mantledillusion.injection.hura.annotation.instruction.Adjust;
@@ -456,7 +457,12 @@ final class ReflectionCache {
 	}
 
 	private static <T> InjectionSettings<T> retrieveInjectionSettings(Class<T> type, AnnotatedElement e) {
-		return InjectionSettings.of(type, e.getAnnotation(Inject.class), e.getAnnotation(Qualifier.class),
-				e.getAnnotation(Optional.class), e.getAnnotation(Adjust.class));
+		if (e.isAnnotationPresent(Inject.class)) {
+			return InjectionSettings.of(type, e.getAnnotation(Inject.class), e.getAnnotation(Qualifier.class),
+					e.getAnnotation(Optional.class), e.getAnnotation(Adjust.class));
+		} else {
+			return InjectionSettings.of(type, e.getAnnotation(Plugin.class),
+					e.getAnnotation(Optional.class), e.getAnnotation(Adjust.class));
+		}
 	}
 }

@@ -1,10 +1,12 @@
 package com.mantledillusion.injection.hura;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import com.mantledillusion.injection.hura.annotation.injection.Plugin;
 import com.mantledillusion.injection.hura.annotation.injection.Qualifier;
 import org.apache.commons.lang3.StringUtils;
 
@@ -67,6 +69,18 @@ final class InjectionSettings<T> {
 	}
 
 	static <T> InjectionSettings<T> of(Class<T> type, Inject inject, Qualifier qualifier, Optional optional, Adjust adjust) {
+		return of(type, qualifier, optional, adjust, inject.overwriteWithNull());
+	}
+
+	static <T> InjectionSettings<T> of(Class<T> type, Plugin plugin, Optional optional, Adjust adjust) {
+		InjectionSettings<T> set = of(type, null, optional, adjust, false);
+
+		set.predefinitions.getTypeAllocations().put(type, new Injector.PluginAllocator<T>(new File(plugin.directory()), plugin.pluginId(), InjectionProcessors.of()));
+
+		return set;
+	}
+
+	private static <T> InjectionSettings<T> of(Class<T> type, Qualifier qualifier, Optional optional, Adjust adjust, boolean overwriteWithNull) {
 		List<Predefinable> predefinables = new ArrayList<>();
 		String singletonQualifier = StringUtils.EMPTY;
 		SingletonMode singletonMode = SingletonMode.SEQUENCE;
@@ -89,7 +103,7 @@ final class InjectionSettings<T> {
 			extensions = Arrays.asList(adjust.extensions());
 		}
 		return new InjectionSettings<>(type, qualifier == null, singletonQualifier, isContext(type),
-				singletonMode, injectionMode, inject.overwriteWithNull(), Blueprint.of(predefinables),
+				singletonMode, injectionMode, overwriteWithNull, Blueprint.of(predefinables),
 				extensions);
 	}
 
