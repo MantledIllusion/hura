@@ -4,17 +4,21 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
-import java.util.stream.StreamSupport;
 
 import com.mantledillusion.cache.hydnora.HydnoraCache;
 import com.mantledillusion.essentials.concurrency.locks.LockIdentifier;
 import com.mantledillusion.injection.hura.exception.PluginException;
-import sun.misc.Ref;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.lang.model.SourceVersion;
+import javax.xml.bind.DatatypeConverter;
 
 final class PluginCache {
 
@@ -28,8 +32,8 @@ final class PluginCache {
 		private final String pluginName;
 		private final int version;
 
-		private PluginId(File directory, String pluginName, int version) {
-			super(pluginName, version);
+		private PluginId(String checksum, File directory, String pluginName, int version) {
+			super(checksum);
 			this.directory = directory;
 			this.pluginName = pluginName;
 			this.version = version;
@@ -45,17 +49,30 @@ final class PluginCache {
 
 		@Override
 		public String toString() {
-			return directory.getAbsolutePath() + "/" + pluginName
-					+ (this.version > 0 ? "_v" + this.version + FILE_EXTENSION_JAR : FILE_EXTENSION_JAR);
+			return toPath(this.directory, this.pluginName + (version > 0 ? "_v" + version : StringUtils.EMPTY));
+		}
+
+		private static String toPath(File directory, String fileName) {
+			return directory.getAbsolutePath() + "/" + fileName + FILE_EXTENSION_JAR;
 		}
 		
 		private static PluginId from(File directory, String fileName) {
+			String checksum = null;
+			try {
+				MessageDigest md = MessageDigest.getInstance("MD5");
+				md.update(Files.readAllBytes(Paths.get(new File(toPath(directory, fileName)).toURI())));
+				byte[] digest = md.digest();
+				checksum = DatatypeConverter.printHexBinary(digest).toUpperCase();
+			} catch (NoSuchAlgorithmException | IOException e) {
+				throw new PluginException("Unable to create hash for plugin '"+fileName+"'", e);
+			}
+
 			if (fileName.matches(".*" + FILE_SUFFIX_VERSION)) {
 				int versionIdx = fileName.lastIndexOf("_v");
-				return new PluginId(directory, fileName.substring(0, versionIdx),
+				return new PluginId(checksum, directory, fileName.substring(0, versionIdx),
 						Integer.parseInt(fileName.substring(versionIdx + 2)));
 			}
-			return new PluginId(directory, fileName, 0);
+			return new PluginId(checksum, directory, fileName, 0);
 		}
 	}
 	
@@ -156,9 +173,9 @@ final class PluginCache {
 				}
 
 				if (id.isVersioned()) {
-					for (int i=id.version-1; i>= 0; i--) {
-						invalidate(new PluginId(id.directory, id.pluginName, i));
-					}
+					invalidate((existingPluginId, existingPlugin) -> existingPluginId.directory.equals(id.directory)
+							&& existingPluginId.pluginName.equals(id.pluginName)
+							&& existingPluginId.version < id.version);
 				}
 				
 				return new Plugin(pluggables);
