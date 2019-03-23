@@ -13,4 +13,12 @@ public class PluginTest extends AbstractInjectionTest {
 
         Assert.assertNotNull(injectable.injectable);
     }
+
+    @Test
+    public void testPluginCaching() {
+        InjectableWithSerializablePlugin injectableA = this.suite.injectInSuiteContext(InjectableWithSerializablePlugin.class);
+        InjectableWithSerializablePlugin injectableB = this.suite.injectInSuiteContext(InjectableWithSerializablePlugin.class);
+
+        Assert.assertSame(injectableA.injectable.getClass(), injectableB.injectable.getClass());
+    }
 }
