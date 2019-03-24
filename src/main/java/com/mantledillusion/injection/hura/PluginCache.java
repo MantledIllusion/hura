@@ -23,6 +23,8 @@ import javax.xml.bind.DatatypeConverter;
 final class PluginCache {
 
 	private static final String SPI_DIR = "META-INF/services/";
+	private static final String REGEX_PLUGINID_JAR = ".+\\.jar";
+	private static final String REGEX_PLUGINID_VERSION = ".+_v\\d+";
 	private static final String FILE_EXTENSION_JAR = ".jar";
 	private static final String FILE_SUFFIX_VERSION = "_v[1-9][0-9]*";
 
@@ -175,7 +177,7 @@ final class PluginCache {
 				if (id.isVersioned()) {
 					invalidate((existingPluginId, existingPlugin) -> existingPluginId.directory.equals(id.directory)
 							&& existingPluginId.pluginName.equals(id.pluginName)
-							&& existingPluginId.version < id.version);
+							&& existingPluginId.version <= id.version);
 				}
 				
 				return new Plugin(pluggables);
@@ -199,20 +201,20 @@ final class PluginCache {
 	}
 
 	static <T, T2 extends T> Class<T2> findPluggable(File directory, String pluginId, Class<T> spiType) {
-	    if (spiType.getClassLoader() instanceof PluginClassLoader) {
+	    if (pluginId.matches(REGEX_PLUGINID_JAR)) {
+			throw new PluginException("Cannot load a plugin for the SPI '" + spiType.getName()
+					+ "'; the pluginId '" + pluginId + "' ends with a " + FILE_EXTENSION_JAR
+					+ " extension, which has to be appended automatically by the plugin loader");
+		} else if (pluginId.matches(REGEX_PLUGINID_VERSION)) {
+			throw new PluginException("Cannot load a plugin for the SPI '" + spiType.getName()
+					+ "'; the pluginId '" + pluginId + "' ends with a version, but plugins "
+					+ "should always be requested in unversioned manner");
+		} else if (spiType.getClassLoader() instanceof PluginClassLoader) {
 	        throw new PluginException("Cannot load a plugin for the SPI '" + spiType.getName()
                     + "'; the type originates from a plugin itself and plugins cannot be chained");
         }
 
-		PluginId requiredPlugin = PluginId.from(directory, pluginId);
-
 		PluginId foundPlugin = null;
-		if (requiredPlugin.isVersioned()) {
-			throw new PluginException("Cannot load a specific version of a plugin (requested: plugin '"
-					+ requiredPlugin.pluginName + "' version " + requiredPlugin.version
-					+ "); plugins should always be requested in unversioned manner.");
-		}
-
 		for (File file : directory
 				.listFiles((dir, name) -> name.startsWith(pluginId) && name.endsWith(FILE_EXTENSION_JAR))) {
 			String fileName = file.getName();
