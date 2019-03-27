@@ -5,9 +5,7 @@ import com.mantledillusion.injection.hura.Predefinable;
 import com.mantledillusion.injection.hura.exception.PluginException;
 import com.mantledillusion.injection.hura.plugin.injectables.*;
 import com.mantledillusion.injection.hura.plugin.misc.ParsedInjectable;
-import com.mantledillusion.injection.hura.plugin.uninjectables.UninjectableWithJarExtensionPlugin;
-import com.mantledillusion.injection.hura.plugin.uninjectables.UninjectableWithThirdPartyPlugin;
-import com.mantledillusion.injection.hura.plugin.uninjectables.UninjectableWithVersionedPlugin;
+import com.mantledillusion.injection.hura.plugin.uninjectables.*;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -20,6 +18,11 @@ public class PluginTest extends AbstractInjectionTest {
         InjectableWithInjectableInterfacePlugin injectable = this.suite.injectInSuiteContext(InjectableWithInjectableInterfacePlugin.class);
 
         Assert.assertNotNull(injectable.injectable);
+    }
+
+    @Test(expected = PluginException.class)
+    public void testInjectUnknownPlugin() {
+        this.suite.injectInSuiteContext(UninjectableWithUnknownPlugin.class);
     }
 
     @Test
@@ -87,5 +90,40 @@ public class PluginTest extends AbstractInjectionTest {
         InjectableWithPluginBeanInjectedPlugin injectable = this.suite.injectInSuiteContext(InjectableWithPluginBeanInjectedPlugin.class);
 
         Assert.assertNotNull(injectable.injectable.getBean());
+    }
+
+    @Test(expected = PluginException.class)
+    public void testMissingTypeBinding() {
+        this.suite.injectInRootContext(UninjectableWithMissingTypeBindingPlugin.class);
+    }
+
+    @Test(expected = PluginException.class)
+    public void testDuplicateTypeBinding() {
+        this.suite.injectInRootContext(UninjectableWithDuplicateTypeBindingPlugin.class);
+    }
+
+    @Test(expected = PluginException.class)
+    public void testMetaInvalidSpiClass() {
+        this.suite.injectInRootContext(UninjectableWithInvalidSpiClassPlugin.class);
+    }
+
+    @Test(expected = PluginException.class)
+    public void testMetaUnknownSpiClass() {
+        this.suite.injectInRootContext(UninjectableWithUnknownSpiClassPlugin.class);
+    }
+
+    @Test(expected = PluginException.class)
+    public void testMetaInvalidServiceProviderClass() {
+        this.suite.injectInRootContext(UninjectableWithInvalidServiceProviderClassPlugin.class);
+    }
+
+    @Test(expected = PluginException.class)
+    public void testMetaUnknownServiceProviderClass() {
+        this.suite.injectInRootContext(UninjectableWithUnknownServiceProviderClassPlugin.class);
+    }
+
+    @Test(expected = PluginException.class)
+    public void testMetaUnassignableServiceProvider() {
+        this.suite.injectInRootContext(UninjectableWithUnassignableServiceProviderPlugin.class);
     }
 }

@@ -102,6 +102,10 @@ final class PluginCache {
 
 	private static final class PluggableCache extends HydnoraCache<Plugin, PluginId> {
 
+		private PluggableCache() {
+			setWrapRuntimeExceptions(false);
+		}
+
 		@SuppressWarnings("unchecked")
 		private <T> Class<T> retrieve(PluginId id, Class<? super T> spiType) {
 			return get(id, plugin -> {
