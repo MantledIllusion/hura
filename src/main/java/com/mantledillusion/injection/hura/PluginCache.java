@@ -18,7 +18,6 @@ import com.mantledillusion.injection.hura.exception.PluginException;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.lang.model.SourceVersion;
-import javax.xml.bind.DatatypeConverter;
 
 final class PluginCache {
 
@@ -63,8 +62,11 @@ final class PluginCache {
 			try {
 				MessageDigest md = MessageDigest.getInstance("MD5");
 				md.update(Files.readAllBytes(Paths.get(new File(toPath(directory, fileName)).toURI())));
-				byte[] digest = md.digest();
-				checksum = DatatypeConverter.printHexBinary(digest).toUpperCase();
+				StringBuilder sb = new StringBuilder();
+				for (byte b : md.digest()) {
+					sb.append(String.format("%02x", b));
+				}
+				checksum = sb.toString().toUpperCase();
 			} catch (NoSuchAlgorithmException | IOException e) {
 				throw new PluginException("Unable to create hash for plugin '"+fileName+"'", e);
 			}
