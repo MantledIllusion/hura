@@ -10,6 +10,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
 
+import com.mantledillusion.injection.hura.annotation.instruction.Adjust;
 import com.mantledillusion.injection.hura.annotation.instruction.Optional;
 import com.mantledillusion.injection.hura.annotation.lifecycle.annotation.PreConstruct;
 
@@ -32,6 +33,7 @@ import com.mantledillusion.injection.hura.Predefinable.Singleton;
  * <ul>
  * <li>@{@link Qualifier}</li>
  * <li>@{@link Optional}</li>
+ * <li>@{@link Adjust}</li>
  * </ul>
  */
 @Retention(RUNTIME)

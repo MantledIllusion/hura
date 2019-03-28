@@ -54,7 +54,7 @@ public @interface Adjust {
 	/**
 	 * Defines a {@link Property}.
 	 */
-	public @interface PropertyDef {
+	@interface PropertyDef {
 
 		/**
 		 * Returns the key of the {@link Property}.
@@ -74,7 +74,7 @@ public @interface Adjust {
 	/**
 	 * Defines a {@link Mapping}.
 	 */
-	public @interface MappingDef {
+	@interface MappingDef {
 
 		/**
 		 * The qualifier that is mapped. Singleton references to this mapping base ID
@@ -126,8 +126,6 @@ public @interface Adjust {
 	 * <p>
 	 * Note that if any of the {@link #extensions()} define a {@link Mapping} of the
 	 * same qualifier/mode pair, the {@link Mapping} defined here overrides it.
-	 * <p>
-	 * 
 	 * 
 	 * @return The {@link Mapping}s to adjust with; might be null or contain nulls,
 	 *         both is ignored
