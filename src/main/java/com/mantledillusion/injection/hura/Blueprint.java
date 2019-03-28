@@ -234,39 +234,7 @@ public class Blueprint {
 	private static void addPredefinables(Blueprint blueprint, Collection<Predefinable> predefinables) {
 		if (predefinables != null) {
 			for (Predefinable predefinable : predefinables) {
-				if (predefinable != null) {
-					if (predefinable instanceof Property) {
-						Property property = (Property) predefinable;
-						String propertyKey = property.getKey();
-						if (blueprint.propertyAllocations.containsKey(propertyKey)) {
-							throw new IllegalArgumentException(
-									"There were 2 or more property values defined for the key '" + propertyKey + "'; '"
-											+ blueprint.propertyAllocations.get(propertyKey) + "' and '"
-											+ property.getValue() + "'");
-						}
-						blueprint.propertyAllocations.put(propertyKey, property.getValue());
-					} else if (predefinable instanceof Singleton) {
-						Singleton singleton = (Singleton) predefinable;
-						String qualifier = singleton.getQualifier();
-						if (blueprint.singletonAllocations.containsKey(qualifier)) {
-							throw new IllegalArgumentException(
-									"There were 2 or more beans defined for the qualifier '" + qualifier + "'");
-						}
-						blueprint.singletonAllocations.put(singleton.getQualifier(), singleton.getAllocator());
-					}
-					if (predefinable instanceof Mapping) {
-						Mapping mapping = (Mapping) predefinable;
-						SingletonMode mappingMode = mapping.getMode();
-						String mappingBase = mapping.getBase();
-						if (blueprint.mappingAllocations.get(mappingMode).containsKey(mappingBase)) {
-							throw new IllegalArgumentException("There were 2 or more '" + mappingMode.name()
-									+ "' singleton mapping targets defined for the mapping base '" + mappingBase
-									+ "'; '" + blueprint.propertyAllocations.get(mappingBase) + "' and '"
-									+ mapping.getTarget() + "'");
-						}
-						blueprint.mappingAllocations.get(mappingMode).put(mappingBase, mapping.getTarget());
-					}
-				}
+				define(predefinable, blueprint);
 			}
 		}
 	}
@@ -377,16 +345,38 @@ public class Blueprint {
 	}
 
 	private static void define(Predefinable predefinable, Blueprint blueprint) {
-		if (predefinable instanceof Property) {
-			Property property = (Property) predefinable;
-			blueprint.propertyAllocations.put(property.getKey(), property.getValue());
-		} else if (predefinable instanceof Singleton) {
-			Singleton singleton = (Singleton) predefinable;
-			blueprint.singletonAllocations.put(singleton.getQualifier(), singleton.getAllocator());
-		} else if (predefinable instanceof Mapping) {
-			Mapping mapping = (Mapping) predefinable;
-			blueprint.mappingAllocations.get(mapping.getMode()).put(mapping.getBase(),
-					mapping.getTarget());
+		if (predefinable != null) {
+			if (predefinable instanceof Property) {
+				Property property = (Property) predefinable;
+				String propertyKey = property.getKey();
+				if (blueprint.propertyAllocations.containsKey(propertyKey)) {
+					throw new IllegalArgumentException(
+							"There were 2 or more property values defined for the key '" + propertyKey + "'; '"
+									+ blueprint.propertyAllocations.get(propertyKey) + "' and '"
+									+ property.getValue() + "'");
+				}
+				blueprint.propertyAllocations.put(propertyKey, property.getValue());
+			} else if (predefinable instanceof Singleton) {
+				Singleton singleton = (Singleton) predefinable;
+				String qualifier = singleton.getQualifier();
+				if (blueprint.singletonAllocations.containsKey(qualifier)) {
+					throw new IllegalArgumentException(
+							"There were 2 or more beans defined for the qualifier '" + qualifier + "'");
+				}
+				blueprint.singletonAllocations.put(singleton.getQualifier(), singleton.getAllocator());
+			}
+			if (predefinable instanceof Mapping) {
+				Mapping mapping = (Mapping) predefinable;
+				SingletonMode mappingMode = mapping.getMode();
+				String mappingBase = mapping.getBase();
+				if (blueprint.mappingAllocations.get(mappingMode).containsKey(mappingBase)) {
+					throw new IllegalArgumentException("There were 2 or more '" + mappingMode.name()
+							+ "' singleton mapping targets defined for the mapping base '" + mappingBase
+							+ "'; '" + blueprint.propertyAllocations.get(mappingBase) + "' and '"
+							+ mapping.getTarget() + "'");
+				}
+				blueprint.mappingAllocations.get(mappingMode).put(mappingBase, mapping.getTarget());
+			}
 		}
 	}
 }
