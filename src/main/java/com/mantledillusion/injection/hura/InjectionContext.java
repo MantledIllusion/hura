@@ -9,7 +9,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import com.mantledillusion.injection.hura.Injector.SelfSustaningProcessor;
+import com.mantledillusion.injection.hura.Injector.SelfSustainingProcessor;
 import com.mantledillusion.injection.hura.exception.InjectionException;
 import com.mantledillusion.injection.hura.exception.ProcessorException;
 
@@ -19,14 +19,14 @@ class InjectionContext {
 	
 	static class GlobalInjectionContext extends InjectionContext {
 
-		private final Map<String, List<SelfSustaningProcessor>> destroyables = new HashMap<>();
+		private final Map<String, List<SelfSustainingProcessor>> destroyables = new HashMap<>();
 
 		GlobalInjectionContext(ResolvingContext resolvingContext, MappingContext mappingContext, TypeContext typeContext) {
 			super(new Object(), resolvingContext, mappingContext, typeContext);
 		}
 
 		<T> void addGlobalSingleton(String qualifier, T instance, List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> destroyers) {
-			List<SelfSustaningProcessor> destroyables = new ArrayList<>();
+			List<SelfSustainingProcessor> destroyables = new ArrayList<>();
 			for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> destroyer : destroyers) {
 				destroyables.add(() -> destroyer.process(instance, null));
 			}
@@ -35,11 +35,11 @@ class InjectionContext {
 		}
 
 		void destroy() {
-			Iterator<Entry<String, List<SelfSustaningProcessor>>> iter = this.destroyables.entrySet().iterator();
+			Iterator<Entry<String, List<SelfSustainingProcessor>>> iter = this.destroyables.entrySet().iterator();
 			while (iter.hasNext()) {
-				Entry<String, List<SelfSustaningProcessor>> entry = iter.next();
+				Entry<String, List<SelfSustainingProcessor>> entry = iter.next();
 				try {
-					for (SelfSustaningProcessor destroyable : entry.getValue()) {
+					for (SelfSustainingProcessor destroyable : entry.getValue()) {
 						destroyable.process();
 					}
 					super.removeSingleton(entry.getKey());

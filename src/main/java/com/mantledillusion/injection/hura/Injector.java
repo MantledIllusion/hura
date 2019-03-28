@@ -272,7 +272,7 @@ public class Injector extends InjectionProvider {
 		}
 	}
 
-	interface SelfSustaningProcessor {
+	interface SelfSustainingProcessor {
 
 		void process() throws Exception;
 	}
@@ -283,7 +283,7 @@ public class Injector extends InjectionProvider {
 	private final MappingContext mappingContext;
 	private final TypeContext typeContext;
 
-	private final IdentityHashMap<Object, Map<Phase, List<SelfSustaningProcessor>>> beans = new IdentityHashMap<>();
+	private final IdentityHashMap<Object, Map<Phase, List<SelfSustainingProcessor>>> beans = new IdentityHashMap<>();
 
 	@Construct
 	private Injector(
@@ -340,7 +340,7 @@ public class Injector extends InjectionProvider {
 
 			instance = instantiate(chain, settings);
 
-			Map<Phase, List<SelfSustaningProcessor>> destroyables = new HashMap<>();
+			Map<Phase, List<SelfSustainingProcessor>> destroyables = new HashMap<>();
 			destroyables.put(Phase.PRE_DESTROY, chain.getPreDestroyables());
 			destroyables.put(Phase.POST_DESTROY, chain.getPostDestroyables());
 
@@ -350,7 +350,7 @@ public class Injector extends InjectionProvider {
 			chain.clearHook();
 
 			int failingDestructionCount = 0;
-			for (SelfSustaningProcessor destroyable : chain.getPreDestroyables()) {
+			for (SelfSustainingProcessor destroyable : chain.getPreDestroyables()) {
 				try {
 					destroyable.process();
 				} catch (Exception e1) {
@@ -359,7 +359,7 @@ public class Injector extends InjectionProvider {
 					// be a consequence.
 				}
 			}
-			for (SelfSustaningProcessor destroyable : chain.getPostDestroyables()) {
+			for (SelfSustainingProcessor destroyable : chain.getPostDestroyables()) {
 				try {
 					destroyable.process();
 				} catch (Exception e1) {
@@ -382,18 +382,14 @@ public class Injector extends InjectionProvider {
 
 	}
 
-	private void finalize(List<SelfSustaningProcessor> finalizables) {
+	private void finalize(List<SelfSustainingProcessor> finalizables) {
 		Collections.reverse(finalizables);
-		for (SelfSustaningProcessor finalizable : finalizables) {
-			finalize(finalizable);
-		}
-	}
-
-	private void finalize(SelfSustaningProcessor finalizable) {
-		try {
-			finalizable.process();
-		} catch (Exception e) {
-			throw new ProcessorException("Unable to finalize; the processing threw an exception", e);
+		for (SelfSustainingProcessor finalizable : finalizables) {
+			try {
+				finalizable.process();
+			} catch (Exception e) {
+				throw new ProcessorException("Unable to finalize; the processing threw an exception", e);
+			}
 		}
 	}
 
@@ -658,7 +654,7 @@ public class Injector extends InjectionProvider {
 	 */
 	public void destroy(Object rootBean) {
 		if (this.beans.containsKey(rootBean)) {
-			Map<Phase, List<SelfSustaningProcessor>> destroyers = this.beans.get(rootBean);
+			Map<Phase, List<SelfSustainingProcessor>> destroyers = this.beans.get(rootBean);
 			destroy(rootBean, destroyers.get(Phase.PRE_DESTROY));
 			this.beans.remove(rootBean);
 			destroy(rootBean, destroyers.get(Phase.POST_DESTROY));
@@ -674,11 +670,11 @@ public class Injector extends InjectionProvider {
 	 * instantiated by this {@link Injector} at the moment of calling.
 	 */
 	public void destroyAll() {
-		Iterator<Entry<Object, Map<Phase, List<SelfSustaningProcessor>>>> beanIter = this.beans.entrySet().iterator();
+		Iterator<Entry<Object, Map<Phase, List<SelfSustainingProcessor>>>> beanIter = this.beans.entrySet().iterator();
 		while (beanIter.hasNext()) {
-			Entry<Object, Map<Phase, List<SelfSustaningProcessor>>> entry = beanIter.next();
+			Entry<Object, Map<Phase, List<SelfSustainingProcessor>>> entry = beanIter.next();
 			Object bean = entry.getKey();
-			Map<Phase, List<SelfSustaningProcessor>> destroyers = entry.getValue();
+			Map<Phase, List<SelfSustainingProcessor>> destroyers = entry.getValue();
 
 			destroy(bean, destroyers.get(Phase.PRE_DESTROY));
 			beanIter.remove();
@@ -686,8 +682,8 @@ public class Injector extends InjectionProvider {
 		}
 	}
 
-	private void destroy(Object bean, List<SelfSustaningProcessor> destroyables) {
-		for (SelfSustaningProcessor destroyable : destroyables) {
+	private void destroy(Object bean, List<SelfSustainingProcessor> destroyables) {
+		for (SelfSustainingProcessor destroyable : destroyables) {
 			try {
 				destroyable.process();
 			} catch (Exception e) {

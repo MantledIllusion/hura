@@ -1,7 +1,5 @@
 package com.mantledillusion.injection.hura.injection;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -13,6 +11,7 @@ import com.mantledillusion.injection.hura.singleton.injectables.InjectableWithEx
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
+import com.mantledillusion.injection.hura.Blueprint.BlueprintTemplate;
 import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
 import com.mantledillusion.injection.hura.Blueprint.TypedBlueprintTemplate;
 import com.mantledillusion.injection.hura.Predefinable.Singleton;
@@ -34,10 +33,15 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 		
 		assertTrue(injectable.wiredField != null);
 	}
-	
+
 	@Test(expected=IllegalArgumentException.class)
 	public void testNullBlueprintCreation() {
-		TypedBlueprint.from(null);
+		TypedBlueprint.from((BlueprintTemplate) null);
+	}
+	
+	@Test(expected=IllegalArgumentException.class)
+	public void testNullTypedBlueprintCreation() {
+		TypedBlueprint.from((TypedBlueprintTemplate<?>) null);
 	}
 	
 	@Test(expected=BlueprintException.class)

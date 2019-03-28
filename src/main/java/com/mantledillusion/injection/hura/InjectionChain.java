@@ -14,7 +14,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.mantledillusion.injection.hura.InjectionContext.GlobalInjectionContext;
 import com.mantledillusion.injection.hura.Injector.AbstractAllocator;
-import com.mantledillusion.injection.hura.Injector.SelfSustaningProcessor;
+import com.mantledillusion.injection.hura.Injector.SelfSustainingProcessor;
 import com.mantledillusion.injection.hura.Injector.TemporalInjectorCallback;
 import com.mantledillusion.injection.hura.annotation.injection.SingletonMode;
 import com.mantledillusion.injection.hura.exception.InjectionException;
@@ -103,17 +103,17 @@ final class InjectionChain {
 	private final Constructor<?> dependencyConstructor;
 
 	// Processability
-	private final List<SelfSustaningProcessor> postConstructables;
-	private final List<SelfSustaningProcessor> preDestroyables;
-	private final List<SelfSustaningProcessor> postDestroyables;
+	private final List<SelfSustainingProcessor> postConstructables;
+	private final List<SelfSustainingProcessor> preDestroyables;
+	private final List<SelfSustainingProcessor> postDestroyables;
 
 	private InjectionChain(InjectionContext context, ResolvingContext resolvingContext, MappingContext mappingContext,
-			TypeContext typeContext,
-			Map<String, AbstractAllocator<?>> sequenceSingletonAllocations,
-			Map<String, AbstractAllocator<?>> globalSingletonAllocations, ChainLock chainLock,
-			LinkedHashSet<Constructor<?>> constructorChain, DependencyContext dependency,
-			Constructor<?> dependencyConstructor, List<SelfSustaningProcessor> postConstructables,
-			List<SelfSustaningProcessor> preDestroyables, List<SelfSustaningProcessor> postDestroyables) {
+                           TypeContext typeContext,
+                           Map<String, AbstractAllocator<?>> sequenceSingletonAllocations,
+                           Map<String, AbstractAllocator<?>> globalSingletonAllocations, ChainLock chainLock,
+                           LinkedHashSet<Constructor<?>> constructorChain, DependencyContext dependency,
+                           Constructor<?> dependencyConstructor, List<SelfSustainingProcessor> postConstructables,
+                           List<SelfSustainingProcessor> preDestroyables, List<SelfSustainingProcessor> postDestroyables) {
 		this.context = context;
 		this.resolvingContext = resolvingContext;
 		this.mappingContext = mappingContext;
@@ -321,27 +321,27 @@ final class InjectionChain {
 	}
 
 	// Processables
-	void addPostConstructables(SelfSustaningProcessor postConstructable) {
+	void addPostConstructables(SelfSustainingProcessor postConstructable) {
 		this.postConstructables.add(postConstructable);
 	}
 
-	List<SelfSustaningProcessor> getPostConstructables() {
+	List<SelfSustainingProcessor> getPostConstructables() {
 		return this.postConstructables;
 	}
 
-	void addPreDestoryable(SelfSustaningProcessor destroyable) {
+	void addPreDestoryable(SelfSustainingProcessor destroyable) {
 		this.preDestroyables.add(destroyable);
 	}
 
-	List<SelfSustaningProcessor> getPreDestroyables() {
+	List<SelfSustainingProcessor> getPreDestroyables() {
 		return this.preDestroyables;
 	}
 
-	void addPostDestoryable(SelfSustaningProcessor destroyable) {
+	void addPostDestoryable(SelfSustainingProcessor destroyable) {
 		this.postDestroyables.add(destroyable);
 	}
 
-	List<SelfSustaningProcessor> getPostDestroyables() {
+	List<SelfSustainingProcessor> getPostDestroyables() {
 		return this.postDestroyables;
 	}
 }

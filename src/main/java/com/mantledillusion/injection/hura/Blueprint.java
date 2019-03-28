@@ -102,7 +102,7 @@ public class Blueprint {
 	 *            using a processed {@link TypedBlueprint} instance of this
 	 *            {@link TypedBlueprintTemplate} on an {@link Injector}.
 	 */
-	public interface TypedBlueprintTemplate<T> extends BlueprintTemplate {
+	public interface TypedBlueprintTemplate<T> {
 
 		/**
 		 * Returns the root {@link Class} this {@link TypedBlueprintTemplate} can be
@@ -315,7 +315,7 @@ public class Blueprint {
 		return blueprint;
 	}
 
-	private static void buildAllocations(BlueprintTemplate template, Blueprint blueprint) {
+	private static void buildAllocations(Object template, Blueprint blueprint) {
 		for (Method m : ReflectionCache.getMethodsAnnotatedWith(template.getClass(), Define.class)) {
 			Map<TypeVariable<?>, Type> collectionGenericType = TypeUtils.getTypeArguments(m.getGenericReturnType(),
 					Collection.class);
