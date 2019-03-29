@@ -37,9 +37,9 @@
 		<!-- maven dependency versions -->
 		<hydnora.version>1.2.0</hydnora.version>
 		<essentials.reflection.version>1.1.0</essentials.reflection.version>
-		<org.apache.commons.lang.version>3.7</org.apache.commons.lang.version>
-		<org.apache.commons.collections.version>4.1</org.apache.commons.collections.version>
-		<slf4j.version>1.7.25</slf4j.version>
+		<org.apache.commons.lang.version>3.8.1</org.apache.commons.lang.version>
+		<org.apache.commons.collections.version>4.3</org.apache.commons.collections.version>
+		<slf4j.version>1.7.26</slf4j.version>
 		<junit.version>4.12</junit.version>
 	</properties>
 
@@ -107,7 +107,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.7.0</version>
+				<version>3.8.0</version>
 				<configuration>
 					<source>${java.compiler.version}</source>
 					<target>${java.compiler.version}</target>
@@ -129,7 +129,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.0.0</version>
+				<version>3.1.0</version>
 				<executions>
 					<execution>
 						<id>attach-javadocs</id>
