@@ -22,10 +22,8 @@ import com.mantledillusion.essentials.reflection.TypeEssentials;
 import com.mantledillusion.essentials.reflection.AnnotationEssentials.AnnotationOccurrence;
 import com.mantledillusion.injection.hura.annotation.injection.Plugin;
 import com.mantledillusion.injection.hura.annotation.injection.Qualifier;
-import com.mantledillusion.injection.hura.annotation.injection.SingletonMode;
 import com.mantledillusion.injection.hura.annotation.instruction.Adjust;
 import com.mantledillusion.injection.hura.annotation.instruction.Construct;
-import com.mantledillusion.injection.hura.annotation.instruction.Context;
 import com.mantledillusion.injection.hura.annotation.property.DefaultValue;
 import com.mantledillusion.injection.hura.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.annotation.property.Matches;
@@ -340,16 +338,6 @@ final class ReflectionCache {
 					}
 
 					InjectionSettings<?> fieldSet = retrieveInjectionSettings(field.getType(), field);
-
-					if (fieldSet.isContext && !fieldSet.isIndependent
-							&& fieldSet.singletonMode == SingletonMode.GLOBAL) {
-						throw new InjectionException("The type " + field.getType().getSimpleName() + " is "
-								+ Context.class.getSimpleName()
-								+ " annotated, which makes it a context sensitive type that cannot be injected as "
-								+ "a global singleton itself. Nevertheless, it is used as such at the field '"
-								+ field.getName() + "' in the type '" + field.getDeclaringClass().getSimpleName()
-								+ "'.");
-					}
 
 					fields.add(new InjectableField(field, fieldSet));
 				}

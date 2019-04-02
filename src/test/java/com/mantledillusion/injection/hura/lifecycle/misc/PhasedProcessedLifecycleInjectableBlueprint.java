@@ -7,7 +7,7 @@ import com.mantledillusion.injection.hura.annotation.lifecycle.bean.BeanProcesso
 import com.mantledillusion.injection.hura.lifecycle.injectables.AbstractLifecycleInjectable;
 import com.mantledillusion.injection.hura.lifecycle.injectables.PhasedProcessedLifecycleInjectable;
 
-public class PhasedProcessedLifecycleInjectableBlueprintTemplate implements Blueprint.TypedBlueprintTemplate<PhasedProcessedLifecycleInjectable> {
+public class PhasedProcessedLifecycleInjectableBlueprint implements Blueprint {
 
     private class PhasedProcessedLifecycleInjectableProcessor implements BeanProcessor<PhasedProcessedLifecycleInjectable> {
 
@@ -17,20 +17,15 @@ public class PhasedProcessedLifecycleInjectableBlueprintTemplate implements Blue
         }
     }
 
-    @Override
-    public Class<PhasedProcessedLifecycleInjectable> getRootType() {
-        return PhasedProcessedLifecycleInjectable.class;
+    @Define
+    public Blueprint.PropertyAllocation defineProperty() {
+        return Blueprint.PropertyAllocation.of(AbstractLifecycleInjectable.IMPL_PROPERTY_KEY, PhasedProcessedLifecycleInjectable.class.getName());
     }
 
     @Define
-    public Predefinable.Property defineProperty() {
-        return Predefinable.Property.of(AbstractLifecycleInjectable.IMPL_PROPERTY_KEY, PhasedProcessedLifecycleInjectable.class.getName());
-    }
-
-    @Define
-    public BeanAllocation<PhasedProcessedLifecycleInjectable> allocate() {
+    public Blueprint.TypeAllocation allocate() {
         PhasedProcessedLifecycleInjectableProcessor processor = new PhasedProcessedLifecycleInjectableProcessor();
-        return BeanAllocation.allocateToType(PhasedProcessedLifecycleInjectable.class,
+        return Blueprint.TypeAllocation.allocateToType(PhasedProcessedLifecycleInjectable.class, PhasedProcessedLifecycleInjectable.class,
                 PhasedBeanProcessor.of(processor, Phase.PRE_CONSTRUCT),
                 PhasedBeanProcessor.of(processor, Phase.POST_INJECT),
                 PhasedBeanProcessor.of(processor, Phase.POST_CONSTRUCT),

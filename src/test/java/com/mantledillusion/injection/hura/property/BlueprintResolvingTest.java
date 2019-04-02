@@ -1,10 +1,7 @@
 package com.mantledillusion.injection.hura.property;
 
 import com.mantledillusion.injection.hura.*;
-import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
-import com.mantledillusion.injection.hura.Blueprint.TypedBlueprintTemplate;
-import com.mantledillusion.injection.hura.Predefinable.Property;
-import com.mantledillusion.injection.hura.Predefinable.Singleton;
+import com.mantledillusion.injection.hura.Blueprint.PropertyAllocation;
 import com.mantledillusion.injection.hura.annotation.instruction.Define;
 import com.mantledillusion.injection.hura.property.injectables.InjectableWithProperty;
 import com.mantledillusion.injection.hura.property.injectables.InjectableWithPropertyAndSingleton;
@@ -22,18 +19,13 @@ public class BlueprintResolvingTest extends AbstractInjectionTest {
 	public void testBlueprintPropertyDefinition() {
 		String propertyValue = "value";
 		
-		InjectableWithProperty injectable = this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<InjectableWithProperty>() {
-
-			@Override
-			public Class<InjectableWithProperty> getRootType() {
-				return InjectableWithProperty.class;
-			}
+		InjectableWithProperty injectable = this.suite.injectInSuiteContext(InjectableWithProperty.class, new Blueprint() {
 			
 			@Define
-			public Property propertyDefinitionMethod() {
-				return Property.of("property.key", propertyValue);
+			public PropertyAllocation propertyDefinitionMethod() {
+				return PropertyAllocation.of("property.key", propertyValue);
 			}
-		}));
+		});
 		
 		assertEquals(propertyValue, injectable.propertyValue);
 	}
@@ -43,18 +35,13 @@ public class BlueprintResolvingTest extends AbstractInjectionTest {
 		String propertyValue = "value";
 		String singleton = "singleton";
 		
-		InjectableWithPropertyAndSingleton injectable = this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<InjectableWithPropertyAndSingleton>() {
-
-			@Override
-			public Class<InjectableWithPropertyAndSingleton> getRootType() {
-				return InjectableWithPropertyAndSingleton.class;
-			}
+		InjectableWithPropertyAndSingleton injectable = this.suite.injectInSuiteContext(InjectableWithPropertyAndSingleton.class, new Blueprint() {
 			
 			@Define
-			public Set<Predefinable> propertyDefinitionMethod() {
-				return new HashSet<>(Arrays.asList(Property.of("property.key", propertyValue), Singleton.of("qualifier", singleton)));
+			public Set<Blueprint.Allocation> propertyDefinitionMethod() {
+				return new HashSet<>(Arrays.asList(PropertyAllocation.of("property.key", propertyValue), Blueprint.SingletonAllocation.of("qualifier", singleton)));
 			}
-		}));
+		});
 		
 		assertEquals(propertyValue, injectable.propertyValue);
 		assertSame(singleton, injectable.singleton);
@@ -62,21 +49,11 @@ public class BlueprintResolvingTest extends AbstractInjectionTest {
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testMultiplePropertyRootInjectorDefinition() {
-		Injector.of(Property.of("key", "a"), Property.of("key", "b"));
+		Injector.of(PropertyAllocation.of("key", "a"), PropertyAllocation.of("key", "b"));
 	}
 	
 	@Test(expected=IllegalArgumentException.class)
 	public void testMultiplePropertyBlueprintDefinition() {
-		Blueprint.of(Property.of("key", "a"), Property.of("key", "b"));
-	}
-	
-	@Test(expected=IllegalArgumentException.class)
-	public void testMultipleSingletonRootInjectorDefinition() {
-		Injector.of(Singleton.of("id", "a"), Singleton.of("id", "b"));
-	}
-	
-	@Test(expected=IllegalArgumentException.class)
-	public void testMultipleSingletonBlueprintDefinition() {
-		Blueprint.of(Singleton.of("id", "a"), Singleton.of("id", "b"));
+		Injector.of(PropertyAllocation.of("key", "a"), PropertyAllocation.of("key", "b"));
 	}
 }

@@ -1,7 +1,7 @@
 package com.mantledillusion.injection.hura.plugin;
 
 import com.mantledillusion.injection.hura.AbstractInjectionTest;
-import com.mantledillusion.injection.hura.Predefinable;
+import com.mantledillusion.injection.hura.Blueprint;
 import com.mantledillusion.injection.hura.exception.PluginException;
 import com.mantledillusion.injection.hura.plugin.injectables.*;
 import com.mantledillusion.injection.hura.plugin.misc.ParsedInjectable;
@@ -73,7 +73,7 @@ public class PluginTest extends AbstractInjectionTest {
     @Test
     public void testPluginParsing() {
         InjectableWithParsedPlugin injectable = this.suite.injectInSuiteContext(InjectableWithParsedPlugin.class,
-                Predefinable.Property.of(ParsedInjectable.PROPERTY_KEY, DEFAULT_PROPERTY));
+                Blueprint.PropertyAllocation.of(ParsedInjectable.PROPERTY_KEY, DEFAULT_PROPERTY));
 
         Assert.assertEquals(DEFAULT_PROPERTY, injectable.injectable.getProperty());
     }

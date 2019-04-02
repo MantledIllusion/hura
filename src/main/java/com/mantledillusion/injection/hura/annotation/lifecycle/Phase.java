@@ -1,6 +1,6 @@
 package com.mantledillusion.injection.hura.annotation.lifecycle;
 
-import com.mantledillusion.injection.hura.Predefinable;
+import com.mantledillusion.injection.hura.Blueprint;
 
 /**
  * Describes phases of a bean's lifecycle that are significant for its dependency injection.
@@ -19,7 +19,7 @@ public enum Phase {
     PRE_CONSTRUCT,
 
     /**
-     * The phase where the bean has been constructed, {@link Predefinable.Property}s
+     * The phase where the bean has been constructed, {@link Blueprint.PropertyAllocation}s
      * have been parsed and all sub beans have been injected.
      * <p>
      * The bean is fully initialized at this point, in a sense that it can now be
@@ -32,7 +32,7 @@ public enum Phase {
     POST_INJECT,
 
     /**
-     * The phase where the bean has been constructed, {@link Predefinable.Property}s
+     * The phase where the bean has been constructed, {@link Blueprint.PropertyAllocation}s
      * have been parsed and all sub <b>and parent</b> beans have been injected.
      * <p>
      * The bean is finalized at this point, in a sense that it can now be

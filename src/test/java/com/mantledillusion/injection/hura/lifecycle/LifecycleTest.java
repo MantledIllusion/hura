@@ -4,7 +4,7 @@ import com.mantledillusion.injection.hura.*;
 import com.mantledillusion.injection.hura.annotation.lifecycle.Phase;
 import com.mantledillusion.injection.hura.exception.ProcessorException;
 import com.mantledillusion.injection.hura.lifecycle.injectables.*;
-import com.mantledillusion.injection.hura.lifecycle.misc.PhasedProcessedLifecycleInjectableBlueprintTemplate;
+import com.mantledillusion.injection.hura.lifecycle.misc.PhasedProcessedLifecycleInjectableBlueprint;
 import com.mantledillusion.injection.hura.lifecycle.uninjectables.UninjectableWithFailingProcessor;
 import com.mantledillusion.injection.hura.lifecycle.uninjectables.UninjectableWithManualInjectionOnInjectedInjectorDuringInjectPhase;
 import com.mantledillusion.injection.hura.lifecycle.uninjectables.UninjectableWithStaticProcessMethod;
@@ -23,7 +23,7 @@ public class LifecycleTest extends AbstractInjectionTest {
     @Test
     public void testAnnotatedClassProcessing() {
         ClassProcessedLifecycleInjectable injectable = this.suite.injectInSuiteContext(ClassProcessedLifecycleInjectable.class,
-                Predefinable.Property.of(AbstractLifecycleInjectable.IMPL_PROPERTY_KEY, ClassProcessedLifecycleInjectable.class.getName()));
+                Blueprint.PropertyAllocation.of(AbstractLifecycleInjectable.IMPL_PROPERTY_KEY, ClassProcessedLifecycleInjectable.class.getName()));
         this.suite.destroyInSuiteContext(injectable);
         Assert.assertEquals(PHASES_WITH_PRECONSTRUCT, AbstractLifecycleInjectable.PHASES.get(ClassProcessedLifecycleInjectable.class));
     }
@@ -31,7 +31,7 @@ public class LifecycleTest extends AbstractInjectionTest {
     @Test
     public void testAnnotatedMethodProcessing() {
         MethodProcessedLifecycleInjectable injectable = this.suite.injectInSuiteContext(MethodProcessedLifecycleInjectable.class,
-                Predefinable.Property.of(AbstractLifecycleInjectable.IMPL_PROPERTY_KEY, MethodProcessedLifecycleInjectable.class.getName()));
+                Blueprint.PropertyAllocation.of(AbstractLifecycleInjectable.IMPL_PROPERTY_KEY, MethodProcessedLifecycleInjectable.class.getName()));
         this.suite.destroyInSuiteContext(injectable);
         Assert.assertEquals(PHASES_WITHOUT_PRECONSTRUCT, AbstractLifecycleInjectable.PHASES.get(MethodProcessedLifecycleInjectable.class));
     }
@@ -39,14 +39,15 @@ public class LifecycleTest extends AbstractInjectionTest {
     @Test
     public void testAnnotatedAnnotationProcessing() {
         AnnotationProcessedLifecycleInjectable injectable = this.suite.injectInSuiteContext(AnnotationProcessedLifecycleInjectable.class,
-                Predefinable.Property.of(AbstractLifecycleInjectable.IMPL_PROPERTY_KEY, AnnotationProcessedLifecycleInjectable.class.getName()));
+                Blueprint.PropertyAllocation.of(AbstractLifecycleInjectable.IMPL_PROPERTY_KEY, AnnotationProcessedLifecycleInjectable.class.getName()));
         this.suite.destroyInSuiteContext(injectable);
         Assert.assertEquals(PHASES_WITH_PRECONSTRUCT, AbstractLifecycleInjectable.PHASES.get(AnnotationProcessedLifecycleInjectable.class));
     }
 
     @Test
     public void testBlueprintPhasedProcessing() {
-        PhasedProcessedLifecycleInjectable injectable = this.suite.injectInSuiteContext(Blueprint.from(new PhasedProcessedLifecycleInjectableBlueprintTemplate()));
+        PhasedProcessedLifecycleInjectable injectable = this.suite.injectInSuiteContext(PhasedProcessedLifecycleInjectable.class,
+                new PhasedProcessedLifecycleInjectableBlueprint());
         this.suite.destroyInSuiteContext(injectable);
         Assert.assertEquals(PHASES_WITH_PRECONSTRUCT, AbstractLifecycleInjectable.PHASES.get(PhasedProcessedLifecycleInjectable.class));
     }

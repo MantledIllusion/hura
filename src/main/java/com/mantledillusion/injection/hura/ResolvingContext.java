@@ -28,19 +28,9 @@ final class ResolvingContext {
 		return this.properties.get(propertyKey);
 	}
 	
-	void addProperty(String propertyKey, String propertyValue) {
-		this.properties.put(propertyKey, propertyValue);
-	}
-	
 	ResolvingContext merge(Map<String, String> propertyAllocations) {
 		ResolvingContext newContext = new ResolvingContext(this);
 		newContext.properties.putAll(propertyAllocations);
-		return newContext;
-	}
-	
-	ResolvingContext merge(ResolvingContext other) {
-		ResolvingContext newContext = new ResolvingContext(this);
-		newContext.properties.putAll(other.properties);
 		return newContext;
 	}
 

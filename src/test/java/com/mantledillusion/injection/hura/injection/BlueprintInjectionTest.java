@@ -6,15 +6,11 @@ import java.io.File;
 
 import com.mantledillusion.injection.hura.*;
 import com.mantledillusion.injection.hura.injection.injectables.InjectableWithExplicitIndependent;
-import com.mantledillusion.injection.hura.injection.injectables.InjectableWithInjectableField;
 import com.mantledillusion.injection.hura.singleton.injectables.InjectableWithExplicitSingleton;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Test;
 
-import com.mantledillusion.injection.hura.Blueprint.BlueprintTemplate;
-import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
-import com.mantledillusion.injection.hura.Blueprint.TypedBlueprintTemplate;
-import com.mantledillusion.injection.hura.Predefinable.Singleton;
+import com.mantledillusion.injection.hura.Blueprint;
 import com.mantledillusion.injection.hura.annotation.instruction.Define;
 import com.mantledillusion.injection.hura.exception.BlueprintException;
 import com.mantledillusion.injection.hura.exception.ValidatorException;
@@ -24,110 +20,69 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 
 	@Test(expected=IllegalArgumentException.class)
 	public void testNullBlueprintInjection() {
-		this.suite.injectInSuiteContext((TypedBlueprint<?>) null);
-	}
-	
-	@Test
-	public void testBasicBlueprintInjection() {
-		InjectableWithInjectableField injectable = this.suite.injectInSuiteContext(TypedBlueprint.from(() -> InjectableWithInjectableField.class));
-		
-		assertTrue(injectable.wiredField != null);
+		this.suite.injectInSuiteContext(null);
 	}
 
-	@Test(expected=IllegalArgumentException.class)
+	@Test
 	public void testNullBlueprintCreation() {
-		TypedBlueprint.from((BlueprintTemplate) null);
-	}
-	
-	@Test(expected=IllegalArgumentException.class)
-	public void testNullTypedBlueprintCreation() {
-		TypedBlueprint.from((TypedBlueprintTemplate<?>) null);
-	}
-	
-	@Test(expected=BlueprintException.class)
-	public void testNullReturningBlueprintInjection() {
-		this.suite.injectInSuiteContext(TypedBlueprint.from(() -> null));
+		this.suite.injectInSuiteContext(Injectable.class, (Blueprint.Allocation) null, null);
+		this.suite.injectInSuiteContext(Injectable.class, (Blueprint) null, null);
 	}
 
 	@Test(expected=ValidatorException.class)
 	public void testWrongAllocMethodReturnTypeBlueprintInjection() {
-		this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<Injectable>() {
-
-			@Override
-			public Class<Injectable> getRootType() {
-				return Injectable.class;
-			}
+		this.suite.injectInSuiteContext(Injectable.class, new Blueprint() {
 			
 			@Define
 			public String wrongReturnTypeAllocationMethod() {
 				return StringUtils.EMPTY;
 			}
-		}));
+		});
 	}
 
 	@Test(expected=ValidatorException.class)
 	public void testParameteredAllocMethodBlueprintInjection() {
-		this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<Injectable>() {
-
-			@Override
-			public Class<Injectable> getRootType() {
-				return Injectable.class;
-			}
+		this.suite.injectInSuiteContext(Injectable.class, new Blueprint() {
 			
 			@Define
-			public BeanAllocation<String> parameteredAllocationMethod(String param) {
+			public Blueprint.TypeAllocation parameteredAllocationMethod(String param) {
 				return null;
 			}
-		}));
+		});
 	}
 	
 	@Test(expected=BlueprintException.class)
 	public void testNullAllocationBlueprintInjection() {
-		this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<Injectable>() {
-
-			@Override
-			public Class<Injectable> getRootType() {
-				return Injectable.class;
-			}
+		this.suite.injectInSuiteContext(Injectable.class, new Blueprint() {
 			
 			@Define
-			public BeanAllocation<String> nullReturningAllocationMethod() {
+			public Blueprint.TypeAllocation nullReturningAllocationMethod() {
 				return null;
 			}
-		}));
+		});
 	}
-	
+
 	@Test(expected=BlueprintException.class)
 	public void testNullTypeAllocationBlueprintInjection() {
-		this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<Injectable>() {
-
-			@Override
-			public Class<Injectable> getRootType() {
-				return Injectable.class;
-			}
+		this.suite.injectInSuiteContext(Injectable.class, new Blueprint() {
 			
 			@Define
-			public BeanAllocation<String> nullTypeAllocationReturningMethod() {
-				return BeanAllocation.allocateToType(null);
+			public Blueprint.TypeAllocation nullTypeAllocationReturningMethod() {
+				return Blueprint.TypeAllocation.allocateToType(Injectable.class, null);
 			}
-		}));
+		});
 	}
 	
 	@Test
 	public void testBlueprintInstanceSingletonInjection() {
 		Injectable instance = new Injectable();
-		InjectableWithExplicitSingleton injectable = this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<InjectableWithExplicitSingleton>() {
-
-			@Override
-			public Class<InjectableWithExplicitSingleton> getRootType() {
-				return InjectableWithExplicitSingleton.class;
-			}
+		InjectableWithExplicitSingleton injectable = this.suite.injectInSuiteContext(InjectableWithExplicitSingleton.class, new Blueprint() {
 			
 			@Define
-			public Singleton singletonInstanceAllocationMethod() {
-				return Singleton.of(InjectableWithExplicitSingleton.SINGLETON, instance);
+			public Blueprint.SingletonAllocation singletonInstanceAllocationMethod() {
+				return Blueprint.SingletonAllocation.of(InjectableWithExplicitSingleton.SINGLETON, instance);
 			}
-		}));
+		});
 		
 		assertTrue(injectable.explicitInjectable == instance);
 	}
@@ -135,54 +90,39 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 	@Test
 	public void testBlueprintProviderSingletonInjection() {
 		Injectable instance = new Injectable();
-		InjectableWithExplicitSingleton injectable = this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<InjectableWithExplicitSingleton>() {
-
-			@Override
-			public Class<InjectableWithExplicitSingleton> getRootType() {
-				return InjectableWithExplicitSingleton.class;
-			}
+		InjectableWithExplicitSingleton injectable = this.suite.injectInSuiteContext(InjectableWithExplicitSingleton.class, new Blueprint() {
 			
 			@Define
-			public Singleton singletonProviderAllocationMethod() {
-				return Singleton.of(InjectableWithExplicitSingleton.SINGLETON, callback -> instance);
+			public Blueprint.SingletonAllocation singletonProviderAllocationMethod() {
+				return Blueprint.SingletonAllocation.of(InjectableWithExplicitSingleton.SINGLETON, callback -> instance);
 			}
-		}));
+		});
 		
 		assertTrue(injectable.explicitInjectable == instance);
 	}
 	
 	@Test
 	public void testBlueprintTypeSingletonInjection() {
-		InjectableWithExplicitSingleton injectable = this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<InjectableWithExplicitSingleton>() {
-
-			@Override
-			public Class<InjectableWithExplicitSingleton> getRootType() {
-				return InjectableWithExplicitSingleton.class;
-			}
+		InjectableWithExplicitSingleton injectable = this.suite.injectInSuiteContext(InjectableWithExplicitSingleton.class, new Blueprint() {
 			
 			@Define
-			public Singleton singletonTypeAllocationMethod() {
-				return Singleton.of(InjectableWithExplicitSingleton.SINGLETON, Injectable.class);
+			public Blueprint.SingletonAllocation singletonTypeAllocationMethod() {
+				return Blueprint.SingletonAllocation.of(InjectableWithExplicitSingleton.SINGLETON, Injectable.class);
 			}
-		}));
+		});
 		
 		assertTrue(injectable.explicitInjectable != null);
 	}
 
 	@Test
 	public void testBlueprintPluginSingletonInjection() {
-		InjectableWithExplicitSingleton injectable = this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<InjectableWithExplicitSingleton>() {
-
-			@Override
-			public Class<InjectableWithExplicitSingleton> getRootType() {
-				return InjectableWithExplicitSingleton.class;
-			}
+		InjectableWithExplicitSingleton injectable = this.suite.injectInSuiteContext(InjectableWithExplicitSingleton.class, new Blueprint() {
 
 			@Define
-			public Singleton singletonTypeAllocationMethod() {
-				return Singleton.of(InjectableWithExplicitSingleton.SINGLETON, InjectableInterface.class, new File("src/test/resources/plugins"), "InjectableInterfacePlugin");
+			public Blueprint.SingletonAllocation singletonTypeAllocationMethod() {
+				return Blueprint.SingletonAllocation.of(InjectableWithExplicitSingleton.SINGLETON, InjectableInterface.class, new File("src/test/resources/plugins"), "InjectableInterfacePlugin");
 			}
-		}));
+		});
 
 		assertTrue(injectable.explicitInjectable != null);
 	}
@@ -190,18 +130,13 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 	@Test
 	public void testBlueprintInstanceIndependentInjection() {
 		Injectable instance = new Injectable();
-		InjectableWithExplicitIndependent injectable = this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<InjectableWithExplicitIndependent>() {
-
-			@Override
-			public Class<InjectableWithExplicitIndependent> getRootType() {
-				return InjectableWithExplicitIndependent.class;
-			}
+		InjectableWithExplicitIndependent injectable = this.suite.injectInSuiteContext(InjectableWithExplicitIndependent.class, new Blueprint() {
 			
 			@Define
-			public BeanAllocation<InjectableInterface> instanceAllocationMethod() {
-				return BeanAllocation.allocateToInstance(instance);
+			public Blueprint.TypeAllocation instanceAllocationMethod() {
+				return Blueprint.TypeAllocation.allocateToInstance(InjectableInterface.class, instance);
 			}
-		}));
+		});
 		
 		assertTrue(injectable.explicitInjectable == instance);
 	}
@@ -209,54 +144,39 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 	@Test
 	public void testBlueprintProviderIndependentInjection() {
 		Injectable instance = new Injectable();
-		InjectableWithExplicitIndependent injectable = this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<InjectableWithExplicitIndependent>() {
-
-			@Override
-			public Class<InjectableWithExplicitIndependent> getRootType() {
-				return InjectableWithExplicitIndependent.class;
-			}
+		InjectableWithExplicitIndependent injectable = this.suite.injectInSuiteContext(InjectableWithExplicitIndependent.class, new Blueprint() {
 			
 			@Define
-			public BeanAllocation<InjectableInterface> providerAllocationMethod() {
-				return BeanAllocation.allocateToProvider(callback -> instance);
+			public Blueprint.TypeAllocation providerAllocationMethod() {
+				return Blueprint.TypeAllocation.allocateToProvider(InjectableInterface.class, callback -> instance);
 			}
-		}));
+		});
 		
 		assertTrue(injectable.explicitInjectable == instance);
 	}
 	
 	@Test
 	public void testBlueprintTypeIndependentInjection() {
-		InjectableWithExplicitIndependent injectable = this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<InjectableWithExplicitIndependent>() {
-
-			@Override
-			public Class<InjectableWithExplicitIndependent> getRootType() {
-				return InjectableWithExplicitIndependent.class;
-			}
+		InjectableWithExplicitIndependent injectable = this.suite.injectInSuiteContext(InjectableWithExplicitIndependent.class, new Blueprint() {
 			
 			@Define
-			public BeanAllocation<InjectableInterface> typeAllocationMethod() {
-				return BeanAllocation.allocateToType(Injectable.class);
+			public Blueprint.TypeAllocation typeAllocationMethod() {
+				return Blueprint.TypeAllocation.allocateToType(InjectableInterface.class, Injectable.class);
 			}
-		}));
+		});
 		
 		assertTrue(injectable.explicitInjectable != null);
 	}
 
 	@Test
 	public void testBlueprintPluginIndependentInjection() {
-		InjectableWithExplicitIndependent injectable = this.suite.injectInSuiteContext(TypedBlueprint.from(new TypedBlueprintTemplate<InjectableWithExplicitIndependent>() {
-
-			@Override
-			public Class<InjectableWithExplicitIndependent> getRootType() {
-				return InjectableWithExplicitIndependent.class;
-			}
+		InjectableWithExplicitIndependent injectable = this.suite.injectInSuiteContext(InjectableWithExplicitIndependent.class, new Blueprint() {
 
 			@Define
-			public BeanAllocation<InjectableInterface> pluginAllocationMethod() {
-				return BeanAllocation.allocateToPlugin(new File("src/test/resources/plugins"), "InjectableInterfacePlugin");
+			public Blueprint.TypeAllocation pluginAllocationMethod() {
+				return Blueprint.TypeAllocation.allocateToPlugin(InjectableInterface.class, new File("src/test/resources/plugins"), "InjectableInterfacePlugin");
 			}
-		}));
+		});
 
 		assertTrue(injectable.explicitInjectable != null);
 	}

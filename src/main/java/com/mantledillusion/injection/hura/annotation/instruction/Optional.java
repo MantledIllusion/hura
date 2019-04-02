@@ -10,8 +10,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
 
-import com.mantledillusion.injection.hura.BeanAllocation;
-import com.mantledillusion.injection.hura.Predefinable.Singleton;
+import com.mantledillusion.injection.hura.Blueprint;
 import com.mantledillusion.injection.hura.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.annotation.property.Property;
 import com.mantledillusion.injection.hura.annotation.lifecycle.annotation.PreConstruct;
@@ -43,10 +42,10 @@ public @interface Optional {
 	 * annotated with @{@link Inject} null depending on existing allocations.
 	 * <p>
 	 * How the mode is applied depends on the whether the injected bean is
-	 * independent ({@link BeanAllocation}s) or a {@link Singleton} (allocation on
+	 * independent ({@link Blueprint.TypeAllocation}s) or a {@link Blueprint.SingletonAllocation} (allocation on
 	 * the qualifier).
 	 * <p>
-	 * Note that if a {@link Singleton} is created in a parent injection sequence,
+	 * Note that if a {@link Blueprint.SingletonAllocation} is created in a parent injection sequence,
 	 * it is treated as it was allocated in all sub injection sequences, regardless
 	 * whether it was explicitly allocated or created on demand.
 	 */
@@ -60,18 +59,18 @@ public @interface Optional {
 		 * For independent beans:
 		 * <ul>
 		 * <li>If the type of the injection target is allocated by a
-		 * {@link BeanAllocation}, the injection is done using the allocation.</li>
+		 * {@link Blueprint.TypeAllocation}, the injection is done using the allocation.</li>
 		 * <li>If the type of the injection target is <b>not</b> allocated by a
-		 * {@link BeanAllocation}, it is tried to instantiate the type on demand; if
+		 * {@link Blueprint.TypeAllocation}, it is tried to instantiate the type on demand; if
 		 * that is not possible, an {@link InjectionException} is thrown</li>
 		 * </ul>
 		 * <p>
-		 * For {@link Singleton} beans:
+		 * For {@link Blueprint.SingletonAllocation} beans:
 		 * <ul>
 		 * <li>If the qualifier of the injection target is allocated by a
-		 * {@link Singleton}, the injection is done using the allocation.</li>
+		 * {@link Blueprint.SingletonAllocation}, the injection is done using the allocation.</li>
 		 * <li>If the qualifier of the injection target is <b>not</b> allocated by a
-		 * {@link Singleton}, it is checked whether there already is a singleton for the
+		 * {@link Blueprint.SingletonAllocation}, it is checked whether there already is a singleton for the
 		 * qualifier that has been instantiated on demand:
 		 * <ul>
 		 * <li>If there is none, it is tried to instantiate the type on demand; if that
@@ -92,17 +91,17 @@ public @interface Optional {
 		 * For independent beans:
 		 * <ul>
 		 * <li>If the type of the injection target is allocated by a
-		 * {@link BeanAllocation}, the injection is done using the allocation.</li>
+		 * {@link Blueprint.TypeAllocation}, the injection is done using the allocation.</li>
 		 * <li>If the type of the injection target is <b>not</b> allocated by a
-		 * {@link BeanAllocation}, leave the target null.</li>
+		 * {@link Blueprint.TypeAllocation}, leave the target null.</li>
 		 * </ul>
 		 * <p>
-		 * For {@link Singleton} beans:
+		 * For {@link Blueprint.SingletonAllocation} beans:
 		 * <ul>
 		 * <li>If the qualifier of the injection target is allocated by a
-		 * {@link Singleton}, the injection is done using the allocation.</li>
+		 * {@link Blueprint.SingletonAllocation}, the injection is done using the allocation.</li>
 		 * <li>If the qualifier of the injection target is <b>not</b> allocated by a
-		 * {@link Singleton}, leave the target null.</li>
+		 * {@link Blueprint.SingletonAllocation}, leave the target null.</li>
 		 * </ul>
 		 */
 		EXPLICIT

@@ -1,382 +1,378 @@
 package com.mantledillusion.injection.hura;
 
-import java.lang.reflect.*;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.mantledillusion.essentials.reflection.TypeEssentials;
-import com.mantledillusion.injection.hura.Injector.AbstractAllocator;
-import com.mantledillusion.injection.hura.Predefinable.Property;
-import com.mantledillusion.injection.hura.Predefinable.Singleton;
-import com.mantledillusion.injection.hura.Predefinable.Mapping;
-import com.mantledillusion.injection.hura.annotation.ValidatorUtils;
 import com.mantledillusion.injection.hura.annotation.instruction.Define;
-import com.mantledillusion.injection.hura.annotation.injection.SingletonMode;
-import com.mantledillusion.injection.hura.exception.BlueprintException;
-import com.mantledillusion.injection.hura.exception.ValidatorException;
-import org.apache.commons.lang3.reflect.TypeUtils;
+import org.apache.commons.lang3.StringUtils;
+
+import java.io.File;
+import java.lang.reflect.Method;
 
 /**
- * A {@link Blueprint} is an injection instruction for an {@link Injector}.
+ * Interface for a group of {@link Allocation}s.
  * <p>
- * It may contain information on how the injection has to be done when the
- * {@link Blueprint} is used by an {@link Injector}.
+ * An implementation of this interface may define an arbitrary amount of
+ * {@link Allocation} returning {@link Method}s that are annotated with
+ * {@link Define}.
  * <p>
- * For example, the {@link Blueprint} may pre-define singletons or divert the
- * injection of an interface-typed injection to the implementing {@link Class}
- * that has to be used for the injection; these kind of injection instructions
- * are called allocations.
- * <p>
- * The static {@link Method}s...
- * <ul>
- * <li>{@link #from(BlueprintTemplate)} (For injection instruction only)</li>
- * <li>{@link #from(TypedBlueprintTemplate)} (For injection instruction on
- * instantiating a specific type)</li>
- * <li>{@link #of(Predefinable...)} (For simple injection instruction only)</li>
- * <li>{@link #of(Class, Predefinable...)} (For simple injection of instantiating
- * a specific type)</li>
- * </ul>
- * ...can be used to create {@link Blueprint} instances; refer to the
- * documentation of these {@link Method}s for information on how allocations can
- * be created.
+ * During processing, these {@link Method}s will be invoked; their returned
+ * {@link Allocation} instances will be turned into allocations the
+ * {@link Injector} can use during injection;
+ * this is how {@link Blueprint} implementations can influence the way
+ * an {@link Injector} injects its beans.
  */
-public class Blueprint {
+public interface Blueprint {
 
-	static final Blueprint EMPTY = new Blueprint();
+    /**
+     * Interface for providers of bean instances.
+     *
+     * @param <T> The bean type this {@link BeanProvider} provides.
+     */
+    interface BeanProvider<T> {
 
-	/**
-	 * A {@link TypedBlueprint} is an extension to the {@link Blueprint}.
-	 * <p>
-	 * In addition to defining allocations, a {@link TypedBlueprint} also determines
-	 * a specific {@link Class} that can be instantiated and injected using it.
-	 *
-	 * @param <T>
-	 *            The root type to instantiate, inject and return as a new bean when
-	 *            using this {@link TypedBlueprint} on an {@link Injector}.
-	 */
-	public static final class TypedBlueprint<T> extends Blueprint {
+        /**
+         * Provides a instance of this provider's bean type.
+         *
+         * @param callback A callback to the injection sequence that caused the call on this
+         *                 {@link BeanProvider}. Can be used if the bean being provided needs
+         *                 some prerequisite beans; might <b>not</b> be null.
+         * @return A bean instance; might be null
+         */
+        T provide(Injector.TemporalInjectorCallback callback);
+    }
 
-		private final Class<T> rootType;
+    /**
+     * Base type for objects that should be treated as given during an injection.
+     * <p>
+     * Implementations are:
+     * <ul>
+     * <li>{@link SingletonAllocation}</li>
+     * <li>{@link PropertyAllocation}</li>
+     * <li>{@link MappingAllocation}</li>
+     * </ul>
+     */
+    abstract class Allocation {
 
-		private TypedBlueprint(Class<T> rootType) {
-			this.rootType = rootType;
-		}
+        private Allocation() {
+        }
+    }
 
-		public Class<T> getRootType() {
-			return rootType;
-		}
-	}
+    /**
+     * Defines a definite property key-&gt;value pair.
+     */
+    final class PropertyAllocation extends Allocation {
 
-	/**
-	 * Interface for self implemented {@link Blueprint}s that can be processed into
-	 * an actual {@link Blueprint} instance by
-	 * {@link Blueprint#from(BlueprintTemplate)}.
-	 * <p>
-	 * An implementation of this interface may define an arbitrary amount of
-	 * {@link BeanAllocation} returning {@link Method}s that are annotated with
-	 * {@link Define}.
-	 * <p>
-	 * During processing, these {@link Method}s will be invoked; their returned
-	 * {@link BeanAllocation} instances will be turned into allocations the
-	 * {@link Injector} can use during injection of the processed {@link Blueprint};
-	 * this is how {@link BlueprintTemplate} implementations can influence the way
-	 * an {@link Injector} injects its beans.
-	 */
-	public interface BlueprintTemplate {
+        private final String key;
+        private final String value;
 
-	}
+        private PropertyAllocation(String key, String value) {
+            this.key = key;
+            this.value = value;
+        }
 
-	/**
-	 * A {@link TypedBlueprintTemplate} is an extension to a
-	 * {@link BlueprintTemplate}.
-	 * <p>
-	 * In addition to defining allocations, a {@link TypedBlueprintTemplate} also
-	 * has to determine a specific {@link Class} that can be instantiated and
-	 * injected using it after it has been processed by
-	 * {@link Blueprint#from(TypedBlueprintTemplate)}.
-	 *
-	 * @param <T>
-	 *            The root type to instantiate, inject and return as a new bean when
-	 *            using a processed {@link TypedBlueprint} instance of this
-	 *            {@link TypedBlueprintTemplate} on an {@link Injector}.
-	 */
-	public interface TypedBlueprintTemplate<T> {
+        /**
+         * Factory {@link Method} for {@link PropertyAllocation} instances.
+         *
+         * @param key   The key that identifies the property; might <b>not</b> be null or
+         *              empty.
+         * @param value The value of the property; might <b>not</b> be null.
+         * @return A new {@link PropertyAllocation} instance; never null
+         */
+        public static PropertyAllocation of(String key, String value) {
+            if (StringUtils.isEmpty(key)) {
+                throw new IllegalArgumentException("Cannot create property with an empty key");
+            } else if (value == null) {
+                throw new IllegalArgumentException("Cannot create property with a null value");
+            }
+            return new PropertyAllocation(key, value);
+        }
 
-		/**
-		 * Returns the root {@link Class} this {@link TypedBlueprintTemplate} can be
-		 * used to instantiate and inject when being used on an {@link Injector} after
-		 * being processed to a {@link TypedBlueprint}.
-		 * 
-		 * @return The {@link Class} to instantiate and inject; may <b>not</b> return
-		 *         null.
-		 */
-		Class<T> getRootType();
-	}
+        /**
+         * The {@link PropertyAllocation} key.
+         *
+         * @return The key; never null
+         */
+        public String getKey() {
+            return key;
+        }
 
-	private final Map<Type, AbstractAllocator<?>> typeAllocations = new HashMap<>();
-	private final Map<String, AbstractAllocator<?>> singletonAllocations = new HashMap<>();
-	private final Map<String, String> propertyAllocations = new HashMap<>();
-	private final Map<SingletonMode, Map<String, String>> mappingAllocations = new HashMap<>();
+        /**
+         * The {@link PropertyAllocation} value.
+         *
+         * @return The value; never null
+         */
+        public String getValue() {
+            return value;
+        }
+    }
 
-	private Blueprint() {
-		this.mappingAllocations.put(SingletonMode.GLOBAL, new HashMap<>());
-		this.mappingAllocations.put(SingletonMode.SEQUENCE, new HashMap<>());
-	}
+    /**
+     * Defines a {@link SingletonAllocation} of a specific qualifier.
+     */
+    final class SingletonAllocation extends Allocation {
 
-	Map<Type, AbstractAllocator<?>> getTypeAllocations() {
-		return typeAllocations;
-	}
+        private final String qualifier;
+        private final Injector.AbstractAllocator<?> allocator;
 
-	Map<String, AbstractAllocator<?>> getSingletonAllocations() {
-		return singletonAllocations;
-	}
+        private SingletonAllocation(String qualifier, Injector.AbstractAllocator<?> allocator) {
+            this.qualifier = qualifier;
+            this.allocator = allocator;
+        }
 
-	Map<String, String> getPropertyAllocations() {
-		return propertyAllocations;
-	}
+        /**
+         * Factory {@link Method} for {@link SingletonAllocation} instances.
+         * <p>
+         * Allocates the qualifier to the specified instance.
+         *
+         * @param qualifier The qualifier on whose injections the given instance may be
+         *                  referenced at; might <b>not</b> be null.
+         * @param bean      The instance to allocate as a {@link SingletonAllocation}; might be null.
+         * @return A new {@link SingletonAllocation} instance; never null
+         */
+        public static SingletonAllocation of(String qualifier, Object bean) {
+            if (qualifier == null) {
+                throw new IllegalArgumentException("Cannot create singleton with a null qualifier");
+            }
+            return new SingletonAllocation(qualifier, new Injector.InstanceAllocator<>(bean));
+        }
 
-	Map<SingletonMode, Map<String, String>> getMappingAllocations() {
-		return mappingAllocations;
-	}
+        /**
+         * Factory {@link Method} for {@link SingletonAllocation} instances.
+         * <p>
+         * Allocates the qualifier to the specified {@link BeanProvider}.
+         *
+         * @param <T>       The type of the singleton.
+         * @param qualifier The qualifier on whose injections the given instance may be
+         *                  referenced at; might <b>not</b> be null.
+         * @param provider  The {@link BeanProvider} to allocate as the provider of a
+         *                  {@link SingletonAllocation}; might <b>not</b> be null.
+         * @return A new {@link SingletonAllocation} instance; never null
+         */
+        public static <T> SingletonAllocation of(String qualifier, BeanProvider<T> provider) {
+            if (qualifier == null) {
+                throw new IllegalArgumentException("Cannot create singleton with a null qualifier");
+            } else if (provider == null) {
+                throw new IllegalArgumentException("Cannot create singleton with a null provider");
+            }
+            return new SingletonAllocation(qualifier, new Injector.ProviderAllocator<>(provider));
+        }
 
-	/**
-	 * Convenience {@link Method} for not having to implement
-	 * {@link BlueprintTemplate} and passing it to {@link #from(BlueprintTemplate)}
-	 * when the injection scenario is rather basic, so the extended allocation
-	 * features of the {@link BlueprintTemplate} are not needed.
-	 * 
-	 * @param predefinables
-	 *            The {@link Predefinable}s to be used during injection, such as
-	 *            {@link SingletonMode#SEQUENCE} {@link Singleton}s or
-	 *            {@link Property}s; might be null or contain nulls, both is
-	 *            ignored.
-	 * @return A new {@link Blueprint} instance; never null
-	 */
-	public static Blueprint of(Predefinable... predefinables) {
-		return of(Arrays.asList(predefinables));
-	}
+        /**
+         * Factory {@link Method} for {@link SingletonAllocation} instances.
+         * <p>
+         * Allocates the qualifier to the specified {@link Class}.
+         *
+         * @param <T>       The type of the singleton.
+         * @param qualifier The qualifier on whose injections the given instance may be
+         *                  referenced at; might <b>not</b> be null.
+         * @param beanClass The {@link Class} to allocate as the type of a {@link SingletonAllocation};
+         *                  might <b>not</b> be null.
+         * @return A new {@link SingletonAllocation} instance; never null
+         */
+        public static <T> SingletonAllocation of(String qualifier, Class<T> beanClass) {
+            if (qualifier == null) {
+                throw new IllegalArgumentException("Cannot create singleton with a null qualifier");
+            } else if (beanClass == null) {
+                throw new IllegalArgumentException("Cannot create singleton with a null bean class");
+            }
+            return new SingletonAllocation(qualifier, new Injector.ClassAllocator<>(beanClass, InjectionProcessors.of()));
+        }
 
-	/**
-	 * Convenience {@link Method} for not having to implement
-	 * {@link BlueprintTemplate} and passing it to {@link #from(BlueprintTemplate)}
-	 * when the injection scenario is rather basic, so the extended allocation
-	 * features of the {@link BlueprintTemplate} are not needed.
-	 * 
-	 * @param predefinables
-	 *            The {@link Predefinable}s to be used during injection, such as
-	 *            {@link SingletonMode#SEQUENCE} {@link Singleton}s or
-	 *            {@link Property}s; might be null or contain nulls, both is
-	 *            ignored.
-	 * @return A new {@link Blueprint} instance; never null
-	 */
-	public static Blueprint of(Collection<Predefinable> predefinables) {
-		Blueprint blueprint = new Blueprint();
-		addPredefinables(blueprint, predefinables);
-		return blueprint;
-	}
+        /**
+         * Factory {@link Method} for {@link SingletonAllocation} instances.
+         * <p>
+         * Allocates the qualifier to the specified {@link Class}.
+         *
+         * @param <T>       The type of the singleton.
+         * @param qualifier The qualifier on whose injections the given instance may be
+         *                  referenced at; might <b>not</b> be null.
+         * @param beanClass The {@link Class} of the {@link SingletonAllocation} to find a plugin for;
+         *                  might <b>not</b> be null.
+         * @param directory The directory to find the plugin in; might <b>not</b> be null and
+         *                  {@link File#isDirectory()} has to return true.
+         * @param pluginId  The ID of the plugin to use, with which it can be found in the
+         *                  given directory; might <b>not</b> be null.
+         * @return A new {@link SingletonAllocation} instance; never null
+         */
+        public static <T> SingletonAllocation of(String qualifier, Class<T> beanClass, File directory, String pluginId) {
+            if (qualifier == null) {
+                throw new IllegalArgumentException("Cannot create singleton with a null qualifier");
+            } else if (beanClass == null) {
+                throw new IllegalArgumentException("Cannot create singleton with a null bean class");
+            } else if (directory == null) {
+                throw new IllegalArgumentException("Cannot create singleton with a plugin from a null directory.");
+            } else if (!directory.isDirectory()) {
+                throw new IllegalArgumentException("Cannot create singleton with a plugin from a non-directory.");
+            } else if (pluginId == null) {
+                throw new IllegalArgumentException("Cannot create singleton with a plugin with a null ID.");
+            }
+            return new SingletonAllocation(qualifier, new Injector.PluginAllocator<>(directory, pluginId, beanClass));
+        }
 
-	/**
-	 * Convenience {@link Method} for not having to implement
-	 * {@link TypedBlueprintTemplate} and passing it to
-	 * {@link #from(TypedBlueprintTemplate)} when the injection scenario is rather
-	 * basic, so the extended allocation features of the
-	 * {@link TypedBlueprintTemplate} are not needed.
-	 * 
-	 * @param <T>
-	 *            The root type of the bean to instantiate and inject by the
-	 *            {@link Injector}.
-	 * @param rootType
-	 *            The {@link Class} of the bean to instantiate and inject by the
-	 *            {@link Injector}; may <b>not</b> return null.
-	 * @param predefinables
-	 *            The {@link Predefinable}s to be used during injection, such as
-	 *            {@link SingletonMode#SEQUENCE} {@link Singleton}s or
-	 *            {@link Property}s; might be null or contain nulls, both is
-	 *            ignored.
-	 * @return A new {@link TypedBlueprint} instance; never null
-	 */
-	public static <T> TypedBlueprint<T> of(Class<T> rootType, Predefinable... predefinables) {
-		return of(rootType, Arrays.asList(predefinables));
-	}
+        /**
+         * Returns the qualifier of this singleton.
+         *
+         * @return The qualifier; never null or empty
+         */
+        public String getQualifier() {
+            return qualifier;
+        }
 
-	/**
-	 * Convenience {@link Method} for not having to implement
-	 * {@link TypedBlueprintTemplate} and passing it to
-	 * {@link #from(TypedBlueprintTemplate)} when the injection scenario is rather
-	 * basic, so the extended allocation features of the
-	 * {@link TypedBlueprintTemplate} are not needed.
-	 * 
-	 * @param <T>
-	 *            The root type of the bean to instantiate and inject by the
-	 *            {@link Injector}.
-	 * @param rootType
-	 *            The {@link Class} of the bean to instantiate and inject by the
-	 *            {@link Injector}; may <b>not</b> return null.
-	 * @param predefinables
-	 *            The {@link Predefinable}s to be used during injection, such as
-	 *            {@link SingletonMode#SEQUENCE} {@link Singleton}s or
-	 *            {@link Property}s; might be null or contain nulls, both is
-	 *            ignored.
-	 * @return A new {@link TypedBlueprint} instance; never null
-	 */
-	public static <T> TypedBlueprint<T> of(Class<T> rootType, Collection<Predefinable> predefinables) {
-		if (rootType == null) {
-			throw new IllegalArgumentException("Cannot create a blue print for a null root type.");
-		}
+        Injector.AbstractAllocator<?> getAllocator() {
+            return allocator;
+        }
+    }
 
-		TypedBlueprint<T> blueprint = new TypedBlueprint<>(rootType);
-		addPredefinables(blueprint, predefinables);
-		return blueprint;
-	}
+    /**
+     * Defines an ID mapping of {@link SingletonAllocation} IDs, from a base to a target.
+     */
+    final class MappingAllocation extends Allocation {
 
-	private static void addPredefinables(Blueprint blueprint, Collection<Predefinable> predefinables) {
-		if (predefinables != null) {
-			for (Predefinable predefinable : predefinables) {
-				define(predefinable, blueprint);
-			}
-		}
-	}
+        private final String base;
+        private final String target;
 
-	/**
-	 * Processes the given {@link BlueprintTemplate} into an actual
-	 * {@link Blueprint} that can be used on {@link Injector}s.
-	 * 
-	 * @param template
-	 *            The {@link BlueprintTemplate} to process; may <b>not</b> be null.
-	 * @return A new {@link Blueprint} instance; never null
-	 */
-	public static Blueprint from(BlueprintTemplate template) {
-		if (template == null) {
-			throw new IllegalArgumentException("Cannot process a null template");
-		}
+        private MappingAllocation(String base, String target) {
+            this.base = base;
+            this.target = target;
+        }
 
-		Blueprint blueprint = new Blueprint();
-		buildAllocations(template, blueprint);
-		return blueprint;
-	}
+        /**
+         * Factory {@link Method} for {@link MappingAllocation} instances.
+         *
+         * @param base   The qualifier that is mapped. SingletonAllocation references to this
+         *               mapping base ID will reference the mapping target singleton
+         *               afterwards; might <b>not</b> be null.
+         * @param target The qualifier that is mapped to. SingletonAllocation references to the
+         *               mapping base ID will reference this mapping target ID's singleton
+         *               afterwards; might <b>not</b> be null.
+         * @return A new {@link MappingAllocation} instance; never null
+         */
+        public static MappingAllocation of(String base, String target) {
+            if (StringUtils.isEmpty(base)) {
+                throw new IllegalArgumentException("Cannot create a singleton mapping with a null qualifier");
+            } else if (target == null) {
+                throw new IllegalArgumentException("Cannot create a singleton mapping with a null mapping target");
+            }
+            return new MappingAllocation(base, target);
+        }
 
-	/**
-	 * Processes the given {@link TypedBlueprintTemplate} into an actual
-	 * {@link TypedBlueprint} that can be used on {@link Injector}s.
-	 * 
-	 * @param <T>
-	 *            The bean type.
-	 * @param template
-	 *            The {@link TypedBlueprintTemplate} to process; may <b>not</b> be
-	 *            null.
-	 * @return A new {@link TypedBlueprint} instance; never null
-	 */
-	public static <T> TypedBlueprint<T> from(TypedBlueprintTemplate<T> template) {
-		if (template == null) {
-			throw new IllegalArgumentException("Cannot process a null template");
-		}
+        /**
+         * Returns the base qualifier to getMapping.
+         *
+         * @return The base qualifier; never null
+         */
+        public String getBase() {
+            return base;
+        }
 
-		Class<T> rootType = template.getRootType();
-		if (rootType == null) {
-			throw new BlueprintException("The root type of a type blueprint template may not be null.");
-		}
+        /**
+         * Returns the target qualifier to getMapping to;
+         *
+         * @return The target qualifier; never null.
+         */
+        public String getTarget() {
+            return target;
+        }
+    }
 
-		TypedBlueprint<T> blueprint = new TypedBlueprint<>(rootType);
-		buildAllocations(template, blueprint);
-		return blueprint;
-	}
+    /**
+     * Type to use as return types of @{@link Define} annotated {@link Method}s of
+     * {@link Blueprint} implementations.
+     */
+    final class TypeAllocation extends Allocation {
 
-	private static void buildAllocations(Object template, Blueprint blueprint) {
-		for (Method m : ReflectionCache.getMethodsAnnotatedWith(template.getClass(), Define.class)) {
-			Map<TypeVariable<?>, Type> collectionGenericType = TypeUtils.getTypeArguments(m.getGenericReturnType(),
-					Collection.class);
-			if (!TypeUtils.isAssignable(m.getGenericReturnType(), BeanAllocation.class)
-					&& !TypeUtils.isAssignable(m.getGenericReturnType(), Predefinable.class)
-					&& !(TypeUtils.isAssignable(m.getGenericReturnType(), Collection.class) && TypeUtils.isAssignable(
-					TypeUtils.parameterize(Collection.class, collectionGenericType).getActualTypeArguments()[0],
-					Predefinable.class))) {
-				throw new ValidatorException(
-						"The " + ValidatorUtils.getDescription(m) + " is annotated with '" + Define.class.getSimpleName()
-								+ "', but does neither declare " + BeanAllocation.class.getSimpleName() + " nor a "
-								+ Predefinable.class.getSimpleName() + " implementation as its return type.");
-			} else if (m.getParameterCount() != 0) {
-				throw new ValidatorException("The " + ValidatorUtils.getDescription(m) + " is annotated with '"
-						+ Define.class.getSimpleName() + "', but is not parameterless as required.");
-			}
+        private final Class<?> type;
+        private final Injector.AbstractAllocator<?> allocator;
 
-			if (!m.isAccessible()) {
-				try {
-					m.setAccessible(true);
-				} catch (SecurityException e) {
-					throw new BlueprintException("Unable to gain access to the method '" + m + "' of the type '"
-							+ m.getDeclaringClass().getSimpleName() + "'", e);
-				}
-			}
+        private <T> TypeAllocation(Class<T> type, Injector.AbstractAllocator<T> allocator) {
+            this.type = type;
+            this.allocator = allocator;
+        }
 
-			Object definable;
-			try {
-				definable = m.invoke(template);
-			} catch (IllegalAccessException e) {
-				throw new BlueprintException("Unable to call method '" + m + "' annotated with @"
-						+ Define.class.getSimpleName() + " to retrieve its definition", e);
-			} catch (InvocationTargetException e) {
-				throw new BlueprintException("Unable to call method '" + m + "' annotated with @"
-						+ Define.class.getSimpleName() + " to retrieve its definition", e.getTargetException());
-			}
+        /**
+         * Allocate to a given instance that should be used upon injection.
+         *
+         * @param <T>      The bean type.
+         * @param type     The {@link Class} of the bean type; might not be null.
+         * @param instance The instance to use; might be null.
+         * @return A newly build allocation; never null
+         */
+        public static <T> TypeAllocation allocateToInstance(Class<T> type, T instance) {
+            if (type == null) {
+                throw new IllegalArgumentException("Unable to allocate a null type.");
+            }
+            return new TypeAllocation(type, new Injector.InstanceAllocator<>(instance));
+        }
 
-			if (definable instanceof Collection) {
-				@SuppressWarnings("unchecked")
-				Collection<Predefinable> predefinables = (Collection<Predefinable>) definable;
-				for (Predefinable predefinable : predefinables) {
-					define(predefinable, blueprint);
-				}
-			} else if (definable instanceof Predefinable) {
-				define((Predefinable) definable, blueprint);
-			} else {
-				BeanAllocation<?> alloc = (BeanAllocation<?>) definable;
-				if (alloc == null) {
-					throw new BlueprintException("The allocation returned by the method '" + m
-							+ "' was null; cannot allocate a null allocation.");
-				}
+        /**
+         * Allocate to a given {@link Class} that should be used upon injection.
+         *
+         * @param <T>      The bean type.
+         * @param type     The {@link Class} of the bean type; might not be null.
+         * @param provider The {@link BeanProvider} to use; might <b>not</b> be null.
+         * @return A newly build allocation, never null
+         */
+        public static <T> TypeAllocation allocateToProvider(Class<T> type, BeanProvider<? extends T> provider) {
+            if (type == null) {
+                throw new IllegalArgumentException("Unable to allocate a null type.");
+            } else if (provider == null) {
+                throw new IllegalArgumentException("Unable to allocate a bean to a null provider.");
+            }
+            return new TypeAllocation(type, new Injector.ProviderAllocator<>(provider));
+        }
 
-				ParameterizedType parameterizedBeanAllocation = TypeEssentials
-						.getParameterizedBound(BeanAllocation.class, m.getGenericReturnType());
-				blueprint.typeAllocations.put(parameterizedBeanAllocation.getActualTypeArguments()[0],
-						alloc.getAllocator());
-			}
-		}
-	}
+        /**
+         * Allocate to a given {@link Class} that should be used upon injection.
+         *
+         * @param <T>        The bean type.
+         * @param <T2>       The allocated type.
+         * @param type       The {@link Class} of the bean type; might not be null.
+         * @param clazz      The {@link Class} to use; might <b>not</b> be null.
+         * @param processors The {@link PhasedBeanProcessor}s to apply on every instantiated bean;
+         *                   might be null or contain nulls, both is ignored.
+         * @return A newly build allocation, never null
+         */
+        @SafeVarargs
+        public static final <T, T2 extends T> TypeAllocation allocateToType(Class<T> type, Class<T2> clazz, PhasedBeanProcessor<? super T2>... processors) {
+            if (type == null) {
+                throw new IllegalArgumentException("Unable to allocate a null type.");
+            } else if (clazz == null) {
+                throw new IllegalArgumentException("Unable to allocate a bean to a null class.");
+            }
+            return new TypeAllocation(type, new Injector.ClassAllocator<>(clazz, InjectionProcessors.of(processors)));
+        }
 
-	private static void define(Predefinable predefinable, Blueprint blueprint) {
-		if (predefinable != null) {
-			if (predefinable instanceof Property) {
-				Property property = (Property) predefinable;
-				String propertyKey = property.getKey();
-				if (blueprint.propertyAllocations.containsKey(propertyKey)) {
-					throw new IllegalArgumentException(
-							"There were 2 or more property values defined for the key '" + propertyKey + "'; '"
-									+ blueprint.propertyAllocations.get(propertyKey) + "' and '"
-									+ property.getValue() + "'");
-				}
-				blueprint.propertyAllocations.put(propertyKey, property.getValue());
-			} else if (predefinable instanceof Singleton) {
-				Singleton singleton = (Singleton) predefinable;
-				String qualifier = singleton.getQualifier();
-				if (blueprint.singletonAllocations.containsKey(qualifier)) {
-					throw new IllegalArgumentException(
-							"There were 2 or more beans defined for the qualifier '" + qualifier + "'");
-				}
-				blueprint.singletonAllocations.put(singleton.getQualifier(), singleton.getAllocator());
-			}
-			if (predefinable instanceof Mapping) {
-				Mapping mapping = (Mapping) predefinable;
-				SingletonMode mappingMode = mapping.getMode();
-				String mappingBase = mapping.getBase();
-				if (blueprint.mappingAllocations.get(mappingMode).containsKey(mappingBase)) {
-					throw new IllegalArgumentException("There were 2 or more '" + mappingMode.name()
-							+ "' singleton mapping targets defined for the mapping base '" + mappingBase
-							+ "'; '" + blueprint.propertyAllocations.get(mappingBase) + "' and '"
-							+ mapping.getTarget() + "'");
-				}
-				blueprint.mappingAllocations.get(mappingMode).put(mappingBase, mapping.getTarget());
-			}
-		}
-	}
+        /**
+         * Allocate to the plugin with the given ID that should be used upon injection.
+         *
+         * @param <T>        The bean type.
+         * @param type       The {@link Class} of the bean type; might not be null.
+         * @param directory  The directory to find the plugin in; might <b>not</b> be null and
+         *                   {@link File#isDirectory()} has to return true.
+         * @param pluginId   The ID of the plugin to use, with which it can be found in the
+         *                   given directory; might <b>not</b> be null.
+         * @param processors The {@link PhasedBeanProcessor}s to apply on every instantiated bean;
+         *                   might be null or contain nulls, both is ignored.
+         * @return A newly build allocation, never null
+         */
+        @SafeVarargs
+        public static final <T> TypeAllocation allocateToPlugin(Class<T> type, File directory, String pluginId, PhasedBeanProcessor<? super T>... processors) {
+            if (type == null) {
+                throw new IllegalArgumentException("Unable to allocate a null type.");
+            } else if (directory == null) {
+                throw new IllegalArgumentException("Unable to allocate a bean to a plugin from a null directory.");
+            } else if (!directory.isDirectory()) {
+                throw new IllegalArgumentException("Unable to allocate a bean to a plugin from a non-directory.");
+            } else if (pluginId == null) {
+                throw new IllegalArgumentException("Unable to allocate a bean to a plugin with a null ID.");
+            }
+            return new TypeAllocation(type, new Injector.PluginAllocator<>(directory, pluginId, InjectionProcessors.of(processors)));
+        }
+
+        Class<?> getType() {
+            return type;
+        }
+
+        Injector.AbstractAllocator<?> getAllocator() {
+            return allocator;
+        }
+    }
 }

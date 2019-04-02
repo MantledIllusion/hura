@@ -10,28 +10,27 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.Collection;
 
-import com.mantledillusion.injection.hura.BeanAllocation;
-import com.mantledillusion.injection.hura.Blueprint.BlueprintTemplate;
-import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
+import com.mantledillusion.injection.hura.Blueprint;
 import com.mantledillusion.injection.hura.Injector;
-import com.mantledillusion.injection.hura.Predefinable;
-import com.mantledillusion.injection.hura.Predefinable.Singleton;
-import com.mantledillusion.injection.hura.annotation.property.Property;
-import com.mantledillusion.injection.hura.annotation.lifecycle.annotation.PreConstruct;
+import com.mantledillusion.injection.hura.Blueprint.SingletonAllocation;
+import com.mantledillusion.injection.hura.Blueprint.PropertyAllocation;
+import com.mantledillusion.injection.hura.Blueprint.MappingAllocation;
+import com.mantledillusion.injection.hura.Blueprint.TypeAllocation;
 
 /**
- * {@link Annotation} for {@link Method}s of {@link BlueprintTemplate}
- * implementations that define allocations to influence the way the processed
- * {@link TypedBlueprint} is injected by an {@link Injector}.
+ * {@link Annotation} for {@link Method}s of {@link Blueprint}
+ * implementations that define allocations to influence the way a bean
+ * is injected by an {@link Injector}.
  * <p>
  * {@link Method}s annotated with @{@link Define} may not:
  * <ul>
  * <li>have a return type any other than:
  * <ul>
- * <li>{@link Singleton}</li>
- * <li>{@link Property}</li>
- * <li>{@link Collection} of such {@link Predefinable}s</li>
- * <li>{@link BeanAllocation}</li>
+ * <li>{@link SingletonAllocation}</li>
+ * <li>{@link PropertyAllocation}</li>
+ * <li>{@link MappingAllocation}</li>
+ * <li>{@link TypeAllocation}</li>
+ * <li>{@link Collection} of such {@link Blueprint.Allocation}s</li>
  * </ul>
  * </li>
  * <li>have {@link Parameter}s</li>

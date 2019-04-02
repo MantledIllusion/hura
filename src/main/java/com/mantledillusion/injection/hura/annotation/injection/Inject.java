@@ -10,13 +10,12 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
 
+import com.mantledillusion.injection.hura.Blueprint;
 import com.mantledillusion.injection.hura.annotation.instruction.Adjust;
 import com.mantledillusion.injection.hura.annotation.instruction.Optional;
 import com.mantledillusion.injection.hura.annotation.lifecycle.annotation.PreConstruct;
 
-import com.mantledillusion.injection.hura.BeanAllocation;
 import com.mantledillusion.injection.hura.Injector;
-import com.mantledillusion.injection.hura.Predefinable.Singleton;
 
 /**
  * {@link Annotation} for {@link Field}s and {@link Parameter}s who have to be
@@ -46,7 +45,7 @@ public @interface Inject {
 	 * {@link Field} with null if the resolved bean to inject is null.
 	 * <p>
 	 * A null bean might be resolved if @{@link Optional} is present and no bean is
-	 * available, or if there is a specific {@link BeanAllocation}/{@link Singleton}
+	 * available, or if there is a specific {@link Blueprint.TypeAllocation}/{@link Blueprint.SingletonAllocation}
 	 * that allocates to null.
 	 * <p>
 	 * Of course annotated {@link Parameter}s cannot be preset with any value, so

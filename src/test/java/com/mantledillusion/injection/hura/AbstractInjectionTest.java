@@ -2,8 +2,6 @@ package com.mantledillusion.injection.hura;
 
 import org.junit.Before;
 
-import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
-import com.mantledillusion.injection.hura.Predefinable.Singleton;
 import com.mantledillusion.injection.hura.annotation.instruction.Construct;
 import com.mantledillusion.injection.hura.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.context.misc.ExampleContext;
@@ -18,21 +16,29 @@ public class AbstractInjectionTest {
 		@Construct
 		private InjectorTestSuite() {
 		}
-		
-		public <T> T injectInRootContext(Class<T> type, Predefinable... predefinables) {
-			return Injector.of(predefinables).instantiate(type);
+
+		public <T> T injectInRootContext(Class<T> type) {
+			return Injector.of().instantiate(type);
 		}
 		
-		public <T> T injectInSuiteContext(Class<T> type, Predefinable... predefinables) {
-			return this.injector.instantiate(Blueprint.of(type, predefinables));
+		public <T> T injectInRootContext(Class<T> type, Blueprint.Allocation allocation, Blueprint.Allocation... allocations) {
+			return Injector.of(allocation, allocations).instantiate(type);
+		}
+
+		public <T> T injectInSuiteContext(Class<T> type) {
+			return this.injector.instantiate(type);
 		}
 		
-		public <T> T injectInSuiteContext(TypedBlueprint<T> blueprint) {
-			return this.injector.instantiate(blueprint);
+		public <T> T injectInSuiteContext(Class<T> type, Blueprint.Allocation allocation, Blueprint.Allocation... allocations) {
+			return this.injector.instantiate(type, allocation, allocations);
+		}
+		
+		public <T> T injectInSuiteContext(Class<T> type, Blueprint blueprint, Blueprint... blueprints) {
+			return this.injector.instantiate(type, blueprint, blueprints);
 		}
 		
 		public <T> T injectInSuiteContext(Class<T> type, ExampleContext context) {
-			return this.injector.instantiate(Blueprint.of(type, Singleton.of(ExampleContext.SINGLETON, context)));
+			return this.injector.instantiate(type, Blueprint.SingletonAllocation.of(ExampleContext.SINGLETON, context));
 		}
 		
 		public void destroyInSuiteContext(Object wiredInstance) {

@@ -36,7 +36,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<!-- maven dependency versions -->
-		<hydnora.version>1.2.0</hydnora.version>
+		<hydnora.version>1.2.1-SNAPSHOT</hydnora.version>
 		<essentials.reflection.version>1.1.0</essentials.reflection.version>
 		<org.apache.commons.lang.version>3.8.1</org.apache.commons.lang.version>
 		<org.apache.commons.collections.version>4.3</org.apache.commons.collections.version>

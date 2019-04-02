@@ -1,16 +1,16 @@
 package com.mantledillusion.injection.hura;
 
-import java.lang.reflect.Method;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 import com.mantledillusion.injection.hura.annotation.property.Matches;
 import org.apache.commons.lang3.StringUtils;
 
-import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
-import com.mantledillusion.injection.hura.Predefinable.Property;
-import com.mantledillusion.injection.hura.Predefinable.Singleton;
-import com.mantledillusion.injection.hura.annotation.injection.SingletonMode;
+import com.mantledillusion.injection.hura.Blueprint.MappingAllocation;
+import com.mantledillusion.injection.hura.Blueprint.PropertyAllocation;
+import com.mantledillusion.injection.hura.Blueprint.SingletonAllocation;
 import com.mantledillusion.injection.hura.exception.ResolvingException;
 import com.mantledillusion.injection.hura.exception.ValidatorException;
 
@@ -139,37 +139,72 @@ abstract class InjectionProvider {
 	}
 
 	/**
-	 * Convenience {@link Method} for not having to use
-	 * {@link #instantiate(TypedBlueprint)} with the result of
-	 * {@link Blueprint#of(Class, Predefinable...)}.
+	 * Instantiates and injects an instance of the given root type.
+	 *
+	 * @param <T>
+	 *            The bean type.
+	 * @param clazz
+	 *            The {@link Class} to instantiate and inject; might <b>not</b> be
+	 *            null.
+	 * @return An injected instance of the given {@link Class}; never null
+	 */
+	public final <T> T instantiate(Class<T> clazz) {
+		return instantiate(clazz, Collections.emptyList());
+	}
+
+	/**
+	 * Instantiates and injects an instance of the given root type.
+	 *
+	 * @param <T>
+	 *            The bean type.
+	 * @param clazz
+	 *            The {@link Class} to instantiate and inject; might <b>not</b> be
+	 *            null.
+	 * @param allocation
+	 *            The {@link Blueprint.Allocation} to be used during injection, for
+	 *            example {@link SingletonAllocation}s, {@link MappingAllocation}s
+	 *            or{@link PropertyAllocation}s and {@link Blueprint.TypeAllocation}s;
+	 *            might be null.
+	 * @param allocations
+	 *            More {@link Blueprint.Allocation}s to be used during injection;
+	 *            might be null or contain nulls.
+	 * @return An injected instance of the given {@link Class}; never null
+	 */
+	public abstract <T> T instantiate(Class<T> clazz, Blueprint.Allocation allocation, Blueprint.Allocation... allocations);
+
+	/**
+	 * Instantiates and injects an instance of the given root type.
 	 * 
 	 * @param <T>
 	 *            The bean type.
 	 * @param clazz
 	 *            The {@link Class} to instantiate and inject; might <b>not</b> be
 	 *            null.
-	 * @param predefinables
-	 *            The {@link Predefinable}s to be used during injection, such as
-	 *            {@link SingletonMode#SEQUENCE} {@link Singleton}s or
-	 *            {@link Property}s; might be null or contain nulls, both is
-	 *            ignored.
+	 * @param blueprint
+	 *            The {@link Blueprint} to be used during injection, for
+	 *            defining bindings such as {@link SingletonAllocation}s, {@link MappingAllocation}s
+	 *            or{@link PropertyAllocation}s and {@link Blueprint.TypeAllocation}s; might be null.
+	 * @param blueprint
+	 *            More {@link Blueprint}s to be used during injection; might be null or contain nulls.
 	 * @return An injected instance of the given {@link Class}; never null
 	 */
-	public final <T> T instantiate(Class<T> clazz, Predefinable... predefinables) {
-		return instantiate(Blueprint.of(clazz, predefinables));
+	public final <T> T instantiate(Class<T> clazz, Blueprint blueprint, Blueprint... blueprints) {
+		return instantiate(clazz, InjectionUtils.asList(blueprints, blueprint));
 	}
 
 	/**
-	 * Instantiates and injects an instance of the given {@link TypedBlueprint}'s
-	 * root type.
-	 * 
+	 * Instantiates and injects an instance of the given root type.
+	 *
 	 * @param <T>
 	 *            The bean type.
-	 * @param blueprint
-	 *            The {@link TypedBlueprint} to use for instantiation and injection;
-	 *            might <b>not</b> be null.
-	 * @return An injected instance of the given {@link TypedBlueprint}'s root type;
-	 *         never null
+	 * @param clazz
+	 *            The {@link Class} to instantiate and inject; might <b>not</b> be
+	 *            null.
+	 * @param blueprints
+	 *            {@link Blueprint}s to be used during injection, for
+	 *            defining bindings such as {@link SingletonAllocation}s, {@link MappingAllocation}s
+	 *            or{@link PropertyAllocation}s and {@link Blueprint.TypeAllocation}s; might be null or contain nulls.
+	 * @return An injected instance of the given {@link Class}; never null
 	 */
-	public abstract <T> T instantiate(TypedBlueprint<T> blueprint);
+	public abstract <T> T instantiate(Class<T> clazz, Collection<Blueprint> blueprints);
 }

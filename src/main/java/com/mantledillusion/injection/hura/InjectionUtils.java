@@ -3,6 +3,9 @@ package com.mantledillusion.injection.hura;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Executable;
 import java.lang.reflect.Parameter;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import com.mantledillusion.injection.hura.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.annotation.injection.Plugin;
@@ -66,5 +69,11 @@ public final class InjectionUtils {
 			throw new IllegalArgumentException("Cannot check resolvability of a null annotated element.");
 		}
 		return e.isAnnotationPresent(Property.class);
+	}
+
+	static <T> List<T> asList(T[] objects, T object) {
+		List<T> objectList = objects == null ? new ArrayList<T>() : new ArrayList<>(Arrays.asList(objects));
+		objectList.add(object);
+		return objectList;
 	}
 }

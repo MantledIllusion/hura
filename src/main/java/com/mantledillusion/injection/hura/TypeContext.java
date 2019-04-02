@@ -14,13 +14,13 @@ class TypeContext {
 	
 	TypeContext() {
 	}
+
+	TypeContext(TypeContext base) {
+		this.typeAllocations.putAll(base.typeAllocations);
+	}
 	
 	boolean hasTypeAllocator(Type type) {
 		return this.typeAllocations.containsKey(type);
-	}
-	
-	TypeContext(TypeContext base) {
-		this.typeAllocations.putAll(base.typeAllocations);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -31,12 +31,6 @@ class TypeContext {
 	TypeContext merge(Map<Type, AbstractAllocator<?>> typeAllocations) {
 		TypeContext newContext = new TypeContext(this);
 		newContext.typeAllocations.putAll(typeAllocations);
-		return newContext;
-	}
-	
-	TypeContext merge(TypeContext other) {
-		TypeContext newContext = new TypeContext(this);
-		newContext.typeAllocations.putAll(other.typeAllocations);
 		return newContext;
 	}
 }

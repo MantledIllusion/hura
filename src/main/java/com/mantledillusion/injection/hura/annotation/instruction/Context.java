@@ -7,9 +7,8 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
-import com.mantledillusion.injection.hura.Blueprint.TypedBlueprint;
+import com.mantledillusion.injection.hura.Blueprint;
 import com.mantledillusion.injection.hura.Injector;
-import com.mantledillusion.injection.hura.annotation.injection.SingletonMode;
 
 /**
  * {@link Annotation} for beans that represent a context sensitive entity.
@@ -30,10 +29,7 @@ import com.mantledillusion.injection.hura.annotation.injection.SingletonMode;
  * treated specially regarding their injection:
  * <ul>
  * <li>They cannot be instantiated by the {@link Injector}, they have to be
- * pre-defined by the {@link TypedBlueprint}</li>
- * <li>They cannot be defined as {@link SingletonMode#GLOBAL} singletons, since
- * that would allow carrying them out of their injection context, harming their
- * sensitivity.</li>
+ * pre-defined by the {@link Blueprint}</li>
  * </ul>
  */
 @Retention(RUNTIME)

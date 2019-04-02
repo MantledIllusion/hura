@@ -9,8 +9,6 @@ import com.mantledillusion.injection.hura.exception.ProcessorException;
 import org.junit.Test;
 
 import com.mantledillusion.injection.hura.Injector.RootInjector;
-import com.mantledillusion.injection.hura.Predefinable.Property;
-import com.mantledillusion.injection.hura.Predefinable.Singleton;
 import com.mantledillusion.injection.hura.exception.ResolvingException;
 import com.mantledillusion.injection.hura.property.injectables.InjectableWithProperty;
 import com.mantledillusion.injection.hura.property.injectables.InjectableWithResolvableConstructor;
@@ -36,7 +34,7 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 	public void testPropertyFieldResolving() {
 		String propertyValue = "value";
 		InjectableWithProperty injectable = this.suite.injectInSuiteContext(InjectableWithProperty.class,
-				Property.of("property.key", propertyValue));
+				Blueprint.PropertyAllocation.of("property.key", propertyValue));
 
 		assertEquals(propertyValue, injectable.propertyValue);
 	}
@@ -45,7 +43,7 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 	public void testPropertyConstructorResolving() {
 		String propertyValue = "value";
 		InjectableWithResolvableConstructor injectable = this.suite.injectInSuiteContext(
-				InjectableWithResolvableConstructor.class, Property.of("property.key", propertyValue));
+				InjectableWithResolvableConstructor.class, Blueprint.PropertyAllocation.of("property.key", propertyValue));
 
 		assertEquals(propertyValue, injectable.propertyValue);
 	}
@@ -54,7 +52,7 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 	public void testPropertyProcessingResolving() {
 		String propertyValue = "value";
 		InjectableWithProcessingResolver injectable = this.suite.injectInSuiteContext(
-				InjectableWithProcessingResolver.class, Property.of("property.key", propertyValue));
+				InjectableWithProcessingResolver.class, Blueprint.PropertyAllocation.of("property.key", propertyValue));
 
 		assertEquals(propertyValue, injectable.propertyValue);
 	}
@@ -63,7 +61,7 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 	public void testPropertyProcessorResolving() {
 		String propertyValue = "value";
 		InjectableWithProcessorResolver injectable = this.suite.injectInSuiteContext(
-				InjectableWithProcessorResolver.class, Property.of("property.key", propertyValue));
+				InjectableWithProcessorResolver.class, Blueprint.PropertyAllocation.of("property.key", propertyValue));
 
 		assertEquals(propertyValue, injectable.propertyValue);
 	}
@@ -77,7 +75,7 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 	public void testPropertyMatching() {
 		String propertyValue = "23";
 		InjectableWithMatchedProperty injectable = this.suite.injectInSuiteContext(InjectableWithMatchedProperty.class,
-				Property.of("property.key", propertyValue));
+				Blueprint.PropertyAllocation.of("property.key", propertyValue));
 
 		assertEquals(propertyValue, injectable.exactly2NumbersPropertyValue);
 	}
@@ -86,7 +84,7 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 	public void testPropertyNonMatching() {
 		String propertyValue = "non2DigitPropertyValue";
 		this.suite.injectInSuiteContext(InjectableWithMatchedProperty.class,
-				Property.of("property.key", propertyValue));
+				Blueprint.PropertyAllocation.of("property.key", propertyValue));
 	}
 	
 	@Test(expected = ProcessorException.class)
@@ -103,7 +101,7 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 	public void testPropertyMatchingWithDefault() {
 		String propertyValue = "non2DigitPropertyValue";
 		InjectableWithMatchedDefaultedProperty injectable = this.suite.injectInSuiteContext(
-				InjectableWithMatchedDefaultedProperty.class, Property.of("property.key", propertyValue));
+				InjectableWithMatchedDefaultedProperty.class, Blueprint.PropertyAllocation.of("property.key", propertyValue));
 
 		assertEquals(InjectableWithMatchedDefaultedProperty.DEFAULT_VALUE, injectable.exactly2NumbersPropertyValue);
 	}
@@ -127,7 +125,7 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 	public void testPropertyForcedResolving() {
 		String propertyValue = "value";
 		InjectableWithForcedProperty injectable = this.suite.injectInSuiteContext(InjectableWithForcedProperty.class,
-				Property.of("property.key", propertyValue));
+				Blueprint.PropertyAllocation.of("property.key", propertyValue));
 
 		assertEquals(propertyValue, injectable.forcedPropertyValue);
 	}
@@ -139,61 +137,60 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testKeylessProperty() {
-		Property.of("", "someValue");
+		Blueprint.PropertyAllocation.of("", "someValue");
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void testValuelessProperty() {
-		Property.of("property.key", null);
+		Blueprint.PropertyAllocation.of("property.key", null);
 	}
 
 	@Test(expected = ProcessorException.class)
 	public void testKeylessPropertyResolving() {
 		this.suite.injectInSuiteContext(UninjectableWithoutPropertyKey.class,
-				Property.of("property.key", "unneededValue"));
+				Blueprint.PropertyAllocation.of("property.key", "unneededValue"));
 	}
 
 	@Test(expected = ProcessorException.class)
 	public void testNonStringPropertyResolving() {
 		this.suite.injectInSuiteContext(UninjectableWithNonStringPropertyField.class,
-				Property.of("property.key", "unneededValue"));
+				Blueprint.PropertyAllocation.of("property.key", "unneededValue"));
 	}
 
 	@Test(expected = ProcessorException.class)
 	public void testStaticPropertyResolving() {
 		this.suite.injectInSuiteContext(UninjectableWithStaticProperty.class,
-				Property.of("property.key", "unneededValue"));
+				Blueprint.PropertyAllocation.of("property.key", "unneededValue"));
 	}
 
 	@Test(expected = ProcessorException.class)
 	public void testFinalPropertyResolving() {
 		this.suite.injectInSuiteContext(UninjectableWithFinalProperty.class,
-				Property.of("property.key", "unneededValue"));
+				Blueprint.PropertyAllocation.of("property.key", "unneededValue"));
 	}
 
 	@Test(expected = ProcessorException.class)
 	public void testUnparsableMatcherPropertyResolving() {
 		this.suite.injectInSuiteContext(UninjectableWithUnparsableMatcherProperty.class,
-				Property.of("property.key", "unneededValue"));
+				Blueprint.PropertyAllocation.of("property.key", "unneededValue"));
 	}
 
 	@Test(expected = ProcessorException.class)
 	public void testUnmatchingDefaultValuePropertyResolving() {
 		this.suite.injectInSuiteContext(UninjectableWithUnmatchingDefaultValueProperty.class,
-				Property.of("property.key", "unneededValue"));
+				Blueprint.PropertyAllocation.of("property.key", "unneededValue"));
 	}
 
 	@Test
 	public void testPropertyPredefiningAndOverriding() {
 		String predefined = "predefined";
-		RootInjector injector = Injector.of(Property.of("property.key", predefined));
+		RootInjector injector = Injector.of(Blueprint.PropertyAllocation.of("property.key", predefined));
 
 		InjectableWithProperty injectable = injector.instantiate(InjectableWithProperty.class);
 		assertEquals(predefined, injectable.propertyValue);
 
 		String overridden = "overridden";
-		injectable = injector
-				.instantiate(Blueprint.of(InjectableWithProperty.class, Property.of("property.key", overridden)));
+		injectable = injector.instantiate(InjectableWithProperty.class, Blueprint.PropertyAllocation.of("property.key", overridden));
 		assertEquals(overridden, injectable.propertyValue);
 	}
 }
