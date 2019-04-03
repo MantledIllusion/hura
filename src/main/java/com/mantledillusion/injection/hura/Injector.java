@@ -6,9 +6,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.Function;
 
 import com.mantledillusion.injection.hura.annotation.injection.Qualifier;
 import com.mantledillusion.injection.hura.annotation.lifecycle.Phase;
+import com.mantledillusion.injection.hura.annotation.lifecycle.bean.PreDestroy;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
 import com.mantledillusion.injection.hura.Blueprint.BeanProvider;
@@ -24,6 +26,8 @@ import com.mantledillusion.injection.hura.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.annotation.instruction.Optional.InjectionMode;
 import com.mantledillusion.injection.hura.exception.ProcessorException;
 import com.mantledillusion.injection.hura.exception.InjectionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An {@link Injector} for instantiating and injecting beans.
@@ -58,33 +62,41 @@ import com.mantledillusion.injection.hura.exception.InjectionException;
  */
 public class Injector extends InjectionProvider {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(Injector.class);
+
     /**
      * The root {@link Injector} of an injection tree.
      */
     public static final class RootInjector extends Injector {
+
+        private Map<Phase, List<SelfSustainingProcessor>> rootDestroyables;
 
         private RootInjector(SingletonContext singletonContext, ResolvingContext resolvingContext,
                              MappingContext mappingContext, TypeContext typeContext) {
             super(singletonContext, resolvingContext, mappingContext, typeContext);
         }
 
-        /**
-         * Extension to {@link #destroyAll()} that not only destroys the whole injection
-         * tree, but also all {@link com.mantledillusion.injection.hura.Blueprint.Allocation}s
-         * the root injector may have.
-         */
-        public void destroyInjector() {
-            super.destroyAll();
-            // TODO
+        private void setRootDestroyables(Map<Phase, List<SelfSustainingProcessor>> rootDestroyables) {
+            this.rootDestroyables = rootDestroyables;
         }
 
         /**
-         * Normal {@link Injector#destroyAll()} method, but since it is called on the
-         * {@link RootInjector}, it destroyes the whole injection tree.
+         * Extension to {@link #destroyAll()} that not only destroys the whole injection
+         * tree, but also all {@link com.mantledillusion.injection.hura.Blueprint.Allocation}s
+         * the root injector may have as well.
          */
         @Override
-        public void destroyAll() {
-            super.destroyAll();
+        public synchronized void shutdown() {
+            super.shutdown();
+
+            int failingDestructionCount =
+                    ((Injector) this).destroy(this, rootDestroyables.get(Phase.PRE_DESTROY), false) +
+                    ((Injector) this).destroy(this, rootDestroyables.get(Phase.POST_DESTROY), false);
+            this.rootDestroyables.clear();
+
+            if (failingDestructionCount > 0) {
+                ((Injector) this).failDestruction(this, failingDestructionCount);
+            }
         }
     }
 
@@ -106,46 +118,26 @@ public class Injector extends InjectionProvider {
      * The callback automatically looses its instantiation ability when the
      * injection sequence proceeds; any successive calls on the callback's functions
      * will result in {@link IllegalStateException}s. The current state can be
-     * checked with {@link TemporalInjectorCallback#isActive()}.
+     * checked with {@link TemporalInjectorCallback#isShutdown()}.
      */
     public final class TemporalInjectorCallback extends InjectionProvider {
 
         private final InjectionChain chain;
-        private boolean isActive = true;
 
         private TemporalInjectorCallback(InjectionChain chain) {
             this.chain = chain;
         }
 
-        /**
-         * Determines whether this {@link TemporalInjectorCallback} is currently active.
-         * <p>
-         * In other words, this method returns whether the injection sequence this
-         * callback has been created for is still running, so the callback is able to
-         * instantiate more beans in that sequence's context.
-         *
-         * @return True if the sequence is still active, false otherwise; if false is
-         * returned, all calls to any of the instantiate() or resolve() {@link Method}s
-         * will fail with {@link IllegalStateException}s
-         */
-        public boolean isActive() {
-            return this.isActive;
-        }
-
-        private void deactivate() {
-            this.isActive = false;
-        }
-
         @Override
         String resolve(ResolvingSettings set) {
-            checkActive();
+            checkShutdown();
 
             return this.chain.resolve(set);
         }
 
         @Override
         public <T> T instantiate(Class<T> clazz, Blueprint.Allocation allocation, Blueprint.Allocation... allocations) {
-            checkActive();
+            checkShutdown();
 
             InjectionChain chain = this.chain.extendBy(InjectionAllocations.ofAllocations(InjectionUtils.asList(allocations, allocation)));
             InjectionSettings<T> set = InjectionSettings.of(clazz);
@@ -154,18 +146,11 @@ public class Injector extends InjectionProvider {
 
         @Override
         public <T> T instantiate(Class<T> clazz, Collection<Blueprint> blueprints) {
-            checkActive();
+            checkShutdown();
 
             InjectionChain chain = this.chain.extendBy(InjectionAllocations.ofBlueprints(blueprints));
             InjectionSettings<T> set = InjectionSettings.of(clazz);
             return Injector.this.instantiate(chain, set);
-        }
-
-        private void checkActive() {
-            if (!this.isActive) {
-                throw new IllegalStateException(
-                        "The temporally restricted lifetime of the injection callback has expired.");
-            }
         }
     }
 
@@ -270,7 +255,7 @@ public class Injector extends InjectionProvider {
         void process() throws Exception;
     }
 
-    private final SingletonContext baseSingletonContext;
+    private final SingletonContext singletonContext;
     private final ResolvingContext resolvingContext;
     private final MappingContext mappingContext;
     private final TypeContext typeContext;
@@ -279,11 +264,11 @@ public class Injector extends InjectionProvider {
 
     @Construct
     private Injector(
-            @Inject @Qualifier(SingletonContext.INJECTION_CONTEXT_SINGLETON_ID) SingletonContext baseSingletonContext,
+            @Inject @Qualifier(SingletonContext.INJECTION_CONTEXT_SINGLETON_ID) SingletonContext singletonContext,
             @Inject @Qualifier(ResolvingContext.RESOLVING_CONTEXT_SINGLETON_ID) ResolvingContext resolvingContext,
             @Inject @Qualifier(MappingContext.MAPPING_CONTEXT_SINGLETON_ID) MappingContext mappingContext,
             @Inject @Qualifier(TypeContext.TYPE_CONTEXT_SINGLETON_ID) TypeContext typeContext) {
-        this.baseSingletonContext = baseSingletonContext;
+        this.singletonContext = singletonContext;
         this.resolvingContext = resolvingContext;
         this.mappingContext = mappingContext;
         this.typeContext = typeContext;
@@ -291,6 +276,8 @@ public class Injector extends InjectionProvider {
 
     @Override
     String resolve(ResolvingSettings set) {
+        checkShutdown();
+
         return this.resolvingContext.resolve(set);
     }
 
@@ -305,57 +292,52 @@ public class Injector extends InjectionProvider {
     }
 
     private <T> T instantiate(Class<T> type, InjectionAllocations allocations) {
+        checkShutdown();
+
         InjectionSettings<T> settings = InjectionSettings.of(type);
 
-        InjectionChain chain = InjectionChain.forInjection(this.baseSingletonContext.getInjectionTreeLock(),
-                this.baseSingletonContext, this.resolvingContext, this.mappingContext, this.typeContext, allocations);
+        InjectionChain chain = InjectionChain.forInjection(this.singletonContext.getInjectionTreeLock(),
+                this.singletonContext, this.resolvingContext, this.mappingContext, this.typeContext, allocations);
 
-        T instance;
+        return resolveSingletonsAndPerform(chain, destroyables -> {
+            T instance = instantiate(chain, settings);
+            Injector.this.beans.put(instance, destroyables);
+            return instance;
+        });
+    }
+
+    private <T> T resolveSingletonsAndPerform(InjectionChain chain, Function<Map<Phase, List<SelfSustainingProcessor>>, T> function) {
+        T instance = null;
         try {
             resolveSingletonsIntoChain(chain);
-
-            instance = instantiate(chain, settings);
 
             Map<Phase, List<SelfSustainingProcessor>> destroyables = new HashMap<>();
             destroyables.put(Phase.PRE_DESTROY, chain.getPreDestroyables());
             destroyables.put(Phase.POST_DESTROY, chain.getPostDestroyables());
 
-            this.beans.put(instance, destroyables);
+            instance = function.apply(destroyables);
+
             finalize(chain.getPostConstructables());
         } catch (Exception e) {
             chain.clearHook();
 
-            int failingDestructionCount = 0;
-            for (SelfSustainingProcessor destroyable : chain.getPreDestroyables()) {
-                try {
-                    destroyable.process();
-                } catch (Exception e1) {
-                    failingDestructionCount++;
-                    // Do nothing; If proper injection has failed, a failing destroying might just
-                    // be a consequence.
-                }
-            }
-            for (SelfSustainingProcessor destroyable : chain.getPostDestroyables()) {
-                try {
-                    destroyable.process();
-                } catch (Exception e1) {
-                    failingDestructionCount++;
-                    // Do nothing; If proper injection has failed, a failing destroying might just
-                    // be a consequence.
-                }
-            }
+            int failingDestructionCount = destroy(instance, chain.getPreDestroyables(), false) +
+                    destroy(instance, chain.getPostDestroyables(), false);
 
             if (failingDestructionCount > 0) {
-                throw new InjectionException("Injection failed; " + chain.getPreDestroyables().size()
-                        + " " + Phase.PRE_DESTROY.name() + " processors and " + chain.getPostDestroyables().size()
-                        + " " + Phase.POST_DESTROY.name() + " processors were executed on already injected beans (with "
-                        + failingDestructionCount + " of them failing as well)", e);
+                failDestruction(instance, failingDestructionCount);
             } else {
                 throw e;
             }
         }
         return instance;
+    }
 
+    private void resolveSingletonsIntoChain(InjectionChain chain) {
+        for (String qualifier : chain.getSingletonAllocations()) {
+            InjectionSettings<Object> set = InjectionSettings.of(qualifier);
+            instantiate(chain, set);
+        }
     }
 
     private void finalize(List<SelfSustainingProcessor> finalizables) {
@@ -367,6 +349,38 @@ public class Injector extends InjectionProvider {
                 throw new ProcessorException("Unable to finalize; the processing threw an exception", e);
             }
         }
+    }
+
+    private int destroy(Object bean, List<SelfSustainingProcessor> destroyables, boolean throwOnFailures) {
+        int failingDestructionCount = 0;
+        Iterator<SelfSustainingProcessor> destroyableIter = destroyables.iterator();
+        while (destroyableIter.hasNext()) {
+            SelfSustainingProcessor destroyable = destroyableIter.next();
+            try {
+                destroyable.process();
+            } catch (Exception e) {
+                failingDestructionCount++;
+                LOGGER.warn("[Destruction Processing Fail #]"+failingDestructionCount, e);
+                // Do nothing; If proper injection has failed, a failing destroying might just
+                // be a consequence.
+            } finally {
+                if (!throwOnFailures) {
+                    destroyableIter.remove();
+                }
+            }
+        }
+
+        if (throwOnFailures && failingDestructionCount > 0) {
+            failDestruction(bean, failingDestructionCount);
+        }
+        return failingDestructionCount;
+    }
+
+    private void failDestruction(Object bean, int failingDestructionCount) {
+        String beanDescription = bean == null ? "yet uninstantiated bean" :
+                "instantiated " + bean.getClass().getSimpleName() + " instance (@" + System.identityHashCode(bean) + ")";
+        throw new ProcessorException("Unable to destroy " + beanDescription
+                + "; the execution of " + failingDestructionCount + " processors failed");
     }
 
     @SuppressWarnings("unchecked")
@@ -432,7 +446,7 @@ public class Injector extends InjectionProvider {
     private <T> InjectionProcessors<T> buildApplicators(InjectionChain chain, InjectionSettings<T> set) {
         TemporalInjectorCallback callback = new TemporalInjectorCallback(chain);
         InjectionProcessors<T> applicators = InjectionProcessors.of(set.type, callback);
-        callback.deactivate();
+        callback.shutdown();
 
         return applicators;
     }
@@ -570,7 +584,7 @@ public class Injector extends InjectionProvider {
                 throw new ProcessorException("Unable to process instance of '" + type.getSimpleName()
                         + "'; the processing threw an exception", e);
             } finally {
-                callback.deactivate();
+                callback.shutdown();
             }
         }
     }
@@ -596,9 +610,9 @@ public class Injector extends InjectionProvider {
     public void destroy(Object rootBean) {
         if (this.beans.containsKey(rootBean)) {
             Map<Phase, List<SelfSustainingProcessor>> destroyers = this.beans.get(rootBean);
-            destroy(rootBean, destroyers.get(Phase.PRE_DESTROY));
+            destroy(rootBean, destroyers.get(Phase.PRE_DESTROY), true);
             this.beans.remove(rootBean);
-            destroy(rootBean, destroyers.get(Phase.POST_DESTROY));
+            destroy(rootBean, destroyers.get(Phase.POST_DESTROY), true);
         } else {
             throw new IllegalArgumentException(
                     "The given " + rootBean.getClass().getSimpleName() + " (@" + System.identityHashCode(rootBean)
@@ -617,21 +631,17 @@ public class Injector extends InjectionProvider {
             Object bean = entry.getKey();
             Map<Phase, List<SelfSustainingProcessor>> destroyers = entry.getValue();
 
-            destroy(bean, destroyers.get(Phase.PRE_DESTROY));
+            destroy(bean, destroyers.get(Phase.PRE_DESTROY), true);
             beanIter.remove();
-            destroy(bean, destroyers.get(Phase.POST_DESTROY));
+            destroy(bean, destroyers.get(Phase.POST_DESTROY), true);
         }
     }
 
-    private void destroy(Object bean, List<SelfSustainingProcessor> destroyables) {
-        for (SelfSustainingProcessor destroyable : destroyables) {
-            try {
-                destroyable.process();
-            } catch (Exception e) {
-                throw new ProcessorException("Unable to destroy injected " + bean.getClass().getSimpleName()
-                        + " instance (@" + System.identityHashCode(bean) + ")", e);
-            }
-        }
+    @Override
+    @PreDestroy
+    protected synchronized void shutdown() {
+        destroyAll();
+        super.shutdown();
     }
 
     /**
@@ -729,15 +739,9 @@ public class Injector extends InjectionProvider {
         RootInjector injector = new RootInjector(chain.getSingletonContext(), chain.getResolvingContext(),
                 chain.getMappingContext(), chain.getTypeContext());
 
-        ((Injector) injector).resolveSingletonsIntoChain(chain);
-
-        return injector;
-    }
-
-    private void resolveSingletonsIntoChain(InjectionChain chain) {
-        for (String qualifier : chain.getSingletonAllocations()) {
-            InjectionSettings<Object> set = InjectionSettings.of(qualifier);
-            instantiate(chain, set);
-        }
+        return ((Injector) injector).resolveSingletonsAndPerform(chain, destroyables -> {
+            injector.setRootDestroyables(destroyables);
+            return injector;
+        });
     }
 }

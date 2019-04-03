@@ -1,6 +1,7 @@
 package com.mantledillusion.injection.hura.lifecycle;
 
 import com.mantledillusion.injection.hura.*;
+import com.mantledillusion.injection.hura.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.annotation.lifecycle.Phase;
 import com.mantledillusion.injection.hura.exception.ProcessorException;
 import com.mantledillusion.injection.hura.lifecycle.injectables.*;
@@ -83,18 +84,52 @@ public class LifecycleTest extends AbstractInjectionTest {
     }
 
     @Test
-    public void testSingletonDestruction() {
-        Injector.RootInjector rootInjector = Injector.of();
+    public void testInjectorDestruction() {
+        InjectableWithInjector injectable = this.suite.injectInSuiteContext(InjectableWithInjector.class);
+        InjectableWithDestructionAwareness sub = injectable.injector.instantiate(InjectableWithDestructionAwareness.class);
 
+        Assert.assertFalse(sub.wasDestructed);
+        this.suite.destroyInSuiteContext(injectable);
+        Assert.assertTrue(sub.wasDestructed);
+    }
+
+    @Test
+    public void testRootInjectorDestruction() {
+        Injector.RootInjector rootInjector = Injector.of();
+        InjectableWithDestructionAwareness injectable = rootInjector.instantiate(InjectableWithDestructionAwareness.class);
+
+        Assert.assertFalse(injectable.wasDestructed);
+        rootInjector.shutdown();
+        Assert.assertTrue(injectable.wasDestructed);
+    }
+
+    @Test
+    public void testSingletonDestruction() {
         InjectableWithDestructionAwareness.InjectableWithDestructableSingletonAndInjector injectable =
-                rootInjector.instantiate(InjectableWithDestructionAwareness.InjectableWithDestructableSingletonAndInjector.class);
+                this.suite.injectInSuiteContext(InjectableWithDestructionAwareness.InjectableWithDestructableSingletonAndInjector.class);
         InjectableWithDestructionAwareness.InjectableWithDestructableSingleton sub =
                 injectable.injector.instantiate(InjectableWithDestructionAwareness.InjectableWithDestructableSingleton.class);
 
         Assert.assertFalse(injectable.singleton.wasDestructed);
         injectable.injector.destroy(sub);
         Assert.assertFalse(injectable.singleton.wasDestructed);
+        this.suite.destroyInSuiteContext(injectable);
+        Assert.assertTrue(injectable.singleton.wasDestructed);
+    }
+
+    @Test
+    public void testRootSingletonDestruction() {
+        Injector.RootInjector rootInjector = Injector.of(Blueprint.SingletonAllocation.of(
+                InjectableWithDestructionAwareness.InjectableWithDestructableSingleton.QUALIFIER,
+                InjectableWithDestructionAwareness.class));
+
+        InjectableWithDestructionAwareness.InjectableWithDestructableSingleton injectable =
+                rootInjector.instantiate(InjectableWithDestructionAwareness.InjectableWithDestructableSingleton.class);
+
+        Assert.assertFalse(injectable.singleton.wasDestructed);
         rootInjector.destroy(injectable);
+        Assert.assertFalse(injectable.singleton.wasDestructed);
+        rootInjector.shutdown();
         Assert.assertTrue(injectable.singleton.wasDestructed);
     }
 

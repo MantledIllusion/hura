@@ -1,5 +1,6 @@
 package com.mantledillusion.injection.hura;
 
+import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.regex.Pattern;
@@ -15,7 +16,31 @@ import com.mantledillusion.injection.hura.exception.ResolvingException;
 import com.mantledillusion.injection.hura.exception.ValidatorException;
 
 abstract class InjectionProvider {
-	
+
+	private boolean isShutdown = false;
+
+	/**
+	 * Determines whether this {@link InjectionProvider} has been shut down.
+	 *
+	 * @return True if the {@link InjectionProvider} is still active, false otherwise; if false is
+	 * returned, all calls to any of the instantiate()/resolve()/... {@link Method}s
+	 * will fail with {@link IllegalStateException}s
+	 */
+	public boolean isShutdown() {
+		return isShutdown;
+	}
+
+	protected synchronized void shutdown() {
+		this.isShutdown = true;
+	}
+
+	protected void checkShutdown() {
+		if (this.isShutdown) {
+			throw new IllegalStateException(
+					"The injection provider is shutdown; it cannot be used for injection anymore.");
+		}
+	}
+
 	/**
 	 * Resolves the given property key.
 	 * <p>

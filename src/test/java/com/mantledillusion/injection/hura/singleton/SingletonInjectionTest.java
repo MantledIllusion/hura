@@ -15,7 +15,7 @@ import com.mantledillusion.injection.hura.exception.MappingException;
 import com.mantledillusion.injection.hura.Injectable;
 import com.mantledillusion.injection.hura.singleton.injectables.InjectableWithExplicitAndEagerSingleton;
 import com.mantledillusion.injection.hura.singleton.injectables.InjectableWithExplicitSingleton;
-import com.mantledillusion.injection.hura.singleton.injectables.InjectableWithInjector;
+import com.mantledillusion.injection.hura.InjectableWithInjector;
 import com.mantledillusion.injection.hura.singleton.injectables.InjectableWithSequenceSingleton;
 import com.mantledillusion.injection.hura.singleton.injectables.InjectableWithSequenceSingletonInjectables;
 import com.mantledillusion.injection.hura.singleton.injectables.InjectableWithSingletonAllocationRequired;
