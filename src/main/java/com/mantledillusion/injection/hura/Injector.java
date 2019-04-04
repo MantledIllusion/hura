@@ -8,9 +8,13 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Function;
 
+import com.mantledillusion.essentials.object.ListEssentials;
 import com.mantledillusion.injection.hura.annotation.injection.Qualifier;
 import com.mantledillusion.injection.hura.annotation.lifecycle.Phase;
 import com.mantledillusion.injection.hura.annotation.lifecycle.bean.PreDestroy;
+import com.mantledillusion.injection.hura.exception.ShutdownException;
+import com.mantledillusion.injection.hura.service.InjectionProvider;
+import com.mantledillusion.injection.hura.service.ResolvingProvider;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
 import com.mantledillusion.injection.hura.Blueprint.BeanProvider;
@@ -60,7 +64,7 @@ import org.slf4j.LoggerFactory;
  * define {@link SingletonAllocation}s that will be available to the parent (or another
  * one of its children).
  */
-public class Injector extends InjectionProvider {
+public class Injector implements InjectionProvider, ResolvingProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Injector.class);
 
@@ -84,14 +88,16 @@ public class Injector extends InjectionProvider {
          * Extension to {@link #destroyAll()} that not only destroys the whole injection
          * tree, but also all {@link com.mantledillusion.injection.hura.Blueprint.Allocation}s
          * the root injector may have as well.
+         *
+         * @throws ShutdownException If the instance has already been shut down
          */
         @Override
-        public synchronized void shutdown() {
+        public synchronized void shutdown() throws ShutdownException {
             super.shutdown();
 
             int failingDestructionCount =
                     ((Injector) this).destroy(this, rootDestroyables.get(Phase.PRE_DESTROY), false) +
-                    ((Injector) this).destroy(this, rootDestroyables.get(Phase.POST_DESTROY), false);
+                            ((Injector) this).destroy(this, rootDestroyables.get(Phase.POST_DESTROY), false);
             this.rootDestroyables.clear();
 
             if (failingDestructionCount > 0) {
@@ -120,16 +126,47 @@ public class Injector extends InjectionProvider {
      * will result in {@link IllegalStateException}s. The current state can be
      * checked with {@link TemporalInjectorCallback#isShutdown()}.
      */
-    public final class TemporalInjectorCallback extends InjectionProvider {
+    public final class TemporalInjectorCallback implements InjectionProvider, ResolvingProvider {
 
         private final InjectionChain chain;
+
+        private boolean isShutdown = false;
 
         private TemporalInjectorCallback(InjectionChain chain) {
             this.chain = chain;
         }
 
         @Override
-        String resolve(ResolvingSettings set) {
+        public boolean isShutdown() {
+            return isShutdown;
+        }
+
+        private synchronized void shutdown() {
+            this.isShutdown = true;
+        }
+
+        @Override
+        public final String resolve(String propertyKey, String matcher, boolean forced) {
+            InjectionUtils.checkKey(propertyKey);
+            InjectionUtils.checkMatcher(matcher, null);
+
+            ResolvingSettings set = ResolvingSettings.of(propertyKey, matcher, forced);
+            return resolve(set);
+        }
+
+        @Override
+        public final String resolve(String propertyKey, String matcher, String defaultValue) {
+            if (defaultValue == null) {
+                throw new IllegalArgumentException("Cannot fall back to a null default value.");
+            }
+            InjectionUtils.checkKey(propertyKey);
+            InjectionUtils.checkMatcher(matcher, defaultValue);
+
+            ResolvingSettings set = ResolvingSettings.of(propertyKey, matcher, defaultValue);
+            return resolve(set);
+        }
+
+        private String resolve(ResolvingSettings set) {
             checkShutdown();
 
             return this.chain.resolve(set);
@@ -139,7 +176,7 @@ public class Injector extends InjectionProvider {
         public <T> T instantiate(Class<T> clazz, Blueprint.Allocation allocation, Blueprint.Allocation... allocations) {
             checkShutdown();
 
-            InjectionChain chain = this.chain.extendBy(InjectionAllocations.ofAllocations(InjectionUtils.asList(allocations, allocation)));
+            InjectionChain chain = this.chain.extendBy(InjectionAllocations.ofAllocations(ListEssentials.asList(allocations, allocation)));
             InjectionSettings<T> set = InjectionSettings.of(clazz);
             return Injector.this.instantiate(chain, set);
         }
@@ -262,6 +299,8 @@ public class Injector extends InjectionProvider {
 
     private final IdentityHashMap<Object, Map<Phase, List<SelfSustainingProcessor>>> beans = new IdentityHashMap<>();
 
+    private boolean isShutdown = false;
+
     @Construct
     private Injector(
             @Inject @Qualifier(SingletonContext.INJECTION_CONTEXT_SINGLETON_ID) SingletonContext singletonContext,
@@ -275,7 +314,27 @@ public class Injector extends InjectionProvider {
     }
 
     @Override
-    String resolve(ResolvingSettings set) {
+    public final String resolve(String propertyKey, String matcher, boolean forced) {
+        InjectionUtils.checkKey(propertyKey);
+        InjectionUtils.checkMatcher(matcher, null);
+
+        ResolvingSettings set = ResolvingSettings.of(propertyKey, matcher, forced);
+        return resolve(set);
+    }
+
+    @Override
+    public final String resolve(String propertyKey, String matcher, String defaultValue) {
+        if (defaultValue == null) {
+            throw new IllegalArgumentException("Cannot fall back to a null default value.");
+        }
+        InjectionUtils.checkKey(propertyKey);
+        InjectionUtils.checkMatcher(matcher, defaultValue);
+
+        ResolvingSettings set = ResolvingSettings.of(propertyKey, matcher, defaultValue);
+        return resolve(set);
+    }
+
+    private String resolve(ResolvingSettings set) {
         checkShutdown();
 
         return this.resolvingContext.resolve(set);
@@ -283,7 +342,7 @@ public class Injector extends InjectionProvider {
 
     @Override
     public final <T> T instantiate(Class<T> clazz, Blueprint.Allocation allocation, Blueprint.Allocation... allocations) {
-        return instantiate(clazz, InjectionAllocations.ofAllocations(InjectionUtils.asList(allocations, allocation)));
+        return instantiate(clazz, InjectionAllocations.ofAllocations(ListEssentials.asList(allocations, allocation)));
     }
 
     @Override
@@ -360,7 +419,7 @@ public class Injector extends InjectionProvider {
                 destroyable.process();
             } catch (Exception e) {
                 failingDestructionCount++;
-                LOGGER.warn("[Destruction Processing Fail #]"+failingDestructionCount, e);
+                LOGGER.warn("[Destruction Processing Fail #]" + failingDestructionCount, e);
                 // Do nothing; If proper injection has failed, a failing destroying might just
                 // be a consequence.
             } finally {
@@ -638,10 +697,15 @@ public class Injector extends InjectionProvider {
     }
 
     @Override
+    public boolean isShutdown() {
+        return isShutdown;
+    }
+
     @PreDestroy
     protected synchronized void shutdown() {
+        checkShutdown();
         destroyAll();
-        super.shutdown();
+        this.isShutdown = true;
     }
 
     /**
@@ -684,7 +748,7 @@ public class Injector extends InjectionProvider {
      * @return A new {@link RootInjector} instance; never null
      */
     public static RootInjector of(Blueprint.Allocation allocation, Blueprint.Allocation... allocations) {
-        return of(InjectionAllocations.ofAllocations(InjectionUtils.asList(allocations, allocation)));
+        return of(InjectionAllocations.ofAllocations(ListEssentials.asList(allocations, allocation)));
     }
 
     /**
@@ -707,7 +771,7 @@ public class Injector extends InjectionProvider {
      * @return A new {@link RootInjector} instance; never null
      */
     public static RootInjector of(Blueprint blueprint, Blueprint... blueprints) {
-        return of(InjectionUtils.asList(blueprints, blueprint));
+        return of(ListEssentials.asList(blueprints, blueprint));
     }
 
     /**
