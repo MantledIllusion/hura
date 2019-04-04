@@ -66,7 +66,7 @@ public interface InjectionProvider extends ShutdownableService {
      * @throws ShutdownException If the instance has already been shut down
      */
     default <T> T instantiate(Class<T> clazz, Blueprint blueprint, Blueprint... blueprints) throws ShutdownException {
-        return instantiate(clazz, ListEssentials.asList(blueprints, blueprint));
+        return instantiate(clazz, ListEssentials.toList(blueprints, blueprint));
     }
 
     /**

@@ -176,7 +176,7 @@ public class Injector implements InjectionProvider, ResolvingProvider {
         public <T> T instantiate(Class<T> clazz, Blueprint.Allocation allocation, Blueprint.Allocation... allocations) {
             checkShutdown();
 
-            InjectionChain chain = this.chain.extendBy(InjectionAllocations.ofAllocations(ListEssentials.asList(allocations, allocation)));
+            InjectionChain chain = this.chain.extendBy(InjectionAllocations.ofAllocations(ListEssentials.toList(allocations, allocation)));
             InjectionSettings<T> set = InjectionSettings.of(clazz);
             return Injector.this.instantiate(chain, set);
         }
@@ -342,7 +342,7 @@ public class Injector implements InjectionProvider, ResolvingProvider {
 
     @Override
     public final <T> T instantiate(Class<T> clazz, Blueprint.Allocation allocation, Blueprint.Allocation... allocations) {
-        return instantiate(clazz, InjectionAllocations.ofAllocations(ListEssentials.asList(allocations, allocation)));
+        return instantiate(clazz, InjectionAllocations.ofAllocations(ListEssentials.toList(allocations, allocation)));
     }
 
     @Override
@@ -748,7 +748,7 @@ public class Injector implements InjectionProvider, ResolvingProvider {
      * @return A new {@link RootInjector} instance; never null
      */
     public static RootInjector of(Blueprint.Allocation allocation, Blueprint.Allocation... allocations) {
-        return of(InjectionAllocations.ofAllocations(ListEssentials.asList(allocations, allocation)));
+        return of(InjectionAllocations.ofAllocations(ListEssentials.toList(allocations, allocation)));
     }
 
     /**
@@ -771,7 +771,7 @@ public class Injector implements InjectionProvider, ResolvingProvider {
      * @return A new {@link RootInjector} instance; never null
      */
     public static RootInjector of(Blueprint blueprint, Blueprint... blueprints) {
-        return of(ListEssentials.asList(blueprints, blueprint));
+        return of(ListEssentials.toList(blueprints, blueprint));
     }
 
     /**
