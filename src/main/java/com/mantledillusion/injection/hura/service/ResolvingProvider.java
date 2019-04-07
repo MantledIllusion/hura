@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
 /**
  * Interface for services that provide property resolving.
  */
-public interface ResolvingProvider extends ShutdownableService {
+public interface ResolvingProvider extends StatefulService {
 
     /**
      * Resolves the given property key.

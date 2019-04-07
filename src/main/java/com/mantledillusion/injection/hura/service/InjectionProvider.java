@@ -10,7 +10,7 @@ import java.util.Collections;
 /**
  * Interface for services that provide instantiation, dependency injection and lifecycle handling of beans.
  */
-public interface InjectionProvider extends ShutdownableService {
+public interface InjectionProvider extends StatefulService {
 
     /**
      * Instantiates and injects an instance of the given root type.

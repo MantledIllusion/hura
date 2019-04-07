@@ -1,7 +1,9 @@
 package com.mantledillusion.injection.hura.exception;
 
+import com.mantledillusion.injection.hura.service.StatefulService;
+
 /**
- * Type for {@link RuntimeException}s that occur when calling methods of a {@link com.mantledillusion.injection.hura.service.ShutdownableService} after is has been shut down.
+ * Type for {@link RuntimeException}s that occur when calling methods of a {@link StatefulService} after is has been shut down.
  */
 public class ShutdownException extends RuntimeException {
 

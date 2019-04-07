@@ -6,6 +6,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 
 import com.mantledillusion.essentials.object.ListEssentials;
@@ -13,6 +14,7 @@ import com.mantledillusion.injection.hura.annotation.injection.Qualifier;
 import com.mantledillusion.injection.hura.annotation.lifecycle.Phase;
 import com.mantledillusion.injection.hura.annotation.lifecycle.bean.PreDestroy;
 import com.mantledillusion.injection.hura.exception.ShutdownException;
+import com.mantledillusion.injection.hura.service.AggregationProvider;
 import com.mantledillusion.injection.hura.service.InjectionProvider;
 import com.mantledillusion.injection.hura.service.ResolvingProvider;
 import org.apache.commons.lang3.reflect.TypeUtils;
@@ -64,9 +66,13 @@ import org.slf4j.LoggerFactory;
  * define {@link SingletonAllocation}s that will be available to the parent (or another
  * one of its children).
  */
-public class Injector implements InjectionProvider, ResolvingProvider {
+public class Injector implements ResolvingProvider, AggregationProvider, InjectionProvider {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Injector.class);
+
+    private enum InjectorState {
+        PRE_ACTIVE, ACTIVE, SHUTDOWN;
+    }
 
     /**
      * The root {@link Injector} of an injection tree.
@@ -124,7 +130,7 @@ public class Injector implements InjectionProvider, ResolvingProvider {
      * The callback automatically looses its instantiation ability when the
      * injection sequence proceeds; any successive calls on the callback's functions
      * will result in {@link IllegalStateException}s. The current state can be
-     * checked with {@link TemporalInjectorCallback#isShutdown()}.
+     * checked with {@link TemporalInjectorCallback#isActive()}.
      */
     public final class TemporalInjectorCallback implements InjectionProvider, ResolvingProvider {
 
@@ -137,7 +143,7 @@ public class Injector implements InjectionProvider, ResolvingProvider {
         }
 
         @Override
-        public boolean isShutdown() {
+        public boolean isActive() {
             return isShutdown;
         }
 
@@ -167,14 +173,14 @@ public class Injector implements InjectionProvider, ResolvingProvider {
         }
 
         private String resolve(ResolvingSettings set) {
-            checkShutdown();
+            checkActive();
 
             return this.chain.resolve(set);
         }
 
         @Override
         public <T> T instantiate(Class<T> clazz, Blueprint.Allocation allocation, Blueprint.Allocation... allocations) {
-            checkShutdown();
+            checkActive();
 
             InjectionChain chain = this.chain.extendBy(InjectionAllocations.ofAllocations(ListEssentials.toList(allocations, allocation)));
             InjectionSettings<T> set = InjectionSettings.of(clazz);
@@ -183,7 +189,7 @@ public class Injector implements InjectionProvider, ResolvingProvider {
 
         @Override
         public <T> T instantiate(Class<T> clazz, Collection<Blueprint> blueprints) {
-            checkShutdown();
+            checkActive();
 
             InjectionChain chain = this.chain.extendBy(InjectionAllocations.ofBlueprints(blueprints));
             InjectionSettings<T> set = InjectionSettings.of(clazz);
@@ -299,7 +305,7 @@ public class Injector implements InjectionProvider, ResolvingProvider {
 
     private final IdentityHashMap<Object, Map<Phase, List<SelfSustainingProcessor>>> beans = new IdentityHashMap<>();
 
-    private boolean isShutdown = false;
+    private InjectorState state = InjectorState.PRE_ACTIVE;
 
     @Construct
     private Injector(
@@ -335,9 +341,16 @@ public class Injector implements InjectionProvider, ResolvingProvider {
     }
 
     private String resolve(ResolvingSettings set) {
-        checkShutdown();
+        checkActive();
 
         return this.resolvingContext.resolve(set);
+    }
+
+    @Override
+    public <T> Collection<T> aggregate(Class<T> type, Collection<BiPredicate<String, T>> biPredicates) {
+        checkActive();
+
+        return this.singletonContext.aggregate(type, biPredicates);
     }
 
     @Override
@@ -351,7 +364,7 @@ public class Injector implements InjectionProvider, ResolvingProvider {
     }
 
     private <T> T instantiate(Class<T> type, InjectionAllocations allocations) {
-        checkShutdown();
+        checkActive();
 
         InjectionSettings<T> settings = InjectionSettings.of(type);
 
@@ -376,6 +389,7 @@ public class Injector implements InjectionProvider, ResolvingProvider {
 
             instance = function.apply(destroyables);
 
+            finalize(chain.getActivateables());
             finalize(chain.getPostConstructables());
         } catch (Exception e) {
             chain.clearHook();
@@ -628,6 +642,9 @@ public class Injector implements InjectionProvider, ResolvingProvider {
 
     private <T> void registerPostConstructProcessors(T instance, InjectionChain injectionChain,
                                                      List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> finalizers) {
+        if (instance instanceof Injector) {
+            injectionChain.addActivateable(() -> this.state = InjectorState.ACTIVE);
+        }
         for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> finalizer : finalizers) {
             injectionChain.addPostConstructables(() -> finalizer.process(instance, null));
         }
@@ -697,15 +714,15 @@ public class Injector implements InjectionProvider, ResolvingProvider {
     }
 
     @Override
-    public boolean isShutdown() {
-        return isShutdown;
+    public boolean isActive() {
+        return this.state == InjectorState.ACTIVE;
     }
 
     @PreDestroy
     protected synchronized void shutdown() {
-        checkShutdown();
+        checkActive();
         destroyAll();
-        this.isShutdown = true;
+        this.state = InjectorState.SHUTDOWN;
     }
 
     /**
