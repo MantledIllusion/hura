@@ -13,7 +13,6 @@ final class ResolvingSettings {
 	final String defaultValue;
 	
 	private ResolvingSettings(String propertyKey, String matcher, boolean forced, String defaultValue) {
-		super();
 		this.propertyKey = propertyKey;
 		this.matcher = matcher;
 		this.forced = forced;

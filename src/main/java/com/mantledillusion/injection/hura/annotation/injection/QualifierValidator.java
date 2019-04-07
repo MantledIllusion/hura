@@ -16,9 +16,9 @@ class QualifierValidator implements AnnotationProcessor<Qualifier, AnnotatedElem
 
 	@Override
 	public void process(Phase phase, Object bean, Qualifier annotationInstance, AnnotatedElement annotatedElement, TemporalInjectorCallback callback) throws Exception {
-		if (!annotatedElement.isAnnotationPresent(Inject.class)) {
-			throw new ValidatorException("The " + ValidatorUtils.getDescription(annotatedElement) + " is not annotated with @"
-					+ Inject.class.getSimpleName() + ", which it has to be to be annotated with @"
+		if (!annotatedElement.isAnnotationPresent(Inject.class) && !annotatedElement.isAnnotationPresent(Plugin.class)) {
+			throw new ValidatorException("The " + ValidatorUtils.getDescription(annotatedElement) + " is neither annotated with @"
+					+ Inject.class.getSimpleName() + " nor with @" + Plugin.class.getSimpleName() + ", which it has to be to be annotated with @"
 					+ Qualifier.class.getSimpleName());
 		}
 	}

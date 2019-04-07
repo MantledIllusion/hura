@@ -3,6 +3,7 @@ package com.mantledillusion.injection.hura;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.function.BiPredicate;
 
 import com.mantledillusion.injection.hura.exception.BlueprintException;
 import org.apache.commons.collections4.IteratorUtils;
@@ -94,6 +95,7 @@ final class InjectionChain {
 	private final Constructor<?> dependencyConstructor;
 
 	// Processability
+	private final List<SelfSustainingProcessor> aggregateables;
 	private final List<SelfSustainingProcessor> activateables;
 	private final List<SelfSustainingProcessor> postConstructables;
 	private final List<SelfSustainingProcessor> preDestroyables;
@@ -103,7 +105,7 @@ final class InjectionChain {
 						   TypeContext typeContext,
 						   Map<String, AbstractAllocator<?>> sequenceSingletonAllocations, ChainLock chainLock,
 						   LinkedHashSet<Constructor<?>> constructorChain, DependencyContext dependency,
-						   Constructor<?> dependencyConstructor,
+						   Constructor<?> dependencyConstructor, List<SelfSustainingProcessor> aggregateables,
 						   List<SelfSustainingProcessor> activatables, List<SelfSustainingProcessor> postConstructables,
 						   List<SelfSustainingProcessor> preDestroyables, List<SelfSustainingProcessor> postDestroyables) {
 		this.singletonContext = singletonContext;
@@ -122,6 +124,7 @@ final class InjectionChain {
 		this.dependency = dependency;
 		this.dependencyConstructor = dependencyConstructor;
 
+		this.aggregateables = aggregateables;
 		this.activateables = activatables;
 		this.postConstructables = postConstructables;
 		this.preDestroyables = preDestroyables;
@@ -161,7 +164,7 @@ final class InjectionChain {
 
 		return new InjectionChain(this.singletonContext, resolvingContext, mappingContext, typeContext,
 				new HashMap<>(this.sequenceSingletonAllocations), this.chainLock, this.constructorChain,
-				this.dependency, this.dependencyConstructor,
+				this.dependency, this.dependencyConstructor, this.aggregateables,
 				this.activateables, this.postConstructables,
 				this.preDestroyables, this.postDestroyables);
 	}
@@ -180,7 +183,7 @@ final class InjectionChain {
 
 		return new InjectionChain(this.singletonContext, this.resolvingContext, this.mappingContext, this.typeContext,
 				this.sequenceSingletonAllocations, this.chainLock,
-				constructorChain, dependency, dependencyConstructor,
+				constructorChain, dependency, dependencyConstructor, this.aggregateables,
 				this.activateables, this.postConstructables,
 				this.preDestroyables, this.postDestroyables);
 	}
@@ -194,7 +197,7 @@ final class InjectionChain {
 
 		return new InjectionChain(singletonContext, resolvingContext, mappingContext, typeContext,
 				allocations.getSingletonAllocations(), null,
-				new LinkedHashSet<>(), DependencyContext.INDEPENDENT, null,
+				new LinkedHashSet<>(), DependencyContext.INDEPENDENT, null, new ArrayList<>(),
 				new ArrayList<>(), new ArrayList<>(),
 				new ArrayList<>(), new ArrayList<>());
 	}
@@ -210,7 +213,7 @@ final class InjectionChain {
 
 		return new InjectionChain(singletonContext, resolvingContext, mappingContext, typeContext,
 				allocations.getSingletonAllocations(), null,
-				new LinkedHashSet<>(), DependencyContext.INDEPENDENT, null,
+				new LinkedHashSet<>(), DependencyContext.INDEPENDENT, null, new ArrayList<>(),
 				new ArrayList<>(), new ArrayList<>(),
 				new ArrayList<>(), new ArrayList<>());
 	}
@@ -244,6 +247,10 @@ final class InjectionChain {
 
 	<T> T retrieveSingleton(String qualifier) {
 		return this.singletonContext.retrieveSingleton(qualifier);
+	}
+
+	<T> Collection<T> aggregateSingletons(Class<T> type, Collection<BiPredicate<String, T>> biPredicates) {
+		return this.singletonContext.aggregate(type, biPredicates);
 	}
 
 	// Resolving Context
@@ -296,6 +303,15 @@ final class InjectionChain {
 	}
 
 	// Processables
+
+	void addAggregateable(SelfSustainingProcessor aggregateable) {
+		this.aggregateables.add(aggregateable);
+	}
+
+	List<SelfSustainingProcessor> getAggregateables() {
+		return aggregateables;
+	}
+
 	void addActivateable(SelfSustainingProcessor activateable) {
 		this.activateables.add(activateable);
 	}

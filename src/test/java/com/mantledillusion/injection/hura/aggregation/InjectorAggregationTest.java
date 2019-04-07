@@ -8,7 +8,7 @@ import org.junit.Test;
 
 import java.util.Collection;
 
-public class AggregationTest extends AbstractInjectionTest {
+public class InjectorAggregationTest extends AbstractInjectionTest {
 
     @Test
     public void testStaticAllocatedSingletonAggregation() {

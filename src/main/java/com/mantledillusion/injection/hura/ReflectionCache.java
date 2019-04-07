@@ -1,17 +1,8 @@
 package com.mantledillusion.injection.hura;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
-import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.*;
+import java.util.*;
 
 import com.mantledillusion.cache.hydnora.HydnoraCache;
 import com.mantledillusion.essentials.concurrency.locks.LockIdentifier;
@@ -20,6 +11,7 @@ import com.mantledillusion.essentials.reflection.ConstructorEssentials;
 import com.mantledillusion.essentials.reflection.MethodEssentials;
 import com.mantledillusion.essentials.reflection.TypeEssentials;
 import com.mantledillusion.essentials.reflection.AnnotationEssentials.AnnotationOccurrence;
+import com.mantledillusion.injection.hura.annotation.injection.Aggregate;
 import com.mantledillusion.injection.hura.annotation.injection.Plugin;
 import com.mantledillusion.injection.hura.annotation.injection.Qualifier;
 import com.mantledillusion.injection.hura.annotation.instruction.Adjust;
@@ -30,6 +22,9 @@ import com.mantledillusion.injection.hura.annotation.property.Matches;
 import com.mantledillusion.injection.hura.annotation.instruction.Optional;
 import com.mantledillusion.injection.hura.annotation.property.Property;
 import com.mantledillusion.injection.hura.exception.InjectionException;
+import org.apache.commons.lang3.reflect.TypeUtils;
+
+import javax.print.attribute.standard.MediaSizeName;
 
 final class ReflectionCache {
 
@@ -233,11 +228,11 @@ final class ReflectionCache {
 			this.settings = settings;
 		}
 
-		public Field getField() {
+		Field getField() {
 			return field;
 		}
 
-		public ResolvingSettings getSettings() {
+		ResolvingSettings getSettings() {
 			return settings;
 		}
 	}
@@ -302,11 +297,11 @@ final class ReflectionCache {
 			this.settings = settings;
 		}
 
-		public Field getField() {
+		Field getField() {
 			return field;
 		}
 
-		public InjectionSettings<?> getSettings() {
+		InjectionSettings<?> getSettings() {
 			return settings;
 		}
 	}
@@ -355,6 +350,91 @@ final class ReflectionCache {
 
 	static <T> List<InjectableField> getInjectableFields(Class<T> type) {
 		return determineCacheFor(type).injectableFieldCache.retrieve(new TypeIdentifier<>(type));
+	}
+
+	// ###############################################################################################################
+	// ########################################### FIELD AGGREGATION #################################################
+	// ###############################################################################################################
+
+	static final class AggregateableField {
+
+		private final Field field;
+		private final AggregationSettings<?> settings;
+
+		private AggregateableField(Field field, AggregationSettings<?> settings) {
+			this.field = field;
+			this.settings = settings;
+		}
+
+		Field getField() {
+			return field;
+		}
+
+		AggregationSettings<?> getSettings() {
+			return settings;
+		}
+	}
+
+	private static final class AggregateableFieldCache extends NonWrappingCache<List<AggregateableField>, TypeIdentifier<?>> {
+
+		@Override
+		protected List<AggregateableField> load(TypeIdentifier<?> id) throws Exception {
+			return find(id.type);
+		}
+
+		private <T> List<AggregateableField> find(Class<T> type) {
+			List<AggregateableField> fields = new ArrayList<>();
+			Class<? super T> superType = type.getSuperclass();
+			while (superType != null && superType != Object.class) {
+				fields.addAll(get(new TypeIdentifier<>(superType)));
+				superType = superType.getSuperclass();
+			}
+
+			for (Field field : type.getDeclaredFields()) {
+				if (InjectionUtils.isAggregateable(field)) {
+					if (!field.isAccessible()) {
+						try {
+							field.setAccessible(true);
+						} catch (SecurityException e) {
+							throw new InjectionException("Unable to gain access to the field '" + field.getName()
+									+ "' of the type " + superType.getSimpleName() + " which is inaccessible.", e);
+						}
+					}
+
+					Class<?> aggregationType;
+					AggregationSettings.AggregationMode aggregationMode;
+					if (field.getType() == Collection.class) {
+						aggregationType = InjectionUtils.findCollectionType(field.getGenericType());
+						aggregationMode = AggregationSettings.AggregationMode.LIST;
+					} else if (field.getType() == List.class) {
+						aggregationType = InjectionUtils.findCollectionType(field.getGenericType());
+						aggregationMode = AggregationSettings.AggregationMode.LIST;
+					} else if (field.getType() == Set.class) {
+						aggregationType = InjectionUtils.findCollectionType(field.getGenericType());
+						aggregationMode = AggregationSettings.AggregationMode.SET;
+					} else {
+						aggregationType = field.getType();
+						aggregationMode = AggregationSettings.AggregationMode.SINGLE;
+					}
+
+					AggregationSettings<?> fieldSet = retrieveAggregationSettings(aggregationType, aggregationMode, field);
+
+					fields.add(new AggregateableField(field, fieldSet));
+				}
+			}
+
+			return fields;
+		}
+
+		private List<AggregateableField> retrieve(TypeIdentifier<?> id) {
+			return get(id);
+		}
+	}
+
+	private final AggregateableFieldCache aggregateableFieldCache = new AggregateableFieldCache();
+
+	static <T> List<AggregateableField> getAggregateableFields(Class<T> type) {
+		return determineCacheFor(type).aggregateableFieldCache.retrieve(new TypeIdentifier<>(type));
 	}
 
 	// ###############################################################################################################
@@ -452,5 +532,9 @@ final class ReflectionCache {
 			return InjectionSettings.of(type, e.getAnnotation(Plugin.class),
 					e.getAnnotation(Optional.class), e.getAnnotation(Adjust.class));
 		}
+	}
+
+	private static <T> AggregationSettings<T> retrieveAggregationSettings(Class<T> type, AggregationSettings.AggregationMode aggregationMode, AnnotatedElement e) {
+		return AggregationSettings.of(type, aggregationMode, e.getAnnotation(Aggregate.class), e.getAnnotation(Optional.class));
 	}
 }

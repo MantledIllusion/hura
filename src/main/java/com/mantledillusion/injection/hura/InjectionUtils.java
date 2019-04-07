@@ -1,19 +1,17 @@
 package com.mantledillusion.injection.hura;
 
-import java.lang.reflect.AnnotatedElement;
-import java.lang.reflect.Executable;
-import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.lang.reflect.*;
+import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import com.mantledillusion.injection.hura.annotation.injection.Aggregate;
 import com.mantledillusion.injection.hura.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.annotation.injection.Plugin;
 import com.mantledillusion.injection.hura.annotation.property.Property;
 import com.mantledillusion.injection.hura.exception.ValidatorException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.reflect.TypeUtils;
 
 /**
  * Utilities for injection.
@@ -76,6 +74,21 @@ public final class InjectionUtils {
 	}
 
 	/**
+	 * Checks whether the given {@link AnnotatedElement} is annotated
+	 * with @{@link Aggregate}.
+	 *
+	 * @param e
+	 *            The {@link AnnotatedElement} to check; might <b>not</b> be null.
+	 * @return True if the given element is annotated, false otherwise
+	 */
+	public static boolean isAggregateable(AnnotatedElement e) {
+		if (e == null) {
+			throw new IllegalArgumentException("Cannot check aggregateability of a null annotated element.");
+		}
+		return e.isAnnotationPresent(Aggregate.class);
+	}
+
+	/**
 	 * Checks whether the given property key is a valid.
 	 *
 	 * @param propertyKey The property key to check; might be null.
@@ -107,5 +120,22 @@ public final class InjectionUtils {
 			throw new ValidatorException("The the default value '" + defaultProperty
 					+ "' does not match the specified matcher pattern '" + matcher + "'.");
 		}
+	}
+
+	/**
+	 * Finds the element type of the given generic {@link Collection }type.
+	 *
+	 * @param genericType The {@link Collection} type; might <b>not</b> be null.
+	 * @return The element type, never null, {@link Object} if raw or generic type
+	 */
+	public static Class<?> findCollectionType(Type genericType) {
+		Map<TypeVariable<?>, Type> collectionGenericType =
+				TypeUtils.getTypeArguments(genericType, Collection.class);
+		if (collectionGenericType.isEmpty()) {
+			return Object.class;
+		}
+		Type collectionType = TypeUtils.parameterize(Collection.class, collectionGenericType)
+				.getActualTypeArguments()[0];
+		return collectionType instanceof Class ? (Class<?>) collectionType : Object.class;
 	}
 }

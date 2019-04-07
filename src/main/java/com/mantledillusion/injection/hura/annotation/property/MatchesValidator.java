@@ -29,7 +29,7 @@ class MatchesValidator implements AnnotationProcessor<Matches, AnnotatedElement>
 			pattern = Pattern.compile(annotationInstance.value());
 		} catch (PatternSyntaxException | NullPointerException e) {
 			throw new ValidatorException("The " + ValidatorUtils.getDescription(annotatedElement)
-					+ " is annotated with @" + Property.class.getSimpleName() + ", but the matcher  '"
+					+ " is annotated with @" + Property.class.getSimpleName() + ", but the matcher '"
 					+ annotationInstance.value() + "' is no valid pattern.", e);
 		}
 

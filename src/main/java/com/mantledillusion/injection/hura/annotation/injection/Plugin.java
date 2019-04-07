@@ -25,6 +25,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <li>be a static {@link Field}</li>
  * <li>be a final {@link Field}</li>
  * <li>be also annotated with @{@link Inject}</li>
+ * <li>be also annotated with @{@link Aggregate}</li>
  * </ul>
  * <p>
  * Extensions to this {@link Annotation} are:

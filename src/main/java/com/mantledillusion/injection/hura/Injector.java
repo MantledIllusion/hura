@@ -13,6 +13,7 @@ import com.mantledillusion.essentials.object.ListEssentials;
 import com.mantledillusion.injection.hura.annotation.injection.Qualifier;
 import com.mantledillusion.injection.hura.annotation.lifecycle.Phase;
 import com.mantledillusion.injection.hura.annotation.lifecycle.bean.PreDestroy;
+import com.mantledillusion.injection.hura.exception.AggregationException;
 import com.mantledillusion.injection.hura.exception.ShutdownException;
 import com.mantledillusion.injection.hura.service.AggregationProvider;
 import com.mantledillusion.injection.hura.service.InjectionProvider;
@@ -22,6 +23,7 @@ import org.apache.commons.lang3.reflect.TypeUtils;
 import com.mantledillusion.injection.hura.Blueprint.BeanProvider;
 import com.mantledillusion.injection.hura.Blueprint.PropertyAllocation;
 import com.mantledillusion.injection.hura.Blueprint.SingletonAllocation;
+import com.mantledillusion.injection.hura.ReflectionCache.AggregateableField;
 import com.mantledillusion.injection.hura.ReflectionCache.InjectableConstructor;
 import com.mantledillusion.injection.hura.ReflectionCache.InjectableConstructor.ParamSettingType;
 import com.mantledillusion.injection.hura.ReflectionCache.InjectableField;
@@ -389,6 +391,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
 
             instance = function.apply(destroyables);
 
+            finalize(chain.getAggregateables());
             finalize(chain.getActivateables());
             finalize(chain.getPostConstructables());
         } catch (Exception e) {
@@ -577,7 +580,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
 
         registerPostConstructProcessors(instance, injectionChain, applicators.getProcessorsOfPhase(Phase.POST_CONSTRUCT));
 
-        for (ResolvableField resolvableField : ReflectionCache.getResolvableFields(set.type)) {
+        for (ResolvableField resolvableField: ReflectionCache.getResolvableFields(set.type)) {
             Field field = resolvableField.getField();
             ResolvingSettings fieldSet = resolvableField.getSettings();
 
@@ -591,7 +594,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
             }
         }
 
-        for (InjectableField injectableField : ReflectionCache.getInjectableFields(set.type)) {
+        for (InjectableField injectableField: ReflectionCache.getInjectableFields(set.type)) {
             Field field = injectableField.getField();
             InjectionSettings<?> fieldSet = injectableField.getSettings();
 
@@ -614,6 +617,13 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
         }
 
         process(instance, set.type, injectionChain, applicators.getProcessorsOfPhase(Phase.POST_INJECT));
+
+        for (AggregateableField aggregateableField: ReflectionCache.getAggregateableFields(set.type)) {
+            Field field = aggregateableField.getField();
+            AggregationSettings<?> fieldSet = aggregateableField.getSettings();
+
+            registerAggregationProcessor(injectionChain, instance, field, fieldSet);
+        }
 
         return instance;
     }
@@ -663,6 +673,62 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
                 callback.shutdown();
             }
         }
+    }
+
+    private <T> void registerAggregationProcessor(InjectionChain chain, Object instance, Field field, AggregationSettings<T> fieldSet) {
+        chain.addAggregateable(() -> {
+            List<BiPredicate<String, T>> predicates = new ArrayList<>();
+            if (fieldSet.qualifierMatcher != null) {
+                predicates.add((qualifier, bean) -> qualifier.matches(fieldSet.qualifierMatcher));
+            }
+            for (Class<? extends BiPredicate<String, T>> predicateType: fieldSet.predicates) {
+                predicates.add(instantiate(chain, InjectionSettings.of(predicateType)));
+            }
+
+            Collection<T> singletons = chain.aggregateSingletons(fieldSet.type, predicates);
+
+            Object parameter = null;
+            switch (fieldSet.aggregationMode) {
+                case SINGLE:
+                    if (singletons.isEmpty()) {
+                        if (!fieldSet.optional) {
+                            throw new AggregationException("The non-optional field '" + field.getName()
+                                    + "' of the type " + field.getDeclaringClass().getSimpleName()
+                                    + " requires the aggregation of a single singleton instance, but no candidate is found");
+                        }
+                    } else if (singletons.size() > 1) {
+                        if (!fieldSet.distinct) {
+                            throw new AggregationException("The non-distinct field '" + field.getName()
+                                    + "' of the type " + field.getDeclaringClass().getSimpleName()
+                                    + " requires the aggregation of a single singleton instance, but "
+                                    + singletons.size() + " candidates have been found");
+                        }
+                        parameter = singletons.stream().findFirst().get();
+                    } else {
+                        parameter = singletons.stream().findFirst().get();
+                    }
+                    break;
+                case LIST:
+                    parameter = new ArrayList<>(singletons);
+                    break;
+                case SET:
+                    parameter = new HashSet<>(singletons);
+                    break;
+            }
+
+            try {
+                field.set(instance, parameter);
+            } catch (IllegalArgumentException e) {
+                throw new AggregationException(
+                        "Unable to set instance of type " + parameter.getClass().getName() + " to field '"
+                                + field.getName() + "' of the type " + field.getDeclaringClass().getSimpleName()
+                                + ", whose type is " + field.getType().getSimpleName(),
+                        e);
+            } catch (IllegalAccessException e) {
+                throw new AggregationException("Unable to aggregate field '" + field.getName() + "' of the type "
+                        + field.getDeclaringClass().getSimpleName() + "; unable to gain access", e);
+            }
+        });
     }
 
     /**

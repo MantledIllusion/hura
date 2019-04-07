@@ -6,8 +6,6 @@ import java.util.Map;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import com.mantledillusion.injection.hura.exception.InjectionException;
 
 class SingletonContext {

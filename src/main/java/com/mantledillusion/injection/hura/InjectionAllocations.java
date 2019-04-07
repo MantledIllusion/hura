@@ -71,12 +71,9 @@ class InjectionAllocations {
 
 	private static void findDefinitions(Blueprint blueprint, InjectionAllocations injectionAllocations) {
 		for (Method m : ReflectionCache.getMethodsAnnotatedWith(blueprint.getClass(), Define.class)) {
-			Map<TypeVariable<?>, Type> collectionGenericType = TypeUtils.getTypeArguments(m.getGenericReturnType(),
-					Collection.class);
 			if (!TypeUtils.isAssignable(m.getGenericReturnType(), Blueprint.Allocation.class)
 					&& !(TypeUtils.isAssignable(m.getGenericReturnType(), Collection.class)
-					&& TypeUtils.isAssignable(TypeUtils.parameterize(Collection.class, collectionGenericType)
-						.getActualTypeArguments()[0], Blueprint.Allocation.class))) {
+					&& TypeUtils.isAssignable(InjectionUtils.findCollectionType(m.getGenericReturnType()), Blueprint.Allocation.class))) {
 				throw new ValidatorException(
 						"The " + ValidatorUtils.getDescription(m) + " is annotated with '" + Define.class.getSimpleName()
 								+ "', but does neither declare " + Blueprint.TypeAllocation.class.getSimpleName() + " nor a "

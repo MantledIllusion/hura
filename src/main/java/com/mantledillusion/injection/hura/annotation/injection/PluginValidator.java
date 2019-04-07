@@ -24,6 +24,11 @@ class PluginValidator implements AnnotationProcessor<Plugin, AnnotatedElement> {
 					"The " + ValidatorUtils.getDescription(annotatedElement) + " is annotated with @"
 							+ Plugin.class.getSimpleName() + ", but is also annotated with @"
 							+ Inject.class.getSimpleName() + ", which is not allowed.");
+		} else if (annotatedElement.isAnnotationPresent(Aggregate.class)) {
+			throw new ValidatorException(
+					"The " + ValidatorUtils.getDescription(annotatedElement) + " is annotated with @"
+							+ Plugin.class.getSimpleName() + ", but is also annotated with @"
+							+ Aggregate.class.getSimpleName() + ", which is not allowed.");
 		} else if (!new File(annotationInstance.directory()).isDirectory()) {
 			throw new ValidatorException(
 					"The " + ValidatorUtils.getDescription(annotatedElement) + " is annotated with @"

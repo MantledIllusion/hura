@@ -14,7 +14,7 @@ public interface AggregationProvider {
     /**
      * Aggregates all singleton beans matching the {@link java.util.function.Predicate}s.
      *
-     * @param predicates The {@link BiPredicate}s the singleton and its qualifier need to match; migth be null or contain nulls.
+     * @param predicates The {@link BiPredicate}s the singleton and its qualifier need to match; might be null or contain nulls.
      * @return A new {@link Collection} of all singletons matching the {@link java.util.function.Predicate}s, never null, might be empty
      */
     default Collection<Object> aggregate(BiPredicate<String, Object>... predicates) {
@@ -24,7 +24,7 @@ public interface AggregationProvider {
     /**
      * Aggregates all singleton beans matching the {@link java.util.function.Predicate}s.
      *
-     * @param predicates The {@link BiPredicate}s the singleton and its qualifier need to match; migth be null or contain nulls.
+     * @param predicates The {@link BiPredicate}s the singleton and its qualifier need to match; might be null or contain nulls.
      * @return A new {@link Collection} of all singletons matching the {@link java.util.function.Predicate}s, never null, might be empty
      */
     default Collection<Object> aggregate(Collection<BiPredicate<String, Object>> predicates) {
@@ -35,7 +35,7 @@ public interface AggregationProvider {
      * Aggregates all singleton beans matching the {@link java.util.function.Predicate}s.
      *
      * @param qualifierMatcher The {@link java.util.regex.Pattern} the singleton's qualifier needs to match; might <b>not</b> be null.
-     * @param predicates The {@link BiPredicate}s the singleton and its qualifier need to match; migth be null or contain nulls.
+     * @param predicates The {@link BiPredicate}s the singleton and its qualifier need to match; might be null or contain nulls.
      * @return A new {@link Collection} of all singletons matching the {@link java.util.function.Predicate}s, never null, might be empty
      */
     default Collection<Object> aggregate(String qualifierMatcher, BiPredicate<String, Object>... predicates) {
@@ -46,7 +46,7 @@ public interface AggregationProvider {
      * Aggregates all singleton beans matching the {@link java.util.function.Predicate}s.
      *
      * @param qualifierMatcher The {@link java.util.regex.Pattern} the singleton's qualifier needs to match; might <b>not</b> be null.
-     * @param predicates The {@link BiPredicate}s the singleton and its qualifier need to match; migth be null or contain nulls.
+     * @param predicates The {@link BiPredicate}s the singleton and its qualifier need to match; might be null or contain nulls.
      * @return A new {@link Collection} of all singletons matching the {@link java.util.function.Predicate}s, never null, might be empty
      */
     default Collection<Object> aggregate(String qualifierMatcher, Collection<BiPredicate<String, Object>> predicates) {
@@ -58,7 +58,7 @@ public interface AggregationProvider {
      *
      * @param <T> The singleton's type
      * @param type The type the singleton; might <b>not</b> be null.
-     * @param predicates The {@link BiPredicate}s the singleton and its qualifier need to match; migth be null or contain nulls.
+     * @param predicates The {@link BiPredicate}s the singleton and its qualifier need to match; might be null or contain nulls.
      * @return A new {@link Collection} of all singletons matching the {@link java.util.function.Predicate}s, never null, might be empty
      */
     default <T> Collection<T> aggregate(Class<T> type, BiPredicate<String, T>... predicates) {
@@ -70,7 +70,7 @@ public interface AggregationProvider {
      *
      * @param <T> The singleton's type
      * @param type The type the singleton; might <b>not</b> be null.
-     * @param predicates The {@link BiPredicate}s the singleton and its qualifier need to match; migth be null or contain nulls.
+     * @param predicates The {@link BiPredicate}s the singleton and its qualifier need to match; might be null or contain nulls.
      * @return A new {@link Collection} of all singletons matching the {@link java.util.function.Predicate}s, never null, might be empty
      */
     <T> Collection<T> aggregate(Class<T> type, Collection<BiPredicate<String, T>> predicates);
@@ -81,7 +81,7 @@ public interface AggregationProvider {
      * @param <T> The singleton's type
      * @param type The type the singleton; might <b>not</b> be null.
      * @param qualifierMatcher The {@link java.util.regex.Pattern} the singleton's qualifier needs to match; might <b>not</b> be null.
-     * @param predicates The {@link BiPredicate}s the singleton and its qualifier need to match; migth be null or contain nulls.
+     * @param predicates The {@link BiPredicate}s the singleton and its qualifier need to match; might be null or contain nulls.
      * @return A new {@link Collection} of all singletons matching the {@link java.util.function.Predicate}s, never null, might be empty
      */
     default <T> Collection<T> aggregate(Class<T> type, String qualifierMatcher, BiPredicate<String, T>... predicates) {
@@ -94,7 +94,7 @@ public interface AggregationProvider {
      * @param <T> The singleton's type
      * @param type The type the singleton; might <b>not</b> be null.
      * @param qualifierMatcher The {@link java.util.regex.Pattern} the singleton's qualifier needs to match; might <b>not</b> be null.
-     * @param predicates The {@link BiPredicate}s the singleton and its qualifier need to match; migth be null or contain nulls.
+     * @param predicates The {@link BiPredicate}s the singleton and its qualifier need to match; might be null or contain nulls.
      * @return A new {@link Collection} of all singletons matching the {@link java.util.function.Predicate}s, never null, might be empty
      */
     default <T> Collection<T> aggregate(Class<T> type, String qualifierMatcher, Collection<BiPredicate<String, T>> predicates) {
