@@ -45,6 +45,8 @@
 
 	<modules>
 		<module>hura-core</module>
+		<module>hura-web</module>
+		<module>hura-boot</module>
 	</modules>
 
 	<distributionManagement>
