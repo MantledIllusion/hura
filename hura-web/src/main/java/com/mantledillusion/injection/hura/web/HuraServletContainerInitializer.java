@@ -7,6 +7,9 @@ import javax.servlet.annotation.HandlesTypes;
 import java.lang.reflect.Modifier;
 import java.util.Set;
 
+/**
+ * Hura Web's {@link ServletContainerInitializer}. Uses @{@link HandlesTypes} to inject, startup and destroy {@link HuraWebApplicationInitializer}s.
+ */
 @HandlesTypes({HuraWebApplicationInitializer.class})
 public final class HuraServletContainerInitializer implements ServletContainerInitializer, ServletContextListener {
 
@@ -25,10 +28,7 @@ public final class HuraServletContainerInitializer implements ServletContainerIn
                 Class<? extends HuraWebApplicationInitializer> applicationClass = (Class<? extends HuraWebApplicationInitializer>) c;
                 HuraWebApplicationInitializer initializer = this.serverInjector.instantiate(applicationClass);
 
-                HuraWebApplicationInitializer.HuraWebEnvironmentRegistration builder = new HuraWebApplicationInitializer.HuraWebEnvironmentRegistration();
-                initializer.configure(builder);
-
-                HuraWebApplication application = this.serverInjector.instantiate(HuraWebApplication.class, builder.getBlueprints());
+                HuraWebApplication application = this.serverInjector.instantiate(HuraWebApplication.class, initializer);
                 application.configure(ctx);
 
                 this.serverInjector.destroy(initializer);

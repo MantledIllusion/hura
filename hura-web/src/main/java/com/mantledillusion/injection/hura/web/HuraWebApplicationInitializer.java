@@ -2,28 +2,17 @@ package com.mantledillusion.injection.hura.web;
 
 import com.mantledillusion.injection.hura.core.Blueprint;
 
-import java.util.ArrayList;
-import java.util.List;
+/**
+ * {@link Blueprint} extension that defines the bean environment of a web application.
+ * <p>
+ * {@link com.mantledillusion.injection.hura.core.Blueprint.SingletonAllocation}s of the type
+ * {@link com.mantledillusion.injection.hura.web.env.ServletContextConfiguration}
+ * @{@link com.mantledillusion.injection.hura.core.annotation.instruction.Define}d by this {@link Blueprint} are used to
+ * configure the {@link javax.servlet.ServletContext}.
+ * <p>
+ * The {@link com.mantledillusion.injection.hura.web.env.WebEnvironmentFactory} provides implementations of the
+ * {@link com.mantledillusion.injection.hura.web.env.ServletContextConfiguration} interface for default use cases.
+ */
+public interface HuraWebApplicationInitializer extends Blueprint {
 
-public interface HuraWebApplicationInitializer {
-
-    final class HuraWebEnvironmentRegistration {
-
-        private final List<Blueprint> blueprints;
-
-        HuraWebEnvironmentRegistration() {
-            this.blueprints =  new ArrayList<>();
-        }
-
-        List<Blueprint> getBlueprints() {
-            return blueprints;
-        }
-
-        public HuraWebEnvironmentRegistration register(Blueprint blueprint) {
-            this.blueprints.add(blueprint);
-            return this;
-        }
-    }
-
-    void configure(HuraWebEnvironmentRegistration registration);
 }
