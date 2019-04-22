@@ -5,7 +5,6 @@ import com.mantledillusion.injection.hura.core.Injector.SelfSustainingProcessor;
 import com.mantledillusion.injection.hura.core.Injector.TemporalInjectorCallback;
 import com.mantledillusion.injection.hura.core.exception.BlueprintException;
 import com.mantledillusion.injection.hura.core.exception.InjectionException;
-import org.apache.commons.collections4.IteratorUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Constructor;
@@ -20,7 +19,7 @@ final class InjectionChain {
 		private final IdentityHashMap<Object, ChainLock> locks;
 
 		private InjectionLock() {
-			this.locks = new IdentityHashMap<Object, ChainLock>();
+			this.locks = new IdentityHashMap<>();
 		}
 
 		private void register(InjectionChain chain) {
@@ -293,8 +292,16 @@ final class InjectionChain {
 	}
 
 	String getStringifiedChainSinceConstructor(Constructor<?> c) {
-		int index = IteratorUtils.indexOf(this.constructorChain.iterator(), constructor -> constructor == c);
-		return StringUtils.join(IteratorUtils.skippingIterator(this.constructorChain.iterator(), index), " -> ");
+		StringBuilder sb = new StringBuilder();
+		this.constructorChain.forEach(constructor -> {
+			if (constructor == c || sb.length() > 0) {
+				if (sb.length() > 0) {
+					sb.append(" -> ");
+				}
+				sb.append(c).append(c.toString());
+			}
+		});
+		return sb.toString();
 	}
 
 	String getStringifiedChainSinceDependency() {
