@@ -11,6 +11,6 @@ public class ResolverAtInspect implements AnnotationProcessor<ResolvingTypeAnnot
     @Override
     public void process(Phase phase, Object bean, ResolvingTypeAnnotationAtPostConstruct annotationInstance,
                         Class<?> annotatedElement, Injector.TemporalInjectorCallback callback) throws Exception {
-        ((InjectableWithProcessorResolver) bean).propertyValue = callback.resolve("property.key");
+        ((InjectableWithProcessorResolver) bean).propertyValue = callback.resolve("${property.key}");
     }
 }

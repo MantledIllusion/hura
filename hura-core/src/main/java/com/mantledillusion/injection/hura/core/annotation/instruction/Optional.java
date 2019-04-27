@@ -3,7 +3,6 @@ package com.mantledillusion.injection.hura.core.annotation.instruction;
 import com.mantledillusion.injection.hura.core.Blueprint;
 import com.mantledillusion.injection.hura.core.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.annotation.PreConstruct;
-import com.mantledillusion.injection.hura.core.annotation.property.Property;
 import com.mantledillusion.injection.hura.core.exception.InjectionException;
 
 import java.lang.annotation.Annotation;

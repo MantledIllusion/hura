@@ -3,7 +3,7 @@ package com.mantledillusion.injection.hura.core;
 import com.mantledillusion.injection.hura.core.annotation.injection.Aggregate;
 import com.mantledillusion.injection.hura.core.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.core.annotation.injection.Plugin;
-import com.mantledillusion.injection.hura.core.annotation.property.Property;
+import com.mantledillusion.injection.hura.core.annotation.property.Resolve;
 import com.mantledillusion.injection.hura.core.exception.ValidatorException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
@@ -25,7 +25,7 @@ public final class InjectionUtils {
 	/**
 	 * Checks whether all of the given {@link Executable}'s {@link Parameter}s are
 	 * injectables, which means that all of the defined {@link Parameter}s either
-	 * have to be annotated with @{@link Inject} or @{@link Property}.
+	 * have to be annotated with @{@link Inject} or @{@link Resolve}.
 	 * 
 	 * @param executable
 	 *            The executable to check; might <b>not</b> be null.
@@ -61,7 +61,7 @@ public final class InjectionUtils {
 
 	/**
 	 * Checks whether the given {@link AnnotatedElement} is annotated
-	 * with @{@link Property}.
+	 * with @{@link Resolve}.
 	 * 
 	 * @param e
 	 *            The {@link AnnotatedElement} to check; might <b>not</b> be null.
@@ -71,7 +71,7 @@ public final class InjectionUtils {
 		if (e == null) {
 			throw new IllegalArgumentException("Cannot check resolvability of a null annotated element.");
 		}
-		return e.isAnnotationPresent(Property.class);
+		return e.isAnnotationPresent(Resolve.class);
 	}
 
 	/**

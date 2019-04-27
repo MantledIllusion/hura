@@ -1,46 +1,38 @@
 package com.mantledillusion.injection.hura.core;
 
 import com.mantledillusion.injection.hura.core.annotation.instruction.Optional;
-import com.mantledillusion.injection.hura.core.annotation.property.DefaultValue;
 import com.mantledillusion.injection.hura.core.annotation.property.Matches;
-import com.mantledillusion.injection.hura.core.annotation.property.Property;
+import com.mantledillusion.injection.hura.core.annotation.property.Resolve;
 
 final class ResolvingSettings {
 
-	final String propertyKey;
+	final String resolvableValue;
 	final String matcher;
 	final boolean forced;
-	final String defaultValue;
 	
-	private ResolvingSettings(String propertyKey, String matcher, boolean forced, String defaultValue) {
-		this.propertyKey = propertyKey;
+	private ResolvingSettings(String resolvableValue, String matcher, boolean forced) {
+		this.resolvableValue = resolvableValue;
 		this.matcher = matcher;
 		this.forced = forced;
-		this.defaultValue = defaultValue;
 	}
 
-	static ResolvingSettings of(Property property, Matches matches, DefaultValue defaultValue, Optional optional) {
+	static ResolvingSettings of(Resolve property, Matches matches, Optional optional) {
 		boolean forced = true;
 		String matcher = Matches.DEFAULT_MATCHER;
 		if (matches != null) {
 			matcher = matches.value();
 		}
-		String defaultVal = null;
-		if (defaultValue != null) {
-			forced = false;
-			defaultVal = defaultValue.value();
-		}
 		if (optional != null) {
 			forced = false;
 		}
-		return new ResolvingSettings(property.value(), matcher, forced, defaultVal);
+		return new ResolvingSettings(property.value(), matcher, forced);
 	}
 	
+	static ResolvingSettings of(String propertyKey, String matcher) {
+		return new ResolvingSettings(propertyKey, matcher, false);
+	}
+
 	static ResolvingSettings of(String propertyKey, String matcher, boolean forced) {
-		return new ResolvingSettings(propertyKey, matcher, forced, null);
-	}
-	
-	static ResolvingSettings of(String propertyKey, String matcher, String defaultValue) {
-		return new ResolvingSettings(propertyKey, matcher, false, defaultValue);
+		return new ResolvingSettings(propertyKey, matcher, forced);
 	}
 }

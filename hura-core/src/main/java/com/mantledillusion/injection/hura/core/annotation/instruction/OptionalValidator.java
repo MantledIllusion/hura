@@ -7,7 +7,7 @@ import com.mantledillusion.injection.hura.core.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.core.annotation.injection.Plugin;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.annotation.AnnotationProcessor;
-import com.mantledillusion.injection.hura.core.annotation.property.Property;
+import com.mantledillusion.injection.hura.core.annotation.property.Resolve;
 import com.mantledillusion.injection.hura.core.exception.ValidatorException;
 
 import java.lang.reflect.AnnotatedElement;
@@ -22,11 +22,11 @@ class OptionalValidator implements AnnotationProcessor<Optional, AnnotatedElemen
 		if (!annotatedElement.isAnnotationPresent(Inject.class)
 				&& !annotatedElement.isAnnotationPresent(Plugin.class)
 				&& !annotatedElement.isAnnotationPresent(Aggregate.class)
-				&& !annotatedElement.isAnnotationPresent(Property.class)) {
+				&& !annotatedElement.isAnnotationPresent(Resolve.class)) {
 			throw new ValidatorException(
 					"The " + ValidatorUtils.getDescription(annotatedElement) + " is not annotated with @"
 							+ Inject.class.getSimpleName() + ", @" + Plugin.class.getSimpleName() + ", @"
-							+ Aggregate.class.getSimpleName() + " or @" + Property.class.getSimpleName()
+							+ Aggregate.class.getSimpleName() + " or @" + Resolve.class.getSimpleName()
 							+ ", which it has to be to be annotated with @" + Optional.class.getSimpleName());
 		}
 	}

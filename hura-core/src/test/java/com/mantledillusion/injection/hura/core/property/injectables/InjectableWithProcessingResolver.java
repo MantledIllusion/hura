@@ -9,6 +9,6 @@ public class InjectableWithProcessingResolver {
 
 	@PostInject
 	private void process(TemporalInjectorCallback callback) {
-		this.propertyValue = callback.resolve("property.key");
+		this.propertyValue = callback.resolve("${property.key}");
 	}
 }

@@ -19,7 +19,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * who have to receive a property value when their {@link Class} is instantiated
  * and injected by an {@link Injector}.
  * <p>
- * {@link Field}s/{@link Parameter}s annotated with @{@link Property} may
+ * {@link Field}s/{@link Parameter}s annotated with @{@link Resolve} may
  * not:<br>
  * <ul>
  * <li>be a static {@link Field}</li>
@@ -30,14 +30,13 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * Extensions to this {@link Annotation} are:
  * <ul>
  * <li>@{@link Matches}</li>
- * <li>@{@link DefaultValue}</li>
  * <li>@{@link Optional}</li>
  * </ul>
  */
 @Retention(RUNTIME)
 @Target({ FIELD, PARAMETER })
-@PreConstruct(PropertyValidator.class)
-public @interface Property {
+@PreConstruct(ResolveValidator.class)
+public @interface Resolve {
 
 	/**
 	 * The property key to resolve.

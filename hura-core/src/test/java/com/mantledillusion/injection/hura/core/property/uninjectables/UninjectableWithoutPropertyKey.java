@@ -1,9 +1,9 @@
 package com.mantledillusion.injection.hura.core.property.uninjectables;
 
-import com.mantledillusion.injection.hura.core.annotation.property.Property;
+import com.mantledillusion.injection.hura.core.annotation.property.Resolve;
 
 public class UninjectableWithoutPropertyKey {
 
-	@Property("")
+	@Resolve("")
 	public String propertyValue;
 }

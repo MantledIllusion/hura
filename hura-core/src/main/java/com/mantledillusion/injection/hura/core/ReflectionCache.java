@@ -14,9 +14,8 @@ import com.mantledillusion.injection.hura.core.annotation.injection.Qualifier;
 import com.mantledillusion.injection.hura.core.annotation.instruction.Adjust;
 import com.mantledillusion.injection.hura.core.annotation.instruction.Construct;
 import com.mantledillusion.injection.hura.core.annotation.instruction.Optional;
-import com.mantledillusion.injection.hura.core.annotation.property.DefaultValue;
 import com.mantledillusion.injection.hura.core.annotation.property.Matches;
-import com.mantledillusion.injection.hura.core.annotation.property.Property;
+import com.mantledillusion.injection.hura.core.annotation.property.Resolve;
 import com.mantledillusion.injection.hura.core.exception.InjectionException;
 
 import java.lang.annotation.Annotation;
@@ -517,8 +516,8 @@ final class ReflectionCache {
 	}
 
 	private static ResolvingSettings retrieveResolvingSettings(AnnotatedElement e) {
-		return ResolvingSettings.of(e.getAnnotation(Property.class), e.getAnnotation(Matches.class),
-				e.getAnnotation(DefaultValue.class), e.getAnnotation(com.mantledillusion.injection.hura.core.annotation.instruction.Optional.class));
+		return ResolvingSettings.of(e.getAnnotation(Resolve.class), e.getAnnotation(Matches.class),
+				e.getAnnotation(com.mantledillusion.injection.hura.core.annotation.instruction.Optional.class));
 	}
 
 	private static <T> InjectionSettings<T> retrieveInjectionSettings(Class<T> type, AnnotatedElement e) {

@@ -61,42 +61,4 @@ public interface ResolvingProvider extends StatefulService {
      * @throws ShutdownException If the instance has already been shut down
      */
     String resolve(String propertyKey, String matcher, boolean forced) throws ShutdownException;
-
-    /**
-     * Resolves the given property key.
-     * <p>
-     * Resolving is not forced; if the property cannot be resolved, the given
-     * default value is used.
-     *
-     * @param propertyKey
-     *            The key to resolve; might <b>not</b> be null or empty.
-     * @param defaultValue
-     *            The default value to return if the key cannot be resolved; might
-     *            <b>not</b> be null.
-     * @return The property value, never null
-     * @throws ShutdownException If the instance has already been shut down
-     */
-    default String resolve(String propertyKey, String defaultValue) throws ShutdownException {
-        return resolve(propertyKey, Matches.DEFAULT_MATCHER, defaultValue);
-    }
-
-    /**
-     * Resolves the given property key.
-     * <p>
-     * Resolving is not forced; if the property cannot be resolved or the matcher
-     * fails, the given default value is used.
-     *
-     * @param propertyKey
-     *            The key to resolve; might <b>not</b> be null or empty.
-     * @param matcher
-     *            The matcher for the property value; might <b>not</b> be null, must
-     *            be parsable by {@link Pattern#compile(String)}.
-     * @param defaultValue
-     *            The default value to return if the key cannot be resolved or the
-     *            value does not match the matcher's pattern; might <b>not</b> be
-     *            null.
-     * @return The property value, never null
-     * @throws ShutdownException If the instance has already been shut down
-     */
-    String resolve(String propertyKey, String matcher, String defaultValue) throws ShutdownException;
 }

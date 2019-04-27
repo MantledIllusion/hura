@@ -20,7 +20,6 @@ import com.mantledillusion.injection.hura.core.exception.ShutdownException;
 import com.mantledillusion.injection.hura.core.service.AggregationProvider;
 import com.mantledillusion.injection.hura.core.service.InjectionProvider;
 import com.mantledillusion.injection.hura.core.service.ResolvingProvider;
-import org.apache.commons.lang3.reflect.TypeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -151,28 +150,12 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
 
         @Override
         public final String resolve(String propertyKey, String matcher, boolean forced) {
+            checkActive();
+
             InjectionUtils.checkKey(propertyKey);
             InjectionUtils.checkMatcher(matcher, null);
 
             ResolvingSettings set = ResolvingSettings.of(propertyKey, matcher, forced);
-            return resolve(set);
-        }
-
-        @Override
-        public final String resolve(String propertyKey, String matcher, String defaultValue) {
-            if (defaultValue == null) {
-                throw new IllegalArgumentException("Cannot fall back to a null default value.");
-            }
-            InjectionUtils.checkKey(propertyKey);
-            InjectionUtils.checkMatcher(matcher, defaultValue);
-
-            ResolvingSettings set = ResolvingSettings.of(propertyKey, matcher, defaultValue);
-            return resolve(set);
-        }
-
-        private String resolve(ResolvingSettings set) {
-            checkActive();
-
             return this.chain.resolve(set);
         }
 
@@ -319,28 +302,11 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
 
     @Override
     public final String resolve(String propertyKey, String matcher, boolean forced) {
+        checkActive();
         InjectionUtils.checkKey(propertyKey);
         InjectionUtils.checkMatcher(matcher, null);
 
         ResolvingSettings set = ResolvingSettings.of(propertyKey, matcher, forced);
-        return resolve(set);
-    }
-
-    @Override
-    public final String resolve(String propertyKey, String matcher, String defaultValue) {
-        if (defaultValue == null) {
-            throw new IllegalArgumentException("Cannot fall back to a null default value.");
-        }
-        InjectionUtils.checkKey(propertyKey);
-        InjectionUtils.checkMatcher(matcher, defaultValue);
-
-        ResolvingSettings set = ResolvingSettings.of(propertyKey, matcher, defaultValue);
-        return resolve(set);
-    }
-
-    private String resolve(ResolvingSettings set) {
-        checkActive();
-
         return this.resolvingContext.resolve(set);
     }
 
@@ -489,7 +455,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
             }
 
             if (singleton != null) {
-                if (TypeUtils.isAssignable(singleton.getClass(), set.type)) {
+                if (set.type.isAssignableFrom(singleton.getClass())) {
                     instance = (T) singleton;
                 } else {
                     throw new InjectionException("The singleton with the id '" + set.qualifier

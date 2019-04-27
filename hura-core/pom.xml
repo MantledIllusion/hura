@@ -15,6 +15,7 @@
 	<properties>
 		<!-- maven dependency versions -->
 		<hydnora.version>1.2.1</hydnora.version>
+		<essentials.string.version>1.1.0</essentials.string.version>
 		<essentials.object.version>1.2.0</essentials.object.version>
 		<essentials.reflection.version>1.1.0</essentials.reflection.version>
 		<org.apache.commons.lang.version>3.8.1</org.apache.commons.lang.version>
@@ -28,6 +29,11 @@
 			<groupId>com.mantledillusion.cache</groupId>
 			<artifactId>hydnora</artifactId>
 			<version>${hydnora.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.mantledillusion.essentials</groupId>
+			<artifactId>string-essentials</artifactId>
+			<version>${essentials.string.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.mantledillusion.essentials</groupId>

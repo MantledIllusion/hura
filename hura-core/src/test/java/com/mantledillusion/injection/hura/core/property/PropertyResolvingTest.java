@@ -71,17 +71,18 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 				Blueprint.PropertyAllocation.of("property.key", propertyValue));
 	}
 	
-	@Test(expected = ProcessorException.class)
+	@Test(expected = ResolvingException.class)
 	public void testPropertyAnnotationMissingForDefaultValue() {
 		this.suite.injectInSuiteContext(UninjectableWithDefaultValueMissingProperty.class);
 	}
 	
-	@Test(expected = ProcessorException.class)
+	@Test
 	public void testOptionalPropertyWithDefaultValue() {
-		this.suite.injectInSuiteContext(UninjectableWithOptionalPropertyAndDefaultValue.class);
+		InjectableWithOptionalPropertyAndDefaultValue injectable = this.suite.injectInSuiteContext(InjectableWithOptionalPropertyAndDefaultValue.class);
+		assertEquals(InjectableWithOptionalPropertyAndDefaultValue.DEFAULT_VALUE, injectable.property);
 	}
 
-	@Test
+	@Test(expected = ResolvingException.class)
 	public void testPropertyMatchingWithDefault() {
 		String propertyValue = "non2DigitPropertyValue";
 		InjectableWithMatchedDefaultedProperty injectable = this.suite.injectInSuiteContext(
@@ -159,7 +160,7 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 				Blueprint.PropertyAllocation.of("property.key", "unneededValue"));
 	}
 
-	@Test(expected = ProcessorException.class)
+	@Test(expected = ResolvingException.class)
 	public void testUnmatchingDefaultValuePropertyResolving() {
 		this.suite.injectInSuiteContext(UninjectableWithUnmatchingDefaultValueProperty.class,
 				Blueprint.PropertyAllocation.of("property.key", "unneededValue"));

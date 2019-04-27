@@ -1,11 +1,9 @@
 package com.mantledillusion.injection.hura.core.property.injectables;
 
-import com.mantledillusion.injection.hura.core.annotation.property.DefaultValue;
-import com.mantledillusion.injection.hura.core.annotation.property.Property;
+import com.mantledillusion.injection.hura.core.annotation.property.Resolve;
 
 public class InjectableWithDefaultedProperty {
 
-	@Property("property.key")
-	@DefaultValue("defaultValue")
+	@Resolve("${property.key:defaultValue}")
 	public String propertyValue;
 }

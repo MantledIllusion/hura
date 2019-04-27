@@ -18,7 +18,7 @@ public abstract class AbstractLifecycleInjectable {
         Class<? extends AbstractLifecycleInjectable> impl;
         if (phase == Phase.PRE_CONSTRUCT) {
             impl = (Class<? extends AbstractLifecycleInjectable>)
-                    Class.forName(callback.resolve(AbstractLifecycleInjectable.IMPL_PROPERTY_KEY));
+                    Class.forName(callback.resolve("${"+AbstractLifecycleInjectable.IMPL_PROPERTY_KEY+"}"));
         } else {
             impl = bean.getClass();
         }

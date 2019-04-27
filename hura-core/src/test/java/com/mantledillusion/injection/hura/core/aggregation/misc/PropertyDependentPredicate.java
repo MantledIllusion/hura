@@ -1,7 +1,7 @@
 package com.mantledillusion.injection.hura.core.aggregation.misc;
 
 import com.mantledillusion.injection.hura.core.aggregation.injectables.InjectableWithName;
-import com.mantledillusion.injection.hura.core.annotation.property.Property;
+import com.mantledillusion.injection.hura.core.annotation.property.Resolve;
 
 import java.util.function.BiPredicate;
 
@@ -9,7 +9,7 @@ public class PropertyDependentPredicate implements BiPredicate<String, Injectabl
 
     public static final String NAME_PROPERTY_ID = "nameProperty";
 
-    @Property(NAME_PROPERTY_ID)
+    @Resolve("${"+NAME_PROPERTY_ID+"}")
     private String name;
 
     @Override
