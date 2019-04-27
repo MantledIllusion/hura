@@ -1,6 +1,8 @@
 package com.mantledillusion.injection.hura.web;
 
 import com.mantledillusion.injection.hura.core.Injector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.*;
 import javax.servlet.annotation.HandlesTypes;
@@ -25,6 +27,10 @@ public final class HuraServletContainerInitializer implements ServletContainerIn
         for (Class<?> c: applicationClasses) {
             if (!c.isInterface() && !Modifier.isAbstract(c.getModifiers())
                     && HuraWebApplicationInitializer.class.isAssignableFrom(c)) {
+                HuraWebApplication.LOGGER.debug("Starting up web application '" + c.getSimpleName() + "'");
+
+                long ms = System.currentTimeMillis();
+
                 Class<? extends HuraWebApplicationInitializer> applicationClass = (Class<? extends HuraWebApplicationInitializer>) c;
                 HuraWebApplicationInitializer initializer = this.serverInjector.instantiate(applicationClass);
 
@@ -32,6 +38,8 @@ public final class HuraServletContainerInitializer implements ServletContainerIn
                 application.configure(ctx);
 
                 this.serverInjector.destroy(initializer);
+
+                HuraWebApplication.LOGGER.info("Started up web application '" + c.getSimpleName() + "' in " + (System.currentTimeMillis()-ms) + "ms");
             }
         }
     }
