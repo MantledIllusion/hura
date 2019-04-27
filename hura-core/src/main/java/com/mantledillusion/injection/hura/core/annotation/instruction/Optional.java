@@ -2,6 +2,7 @@ package com.mantledillusion.injection.hura.core.annotation.instruction;
 
 import com.mantledillusion.injection.hura.core.Blueprint;
 import com.mantledillusion.injection.hura.core.annotation.injection.Inject;
+import com.mantledillusion.injection.hura.core.annotation.property.Resolve;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.annotation.PreConstruct;
 import com.mantledillusion.injection.hura.core.exception.InjectionException;
 
@@ -16,19 +17,19 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Extension {@link Annotation} to @{@link Inject} and @{@link Property}.
+ * Extension {@link Annotation} to @{@link Inject} and @{@link Resolve}.
  * <p>
  * A {@link Field}/{@link Parameter} annotated with @{@link Inject}
  * and @{@link Optional} will only be injected if the injection is explicitly
  * anticipated as described in {@link InjectionMode#EXPLICIT}.
  * <p>
- * A {@link Field}/{@link Parameter} annotated with @{@link Property}
+ * A {@link Field}/{@link Parameter} annotated with @{@link Resolve}
  * and @{@link Optional} will only be resolved if the property can be
  * determined.
  * <p>
  * {@link Field}s/{@link Parameter}s annotated with @{@link Optional} may not:
  * <ul>
- * <li>be not annotated with either @{@link Inject} or {@link Property}</li>
+ * <li>be not annotated with either @{@link Inject} or {@link Resolve}</li>
  * </ul>
  */
 @Retention(RUNTIME)
