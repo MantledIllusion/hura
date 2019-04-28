@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 import java.lang.reflect.Method;
+import java.util.UUID;
 
 /**
  * Interface for a group of {@link Allocation}s.
@@ -115,6 +116,24 @@ public interface Blueprint {
         private SingletonAllocation(String qualifier, Injector.AbstractAllocator<?> allocator) {
             this.qualifier = qualifier;
             this.allocator = allocator;
+        }
+
+        /**
+         * Factory {@link Method} for {@link SingletonAllocation} instances.
+         * <p>
+         * Allocates specified instance as an <b>anonymous</b> singleton. It cannot be injected
+         * via @{@link com.mantledillusion.injection.hura.core.annotation.injection.Qualifier} afterwards, but it may
+         * be useful for @{@link com.mantledillusion.injection.hura.core.annotation.injection.Aggregate}.
+         *
+         * @param bean      The instance to allocate as a {@link SingletonAllocation}; might <b>not</b> be null.
+         * @return A new {@link SingletonAllocation} instance; never null
+         */
+        public static SingletonAllocation of(Object bean) {
+            if (bean == null) {
+                throw new IllegalArgumentException("Cannot create an anonymous singleton with a null bean instance");
+            }
+            return new SingletonAllocation(bean.getClass().getSimpleName() + '_' + UUID.randomUUID().toString(),
+                    new Injector.InstanceAllocator<>(bean));
         }
 
         /**
