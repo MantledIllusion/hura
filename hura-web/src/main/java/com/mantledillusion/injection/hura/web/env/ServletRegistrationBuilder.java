@@ -31,6 +31,9 @@ public final class ServletRegistrationBuilder {
 
     /**
      * @see javax.servlet.ServletRegistration.Dynamic#addMapping(String...)
+     *
+     * @param urlPatterns the URL patterns of the servlet mapping
+     * @return this
      */
     public synchronized ServletRegistrationBuilder addMapping(String... urlPatterns) {
         this.configurations.add(dynamic -> dynamic.addMapping(urlPatterns));
@@ -39,6 +42,9 @@ public final class ServletRegistrationBuilder {
 
     /**
      * @see javax.servlet.ServletRegistration.Dynamic#setLoadOnStartup(int)
+     *
+     * @param loadOnStartup the initialization priority of the Servlet
+     * @return this
      */
     public synchronized ServletRegistrationBuilder setLoadOnStartup(int loadOnStartup) {
         this.configurations.add(dynamic -> dynamic.setLoadOnStartup(loadOnStartup));
@@ -47,14 +53,22 @@ public final class ServletRegistrationBuilder {
 
     /**
      * @see javax.servlet.ServletRegistration.Dynamic#setAsyncSupported(boolean)
+     *
+     * @param isAsyncSupported true if the Servlet or Filter represented
+     * by this dynamic Registration supports asynchronous operations,
+     * false otherwise
+     * @return this
      */
-    public synchronized ServletRegistrationBuilder setAsyncSupported(boolean asyncSupported) {
-        this.configurations.add(dynamic -> dynamic.setAsyncSupported(asyncSupported));
+    public synchronized ServletRegistrationBuilder setAsyncSupported(boolean isAsyncSupported) {
+        this.configurations.add(dynamic -> dynamic.setAsyncSupported(isAsyncSupported));
         return this;
     }
 
     /**
      * @see javax.servlet.ServletRegistration.Dynamic#setRunAsRole(String)
+     *
+     * @param roleName the name of the <code>runAs</code> role
+     * @return this
      */
     public synchronized ServletRegistrationBuilder setRunAsRole(String roleName) {
         this.configurations.add(dynamic -> dynamic.setRunAsRole(roleName));
@@ -63,6 +77,10 @@ public final class ServletRegistrationBuilder {
 
     /**
      * @see javax.servlet.ServletRegistration.Dynamic#setInitParameter(String, String)
+     *
+     * @param name the initialization parameter name
+     * @param value the initialization parameter value
+     * @return this
      */
     public synchronized ServletRegistrationBuilder setInitParameter(String name, String value) {
         this.configurations.add(dynamic -> dynamic.setInitParameter(name, value));
@@ -71,6 +89,9 @@ public final class ServletRegistrationBuilder {
 
     /**
      * @see javax.servlet.ServletRegistration.Dynamic#setInitParameters(Map)
+     *
+     * @param initParameters the initialization parameters
+     * @return this
      */
     public synchronized ServletRegistrationBuilder setInitParameters(Map<String, String> initParameters) {
         this.configurations.add(dynamic -> dynamic.setInitParameters(initParameters));
@@ -79,6 +100,10 @@ public final class ServletRegistrationBuilder {
 
     /**
      * @see javax.servlet.ServletRegistration.Dynamic#setMultipartConfig(MultipartConfigElement)
+     *
+     * @param multipartConfig the {@link MultipartConfigElement} to be
+     * applied to the patterns mapped to the registration
+     * @return this
      */
     public synchronized ServletRegistrationBuilder setMultipartConfig(MultipartConfigElement multipartConfig) {
         this.configurations.add(dynamic -> dynamic.setMultipartConfig(multipartConfig));
@@ -87,6 +112,10 @@ public final class ServletRegistrationBuilder {
 
     /**
      * @see javax.servlet.ServletRegistration.Dynamic#setServletSecurity(ServletSecurityElement)
+     *
+     * @param constraint the {@link ServletSecurityElement} to be applied
+     * to the patterns mapped to this ServletRegistration
+     * @return this
      */
     public synchronized ServletRegistrationBuilder setMultipartConfig(ServletSecurityElement constraint) {
         this.configurations.add(dynamic -> dynamic.setServletSecurity(constraint));

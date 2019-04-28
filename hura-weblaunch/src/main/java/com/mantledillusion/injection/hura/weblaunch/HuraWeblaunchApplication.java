@@ -1,6 +1,6 @@
-package com.mantledillusion.injection.hura.boot;
+package com.mantledillusion.injection.hura.weblaunch;
 
-import com.mantledillusion.injection.hura.boot.exception.BootException;
+import com.mantledillusion.injection.hura.weblaunch.exception.WeblaunchException;
 import com.mantledillusion.injection.hura.web.HuraServletContainerInitializer;
 import com.mantledillusion.injection.hura.web.HuraWebApplicationInitializer;
 import io.undertow.Undertow;
@@ -15,24 +15,38 @@ import org.slf4j.LoggerFactory;
 import java.util.HashSet;
 import java.util.Set;
 
-public final class HuraBootApplication {
+/**
+ * The class representing a Hura Weblaunch application.
+ * <p>
+ * Use {@link #build(Class)} to configure, initialize and start up an application.
+ */
+public final class HuraWeblaunchApplication {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(HuraBootApplication.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(HuraWeblaunchApplication.class);
     private static final String REGEX_NUMERIC = "[1-9][0-9]*";
     private static final int MAX_PORT = 65535;
 
-    public static final String PROP_SERVER_PORT = "hura.boot.server.port";
+    public static final String PROP_SERVER_PORT = "hura.weblaunch.server.port";
 
-    public static final class HuraBootApplicationBuilder {
+    /**
+     * Builder to initialize and {@link #startUp(String...)} a {@link HuraWeblaunchApplication}.
+     */
+    public static final class HuraWeblaunchApplicationBuilder {
 
         private final Set<Class<? extends HuraWebApplicationInitializer>> initializerTypes;
         private Integer port;
 
-        private HuraBootApplicationBuilder() {
+        private HuraWeblaunchApplicationBuilder() {
             this.initializerTypes = new HashSet<>();
         }
 
-        public synchronized HuraBootApplicationBuilder addApplication(Class<? extends HuraWebApplicationInitializer> initializerType) {
+        /**
+         * Adds another {@link HuraWebApplicationInitializer} to start up to the configuration.
+         *
+         * @param initializerType Additional {@link HuraWebApplicationInitializer} implementation type; my <b>not</b> be null.
+         * @return this
+         */
+        public synchronized HuraWeblaunchApplicationBuilder addApplication(Class<? extends HuraWebApplicationInitializer> initializerType) {
             if (initializerType == null) {
                 throw new IllegalArgumentException("Cannot build an application using a null initializer");
             }
@@ -40,7 +54,13 @@ public final class HuraBootApplication {
             return this;
         }
 
-        public synchronized HuraBootApplicationBuilder setPort(int port) {
+        /**
+         * Sets the {@link Undertow} server's port.
+         *
+         * @param port The port to use; may not be &lt;0 or &gt;{@link #MAX_PORT}.
+         * @return this
+         */
+        public synchronized HuraWeblaunchApplicationBuilder setPort(int port) {
             if (port < 0 || port > MAX_PORT) {
                 throw new IllegalArgumentException("Cannot set the port to a negative value or one bigger than " + MAX_PORT);
             }
@@ -48,7 +68,13 @@ public final class HuraBootApplication {
             return this;
         }
 
-        public synchronized HuraBootApplication startUp(String... args) {
+        /**
+         * Uses the configuration stored in this builder upto this point to start up all {@link HuraWebApplicationInitializer}s configured.
+         *
+         * @param args Java Program parameters; might be null.
+         * @return A new {@link HuraWeblaunchApplication} instance, never null
+         */
+        public synchronized HuraWeblaunchApplication startUp(String... args) {
             long ms = System.currentTimeMillis();
 
             try {
@@ -57,8 +83,8 @@ public final class HuraBootApplication {
 
                 DeploymentInfo servletBuilder = Servlets
                         .deployment()
-                        .setClassLoader(HuraBootApplication.class.getClassLoader())
-                        .setDeploymentName(HuraBootApplication.class.getSimpleName())
+                        .setClassLoader(HuraWeblaunchApplication.class.getClassLoader())
+                        .setDeploymentName(HuraWeblaunchApplication.class.getSimpleName())
                         .setContextPath("/")
                         .addServletContainerInitializer(initializerInfo);
 
@@ -79,9 +105,9 @@ public final class HuraBootApplication {
 
                 LOGGER.info("Started up web server in " + (System.currentTimeMillis()-ms) + " ms");
 
-                return new HuraBootApplication(server);
+                return new HuraWeblaunchApplication(server);
             } catch (Exception e) {
-                throw new BootException("Unable to start up application server", e);
+                throw new WeblaunchException("Unable to start up application server", e);
             }
         }
 
@@ -94,11 +120,17 @@ public final class HuraBootApplication {
 
     private final Undertow server;
 
-    private HuraBootApplication(Undertow server) {
+    private HuraWeblaunchApplication(Undertow server) {
         this.server = server;
     }
 
-    public static HuraBootApplicationBuilder build(Class<? extends HuraWebApplicationInitializer> applicationInitializerType) {
-        return new HuraBootApplicationBuilder().addApplication(applicationInitializerType);
+    /**
+     * Begins a new {@link HuraWeblaunchApplicationBuilder}.
+     *
+     * @param applicationInitializerType The first (and possibly only) {@link HuraWebApplicationInitializer}; might <b>not</b> be null.
+     * @return A new {@link HuraWeblaunchApplicationBuilder} instance, never null
+     */
+    public static HuraWeblaunchApplicationBuilder build(Class<? extends HuraWebApplicationInitializer> applicationInitializerType) {
+        return new HuraWeblaunchApplicationBuilder().addApplication(applicationInitializerType);
     }
 }

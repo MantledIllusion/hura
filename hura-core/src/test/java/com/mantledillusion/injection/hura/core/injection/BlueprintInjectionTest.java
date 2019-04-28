@@ -10,17 +10,16 @@ import com.mantledillusion.injection.hura.core.exception.ValidatorException;
 import com.mantledillusion.injection.hura.core.injection.injectables.InjectableWithExplicitIndependent;
 import com.mantledillusion.injection.hura.core.singleton.injectables.InjectableWithExplicitSingleton;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.assertTrue;
-
 public class BlueprintInjectionTest extends AbstractInjectionTest {
 
-	@Test(expected=IllegalArgumentException.class)
+	@Test
 	public void testNullBlueprintInjection() {
-		this.suite.injectInSuiteContext(null);
+		Assertions.assertThrows(IllegalArgumentException.class, () -> this.suite.injectInSuiteContext(null));
 	}
 
 	@Test
@@ -29,48 +28,48 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 		this.suite.injectInSuiteContext(Injectable.class, (Blueprint) null, null);
 	}
 
-	@Test(expected= ValidatorException.class)
+	@Test
 	public void testWrongAllocMethodReturnTypeBlueprintInjection() {
-		this.suite.injectInSuiteContext(Injectable.class, new Blueprint() {
-			
+		Assertions.assertThrows(ValidatorException.class, () -> this.suite.injectInSuiteContext(Injectable.class, new Blueprint() {
+
 			@Define
 			public String wrongReturnTypeAllocationMethod() {
 				return StringUtils.EMPTY;
 			}
-		});
+		}));
 	}
 
-	@Test(expected=ValidatorException.class)
+	@Test
 	public void testParameteredAllocMethodBlueprintInjection() {
-		this.suite.injectInSuiteContext(Injectable.class, new Blueprint() {
-			
+		Assertions.assertThrows(ValidatorException.class, () -> this.suite.injectInSuiteContext(Injectable.class, new Blueprint() {
+
 			@Define
 			public Blueprint.TypeAllocation parameteredAllocationMethod(String param) {
 				return null;
 			}
-		});
+		}));
 	}
 	
-	@Test(expected= BlueprintException.class)
+	@Test
 	public void testNullAllocationBlueprintInjection() {
-		this.suite.injectInSuiteContext(Injectable.class, new Blueprint() {
-			
+		Assertions.assertThrows(BlueprintException.class, () -> this.suite.injectInSuiteContext(Injectable.class, new Blueprint() {
+
 			@Define
 			public Blueprint.TypeAllocation nullReturningAllocationMethod() {
 				return null;
 			}
-		});
+		}));
 	}
 
-	@Test(expected=BlueprintException.class)
+	@Test
 	public void testNullTypeAllocationBlueprintInjection() {
-		this.suite.injectInSuiteContext(Injectable.class, new Blueprint() {
-			
+		Assertions.assertThrows(BlueprintException.class, () -> this.suite.injectInSuiteContext(Injectable.class, new Blueprint() {
+
 			@Define
 			public Blueprint.TypeAllocation nullTypeAllocationReturningMethod() {
 				return Blueprint.TypeAllocation.allocateToType(Injectable.class, null);
 			}
-		});
+		}));
 	}
 	
 	@Test
@@ -83,8 +82,8 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 				return Blueprint.SingletonAllocation.of(InjectableWithExplicitSingleton.SINGLETON, instance);
 			}
 		});
-		
-		assertTrue(injectable.explicitInjectable == instance);
+
+		Assertions.assertTrue(injectable.explicitInjectable == instance);
 	}
 	
 	@Test
@@ -97,8 +96,8 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 				return Blueprint.SingletonAllocation.of(InjectableWithExplicitSingleton.SINGLETON, callback -> instance);
 			}
 		});
-		
-		assertTrue(injectable.explicitInjectable == instance);
+
+		Assertions.assertTrue(injectable.explicitInjectable == instance);
 	}
 	
 	@Test
@@ -110,8 +109,8 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 				return Blueprint.SingletonAllocation.of(InjectableWithExplicitSingleton.SINGLETON, Injectable.class);
 			}
 		});
-		
-		assertTrue(injectable.explicitInjectable != null);
+
+		Assertions.assertTrue(injectable.explicitInjectable != null);
 	}
 
 	@Test
@@ -124,7 +123,7 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 			}
 		});
 
-		assertTrue(injectable.explicitInjectable != null);
+		Assertions.assertTrue(injectable.explicitInjectable != null);
 	}
 	
 	@Test
@@ -137,8 +136,8 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 				return Blueprint.TypeAllocation.allocateToInstance(InjectableInterface.class, instance);
 			}
 		});
-		
-		assertTrue(injectable.explicitInjectable == instance);
+
+		Assertions.assertTrue(injectable.explicitInjectable == instance);
 	}
 	
 	@Test
@@ -151,8 +150,8 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 				return Blueprint.TypeAllocation.allocateToProvider(InjectableInterface.class, callback -> instance);
 			}
 		});
-		
-		assertTrue(injectable.explicitInjectable == instance);
+
+		Assertions.assertTrue(injectable.explicitInjectable == instance);
 	}
 	
 	@Test
@@ -164,8 +163,8 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 				return Blueprint.TypeAllocation.allocateToType(InjectableInterface.class, Injectable.class);
 			}
 		});
-		
-		assertTrue(injectable.explicitInjectable != null);
+
+		Assertions.assertTrue(injectable.explicitInjectable != null);
 	}
 
 	@Test
@@ -178,6 +177,6 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 			}
 		});
 
-		assertTrue(injectable.explicitInjectable != null);
+		Assertions.assertTrue(injectable.explicitInjectable != null);
 	}
 }

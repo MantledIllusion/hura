@@ -14,20 +14,19 @@ import com.mantledillusion.injection.hura.core.annotation.instruction.Define;
 import com.mantledillusion.injection.hura.core.exception.ProcessorException;
 import com.mantledillusion.injection.hura.core.property.injectables.InjectableWithProperty;
 import com.mantledillusion.injection.hura.core.singleton.injectables.InjectableWithSequenceSingleton;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class InjectionAdjustmentTest extends AbstractInjectionTest {
 
-	@Test(expected = ProcessorException.class)
+	@Test
 	public void testAdjustmentWithoutInjection() {
-		this.suite.injectInSuiteContext(UninjectableWithInjectionlessAdjustment.class);
+		Assertions.assertThrows(ProcessorException.class, () -> this.suite.injectInSuiteContext(UninjectableWithInjectionlessAdjustment.class));
 	}
 
-	@Test(expected = ProcessorException.class)
+	@Test
 	public void testAdjustmentOnSingleton() {
-		this.suite.injectInSuiteContext(UninjectableWithSingletonAdjustment.class);
+		Assertions.assertThrows(ProcessorException.class, () -> this.suite.injectInSuiteContext(UninjectableWithSingletonAdjustment.class));
 	}
 	
 	@Test
@@ -36,7 +35,7 @@ public class InjectionAdjustmentTest extends AbstractInjectionTest {
 				.injectInSuiteContext(InjectableWithPropertyAdjustment.class, 
 						Blueprint.PropertyAllocation.of(InjectableWithProperty.PROPERTY_KEY, "default value"));
 
-		assertEquals(InjectableWithPropertyAdjustment.ADJUSTED_PROPERTY_VALUE,
+		Assertions.assertEquals(InjectableWithPropertyAdjustment.ADJUSTED_PROPERTY_VALUE,
 				injectable.propertiedInjectable.propertyValue);
 	}
 
@@ -48,7 +47,7 @@ public class InjectionAdjustmentTest extends AbstractInjectionTest {
 				Blueprint.SingletonAllocation.of(InjectableWithMappingAdjustment.SOME_QUALIFIER, singleton),
 				Blueprint.MappingAllocation.of(InjectableWithSequenceSingleton.SINGLETON, "predefinitionQualifier"));
 		
-		assertSame(singleton, injectable.singletonedInjectable.sequenceSingleton);
+		Assertions.assertSame(singleton, injectable.singletonedInjectable.sequenceSingleton);
 	}
 
 	@Test
@@ -63,6 +62,6 @@ public class InjectionAdjustmentTest extends AbstractInjectionTest {
 					}
 				});
 
-		assertTrue(injectable.extendedInjectable.explicitInjectable instanceof InjectableAlternative);
+		Assertions.assertTrue(injectable.extendedInjectable.explicitInjectable instanceof InjectableAlternative);
 	}
 }

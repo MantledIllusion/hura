@@ -8,35 +8,34 @@ import com.mantledillusion.injection.hura.core.context.uninjectables.Uninjectabl
 import com.mantledillusion.injection.hura.core.context.uninjectables.UninjectableWithGlobalSingletonInjector;
 import com.mantledillusion.injection.hura.core.context.uninjectables.UninjectableWithSequenceSingletonInjector;
 import com.mantledillusion.injection.hura.core.exception.InjectionException;
-import org.junit.Test;
-
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ContextInjectionTest extends AbstractInjectionTest {
 
-	@Test(expected= InjectionException.class)
+	@Test
 	public void testDirectContextInjection() {
-		this.suite.injectInSuiteContext(ExampleContext.class);
+		Assertions.assertThrows(InjectionException.class, () -> this.suite.injectInSuiteContext(ExampleContext.class));
 	}
 
-	@Test(expected=InjectionException.class)
+	@Test
 	public void testSequenceInjectorInjection() {
-		this.suite.injectInSuiteContext(UninjectableWithSequenceSingletonInjector.class);
+		Assertions.assertThrows(InjectionException.class, () -> this.suite.injectInSuiteContext(UninjectableWithSequenceSingletonInjector.class));
 	}
 
-	@Test(expected=InjectionException.class)
+	@Test
 	public void testGlobalInjectorInjection() {
-		this.suite.injectInSuiteContext(UninjectableWithGlobalSingletonInjector.class);
+		Assertions.assertThrows(InjectionException.class, () -> this.suite.injectInSuiteContext(UninjectableWithGlobalSingletonInjector.class));
 	}
 
-	@Test(expected=InjectionException.class)
+	@Test
 	public void testGlobalContextInjection() {
-		this.suite.injectInSuiteContext(UninjectableWithGlobalSingletonContext.class);
+		Assertions.assertThrows(InjectionException.class, () -> this.suite.injectInSuiteContext(UninjectableWithGlobalSingletonContext.class));
 	}
 
-	@Test(expected=InjectionException.class)
+	@Test
 	public void testContextWithoutQualifierInjection() {
-		this.suite.injectInSuiteContext(UninjectableWithContextWithoutQualifier.class, new ExampleContext());
+		Assertions.assertThrows(InjectionException.class, () -> this.suite.injectInSuiteContext(UninjectableWithContextWithoutQualifier.class, new ExampleContext()));
 	}
 	
 	@Test
@@ -44,6 +43,6 @@ public class ContextInjectionTest extends AbstractInjectionTest {
 		ExampleContext context = new ExampleContext();
 		InjectableWithContextSensitivity injectable = this.suite.injectInSuiteContext(InjectableWithContextSensitivity.class, context);
 		
-		assertTrue(injectable.context == context);
+		Assertions.assertTrue(injectable.context == context);
 	}
 }

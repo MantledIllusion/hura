@@ -8,37 +8,36 @@ import com.mantledillusion.injection.hura.core.injection.injectables.InjectableW
 import com.mantledillusion.injection.hura.core.injection.injectables.InjectableWithInjectableConstructor;
 import com.mantledillusion.injection.hura.core.injection.injectables.InjectableWithInjectableField;
 import com.mantledillusion.injection.hura.core.injection.uninjectables.*;
-import org.junit.Test;
-
-import static org.junit.Assert.assertTrue;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class BasicInjectionTest extends AbstractInjectionTest {
 
-	@Test(expected = IllegalArgumentException.class)
+	@Test
 	public void testNullInjection() {
-		this.suite.injectInSuiteContext((Class<?>) null);
+		Assertions.assertThrows(IllegalArgumentException.class, () -> this.suite.injectInSuiteContext((Class<?>) null));
 	}
 
 	@Test
 	public void testBasicFieldInjection() {
 		InjectableWithInjectableField injectable = this.suite.injectInSuiteContext(InjectableWithInjectableField.class);
 
-		assertTrue(injectable.wiredField != null);
+		Assertions.assertTrue(injectable.wiredField != null);
 	}
 
-	@Test(expected = InjectionException.class)
+	@Test
 	public void testExceptionThrowingConstructorInjection() {
-		this.suite.injectInSuiteContext(UninjectableWithExceptionThrowingConstructor.class);
+		Assertions.assertThrows(InjectionException.class, () -> this.suite.injectInSuiteContext(UninjectableWithExceptionThrowingConstructor.class));
 	}
 
-	@Test(expected = ProcessorException.class)
+	@Test
 	public void testStaticFieldInjection() {
-		this.suite.injectInSuiteContext(UninjectableWithStaticWiredField.class);
+		Assertions.assertThrows(ProcessorException.class, () -> this.suite.injectInSuiteContext(UninjectableWithStaticWiredField.class));
 	}
 
-	@Test(expected = ProcessorException.class)
+	@Test
 	public void testFinalFieldInjection() {
-		this.suite.injectInSuiteContext(UninjectableWithFinalWiredField.class);
+		Assertions.assertThrows(ProcessorException.class, () -> this.suite.injectInSuiteContext(UninjectableWithFinalWiredField.class));
 	}
 
 	@Test
@@ -46,17 +45,17 @@ public class BasicInjectionTest extends AbstractInjectionTest {
 		InjectableWithInjectableConstructor injectable = this.suite
 				.injectInSuiteContext(InjectableWithInjectableConstructor.class);
 
-		assertTrue(injectable.wiredThroughConstructor != null);
+		Assertions.assertTrue(injectable.wiredThroughConstructor != null);
 	}
 
-	@Test(expected = InjectionException.class)
+	@Test
 	public void testUninjectableConstructorInjection() {
-		this.suite.injectInSuiteContext(UninjectableWithUninjectableConstructor.class);
+		Assertions.assertThrows(InjectionException.class, () -> this.suite.injectInSuiteContext(UninjectableWithUninjectableConstructor.class));
 	}
 
-	@Test(expected = InjectionException.class)
+	@Test
 	public void testMultipleInjectableConstructorInjection() {
-		this.suite.injectInSuiteContext(UninjectableWith2InjectableConstructors.class);
+		Assertions.assertThrows(InjectionException.class, () -> this.suite.injectInSuiteContext(UninjectableWith2InjectableConstructors.class));
 	}
 
 	@Test
@@ -64,32 +63,32 @@ public class BasicInjectionTest extends AbstractInjectionTest {
 		InjectableWithAnnotatedConstructor injectable = this.suite
 				.injectInSuiteContext(InjectableWithAnnotatedConstructor.class);
 
-		assertTrue(injectable.onlyWiredThroughUseAnnotatedConstructor != null);
+		Assertions.assertTrue(injectable.onlyWiredThroughUseAnnotatedConstructor != null);
 	}
 
-	@Test(expected = InjectionException.class)
+	@Test
 	public void testMultipleUseAnnotatedConstructorInjection() {
-		this.suite.injectInSuiteContext(UninjectableWith2UseAnnotatedConstructors.class);
+		Assertions.assertThrows(InjectionException.class, () -> this.suite.injectInSuiteContext(UninjectableWith2UseAnnotatedConstructors.class));
 	}
 
-	@Test(expected = ProcessorException.class)
+	@Test
 	public void testIncompleteUseAnnotatedConstructorInjection() {
-		this.suite.injectInSuiteContext(UninjectableWithIncompleteUseAnnotatedConstructor.class);
+		Assertions.assertThrows(ProcessorException.class, () -> this.suite.injectInSuiteContext(UninjectableWithIncompleteUseAnnotatedConstructor.class));
 	}
 
-	@Test(expected = InjectionException.class)
+	@Test
 	public void testMissingUseAnnotationOnNonPublicNoArgsConstructorInjection() {
-		this.suite.injectInSuiteContext(UninjectableWithMissingUseAnnotationOnNonPublicNoArgsConstructor.class);
+		Assertions.assertThrows(InjectionException.class, () -> this.suite.injectInSuiteContext(UninjectableWithMissingUseAnnotationOnNonPublicNoArgsConstructor.class));
 	}
 
-	@Test(expected = InjectionException.class)
+	@Test
 	public void testInterfaceInjection() {
-		this.suite.injectInSuiteContext(UninjectableWithWiredInterfaceField.class);
+		Assertions.assertThrows(InjectionException.class, () -> this.suite.injectInSuiteContext(UninjectableWithWiredInterfaceField.class));
 	}
 
-	@Test(expected = InjectionException.class)
+	@Test
 	public void testSelfInjection() {
-		this.suite.injectInSuiteContext(UninjectableWithWiredSelf.class);
+		Assertions.assertThrows(InjectionException.class, () -> this.suite.injectInSuiteContext(UninjectableWithWiredSelf.class));
 	}
 
 	@Test
@@ -97,11 +96,11 @@ public class BasicInjectionTest extends AbstractInjectionTest {
 		InjectableWithExplicitIndependent injectable = this.suite
 				.injectInSuiteContext(InjectableWithExplicitIndependent.class);
 
-		assertTrue(injectable.explicitInjectable == null);
+		Assertions.assertTrue(injectable.explicitInjectable == null);
 	}
 	
-	@Test(expected = ProcessorException.class)
+	@Test
 	public void testOptionalIndependentInjectionWithMissingInjectAnnotation() {
-		this.suite.injectInSuiteContext(UninjectableWithOptionalInjectableAndMissingInjectAnnotation.class);
+		Assertions.assertThrows(ProcessorException.class, () -> this.suite.injectInSuiteContext(UninjectableWithOptionalInjectableAndMissingInjectAnnotation.class));
 	}
 }

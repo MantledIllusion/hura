@@ -7,14 +7,12 @@ import com.mantledillusion.injection.hura.core.Injector;
 import com.mantledillusion.injection.hura.core.annotation.instruction.Define;
 import com.mantledillusion.injection.hura.core.property.injectables.InjectableWithProperty;
 import com.mantledillusion.injection.hura.core.property.injectables.InjectableWithPropertyAndSingleton;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
 
 public class BlueprintResolvingTest extends AbstractInjectionTest {
 	
@@ -30,7 +28,7 @@ public class BlueprintResolvingTest extends AbstractInjectionTest {
 			}
 		});
 		
-		assertEquals(propertyValue, injectable.propertyValue);
+		Assertions.assertEquals(propertyValue, injectable.propertyValue);
 	}
 	
 	@Test
@@ -45,18 +43,18 @@ public class BlueprintResolvingTest extends AbstractInjectionTest {
 				return new HashSet<>(Arrays.asList(PropertyAllocation.of("property.key", propertyValue), Blueprint.SingletonAllocation.of("qualifier", singleton)));
 			}
 		});
-		
-		assertEquals(propertyValue, injectable.propertyValue);
-		assertSame(singleton, injectable.singleton);
+
+		Assertions.assertEquals(propertyValue, injectable.propertyValue);
+		Assertions.assertSame(singleton, injectable.singleton);
 	}
 	
-	@Test(expected=IllegalArgumentException.class)
+	@Test
 	public void testMultiplePropertyRootInjectorDefinition() {
-		Injector.of(PropertyAllocation.of("key", "a"), PropertyAllocation.of("key", "b"));
+		Assertions.assertThrows(IllegalArgumentException.class, () -> Injector.of(PropertyAllocation.of("key", "a"), PropertyAllocation.of("key", "b")));
 	}
 	
-	@Test(expected=IllegalArgumentException.class)
+	@Test
 	public void testMultiplePropertyBlueprintDefinition() {
-		Injector.of(PropertyAllocation.of("key", "a"), PropertyAllocation.of("key", "b"));
+		Assertions.assertThrows(IllegalArgumentException.class, () -> Injector.of(PropertyAllocation.of("key", "a"), PropertyAllocation.of("key", "b")));
 	}
 }

@@ -28,6 +28,15 @@ public final class FilterRegistrationBuilder {
 
     /**
      * @see FilterRegistration.Dynamic#addMappingForServletNames(EnumSet, boolean, String...)
+     *
+     * @param dispatcherTypes the dispatcher types of the filter mapping,
+     * or null if the default <tt>DispatcherType.REQUEST</tt> is to be used
+     * @param isMatchAfter true if the given filter mapping should be matched
+     * after any declared filter mappings, and false if it is supposed to
+     * be matched before any declared filter mappings of the ServletContext
+     * from which this FilterRegistration was obtained
+     * @param servletNames the servlet names of the filter mapping
+     * @return this
      */
     public synchronized FilterRegistrationBuilder addMappingForServletNames(EnumSet<DispatcherType> dispatcherTypes, boolean isMatchAfter, String... servletNames) {
         this.configurations.add(dynamic -> dynamic.addMappingForServletNames(dispatcherTypes, isMatchAfter, servletNames));
@@ -36,6 +45,15 @@ public final class FilterRegistrationBuilder {
 
     /**
      * @see FilterRegistration.Dynamic#addMappingForUrlPatterns(EnumSet, boolean, String...)
+     *
+     * @param dispatcherTypes the dispatcher types of the filter mapping,
+     * or null if the default <tt>DispatcherType.REQUEST</tt> is to be used
+     * @param isMatchAfter true if the given filter mapping should be matched
+     * after any declared filter mappings, and false if it is supposed to
+     * be matched before any declared filter mappings of the ServletContext
+     * from which this FilterRegistration was obtained
+     * @param urlPatterns the url patterns of the filter mapping
+     * @return this
      */
     public synchronized FilterRegistrationBuilder addMappingForUrlPatterns(EnumSet<DispatcherType> dispatcherTypes, boolean isMatchAfter, String... urlPatterns) {
         this.configurations.add(dynamic -> dynamic.addMappingForUrlPatterns(dispatcherTypes, isMatchAfter, urlPatterns));
@@ -44,14 +62,23 @@ public final class FilterRegistrationBuilder {
 
     /**
      * @see FilterRegistration.Dynamic#setAsyncSupported(boolean)
+     *
+     * @param isAsyncSupported true if the Servlet or Filter represented
+     * by this dynamic Registration supports asynchronous operations,
+     * false otherwise
+     * @return this
      */
-    public synchronized FilterRegistrationBuilder setAsyncSupported(boolean asyncSupported) {
-        this.configurations.add(dynamic -> dynamic.setAsyncSupported(asyncSupported));
+    public synchronized FilterRegistrationBuilder setAsyncSupported(boolean isAsyncSupported) {
+        this.configurations.add(dynamic -> dynamic.setAsyncSupported(isAsyncSupported));
         return this;
     }
 
     /**
      * @see FilterRegistration.Dynamic#setInitParameter(String, String)
+     *
+     * @param name the initialization parameter name
+     * @param value the initialization parameter value
+     * @return this
      */
     public synchronized FilterRegistrationBuilder setInitParameter(String name, String value) {
         this.configurations.add(dynamic -> dynamic.setInitParameter(name, value));
@@ -60,6 +87,9 @@ public final class FilterRegistrationBuilder {
 
     /**
      * @see ServletRegistration.Dynamic#setInitParameters(Map)
+     *
+     * @param initParameters the initialization parameters
+     * @return this
      */
     public synchronized FilterRegistrationBuilder setInitParameters(Map<String, String> initParameters) {
         this.configurations.add(dynamic -> dynamic.setInitParameters(initParameters));

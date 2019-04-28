@@ -6,8 +6,8 @@ import com.mantledillusion.injection.hura.core.exception.PluginException;
 import com.mantledillusion.injection.hura.core.plugin.injectables.*;
 import com.mantledillusion.injection.hura.core.plugin.misc.ParsedInjectable;
 import com.mantledillusion.injection.hura.core.plugin.uninjectables.*;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class PluginTest extends AbstractInjectionTest {
 
@@ -17,12 +17,12 @@ public class PluginTest extends AbstractInjectionTest {
     public void testInjectPlugin() {
         InjectableWithInjectableInterfacePlugin injectable = this.suite.injectInSuiteContext(InjectableWithInjectableInterfacePlugin.class);
 
-        Assert.assertNotNull(injectable.injectable);
+        Assertions.assertNotNull(injectable.injectable);
     }
 
-    @Test(expected = PluginException.class)
+    @Test
     public void testInjectUnknownPlugin() {
-        this.suite.injectInSuiteContext(UninjectableWithUnknownPlugin.class);
+        Assertions.assertThrows(PluginException.class, () -> this.suite.injectInSuiteContext(UninjectableWithUnknownPlugin.class));
     }
 
     @Test
@@ -30,7 +30,7 @@ public class PluginTest extends AbstractInjectionTest {
         InjectableWithInjectableInterfacePlugin injectableA = this.suite.injectInSuiteContext(InjectableWithInjectableInterfacePlugin.class);
         InjectableWithInjectableInterfacePlugin injectableB = this.suite.injectInSuiteContext(InjectableWithInjectableInterfacePlugin.class);
 
-        Assert.assertSame(injectableA.injectable.getClass(), injectableB.injectable.getClass());
+        Assertions.assertSame(injectableA.injectable.getClass(), injectableB.injectable.getClass());
     }
 
     @Test
@@ -38,36 +38,36 @@ public class PluginTest extends AbstractInjectionTest {
         InjectableWithInjectableInterfacePlugin injectableA = this.suite.injectInSuiteContext(InjectableWithInjectableInterfacePlugin.class);
         InjectableWithInjectableInterfacePluginCopy injectableB = this.suite.injectInSuiteContext(InjectableWithInjectableInterfacePluginCopy.class);
 
-        Assert.assertSame(injectableA.injectable.getClass(), injectableB.injectable.getClass());
+        Assertions.assertSame(injectableA.injectable.getClass(), injectableB.injectable.getClass());
     }
 
     @Test
     public void testPluginVersionPriorizing() {
         InjectableWithVersionPromotingPlugin injectable = this.suite.injectInSuiteContext(InjectableWithVersionPromotingPlugin.class);
 
-        Assert.assertEquals(2, injectable.injectable.getVersion());
+        Assertions.assertEquals(2, injectable.injectable.getVersion());
     }
 
-    @Test(expected = PluginException.class)
+    @Test
     public void testPluginWithFullFileName() {
-        this.suite.injectInSuiteContext(UninjectableWithJarExtensionPlugin.class);
+        Assertions.assertThrows(PluginException.class, () -> this.suite.injectInSuiteContext(UninjectableWithJarExtensionPlugin.class));
     }
 
-    @Test(expected = PluginException.class)
+    @Test
     public void testPluginWithVersionedPluginId() {
-        this.suite.injectInSuiteContext(UninjectableWithVersionedPlugin.class);
+        Assertions.assertThrows(PluginException.class, () -> this.suite.injectInSuiteContext(UninjectableWithVersionedPlugin.class));
     }
 
-    @Test(expected = PluginException.class)
+    @Test
     public void testPluginWithThirdPartyPluginRequirement() {
-        this.suite.injectInSuiteContext(UninjectableWithThirdPartyPlugin.class);
+        Assertions.assertThrows(PluginException.class, () -> this.suite.injectInSuiteContext(UninjectableWithThirdPartyPlugin.class));
     }
 
     @Test
     public void testPluginWithFirstPartyPluginRequirement() {
         InjectableWithFirstPartyPlugin injectable = this.suite.injectInSuiteContext(InjectableWithFirstPartyPlugin.class);
 
-        Assert.assertNotNull(injectable.injectable.getBean());
+        Assertions.assertNotNull(injectable.injectable.getBean());
     }
 
     @Test
@@ -75,55 +75,55 @@ public class PluginTest extends AbstractInjectionTest {
         InjectableWithParsedPlugin injectable = this.suite.injectInSuiteContext(InjectableWithParsedPlugin.class,
                 Blueprint.PropertyAllocation.of(ParsedInjectable.PROPERTY_KEY, DEFAULT_PROPERTY));
 
-        Assert.assertEquals(DEFAULT_PROPERTY, injectable.injectable.getProperty());
+        Assertions.assertEquals(DEFAULT_PROPERTY, injectable.injectable.getProperty());
     }
 
     @Test
     public void testPluginRootBeanInjection() {
         InjectableWithRootBeanInjectedPlugin injectable = this.suite.injectInSuiteContext(InjectableWithRootBeanInjectedPlugin.class);
 
-        Assert.assertNotNull(injectable.injectable.getBean());
+        Assertions.assertNotNull(injectable.injectable.getBean());
     }
 
     @Test
     public void testPluginPluginBeanInjection() {
         InjectableWithPluginBeanInjectedPlugin injectable = this.suite.injectInSuiteContext(InjectableWithPluginBeanInjectedPlugin.class);
 
-        Assert.assertNotNull(injectable.injectable.getBean());
+        Assertions.assertNotNull(injectable.injectable.getBean());
     }
 
-    @Test(expected = PluginException.class)
+    @Test
     public void testMissingTypeBinding() {
-        this.suite.injectInRootContext(UninjectableWithMissingTypeBindingPlugin.class);
+        Assertions.assertThrows(PluginException.class, () -> this.suite.injectInRootContext(UninjectableWithMissingTypeBindingPlugin.class));
     }
 
-    @Test(expected = PluginException.class)
+    @Test
     public void testDuplicateTypeBinding() {
-        this.suite.injectInRootContext(UninjectableWithDuplicateTypeBindingPlugin.class);
+        Assertions.assertThrows(PluginException.class, () -> this.suite.injectInRootContext(UninjectableWithDuplicateTypeBindingPlugin.class));
     }
 
-    @Test(expected = PluginException.class)
+    @Test
     public void testMetaInvalidSpiClass() {
-        this.suite.injectInRootContext(UninjectableWithInvalidSpiClassPlugin.class);
+        Assertions.assertThrows(PluginException.class, () -> this.suite.injectInRootContext(UninjectableWithInvalidSpiClassPlugin.class));
     }
 
-    @Test(expected = PluginException.class)
+    @Test
     public void testMetaUnknownSpiClass() {
-        this.suite.injectInRootContext(UninjectableWithUnknownSpiClassPlugin.class);
+        Assertions.assertThrows(PluginException.class, () -> this.suite.injectInRootContext(UninjectableWithUnknownSpiClassPlugin.class));
     }
 
-    @Test(expected = PluginException.class)
+    @Test
     public void testMetaInvalidServiceProviderClass() {
-        this.suite.injectInRootContext(UninjectableWithInvalidServiceProviderClassPlugin.class);
+        Assertions.assertThrows(PluginException.class, () -> this.suite.injectInRootContext(UninjectableWithInvalidServiceProviderClassPlugin.class));
     }
 
-    @Test(expected = PluginException.class)
+    @Test
     public void testMetaUnknownServiceProviderClass() {
-        this.suite.injectInRootContext(UninjectableWithUnknownServiceProviderClassPlugin.class);
+        Assertions.assertThrows(PluginException.class, () -> this.suite.injectInRootContext(UninjectableWithUnknownServiceProviderClassPlugin.class));
     }
 
-    @Test(expected = PluginException.class)
+    @Test
     public void testMetaUnassignableServiceProvider() {
-        this.suite.injectInRootContext(UninjectableWithUnassignableServiceProviderPlugin.class);
+        Assertions.assertThrows(PluginException.class, () -> this.suite.injectInRootContext(UninjectableWithUnassignableServiceProviderPlugin.class));
     }
 }

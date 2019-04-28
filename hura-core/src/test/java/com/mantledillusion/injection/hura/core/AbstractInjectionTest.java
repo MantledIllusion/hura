@@ -3,7 +3,7 @@ package com.mantledillusion.injection.hura.core;
 import com.mantledillusion.injection.hura.core.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.core.annotation.instruction.Construct;
 import com.mantledillusion.injection.hura.core.context.misc.ExampleContext;
-import org.junit.Before;
+import org.junit.jupiter.api.BeforeEach;
 
 public class AbstractInjectionTest {
 
@@ -47,7 +47,7 @@ public class AbstractInjectionTest {
 	
 	protected InjectorTestSuite suite;
 	
-	@Before
+	@BeforeEach
 	public void setup() {
 		this.suite = Injector.of().instantiate(InjectorTestSuite.class);
 	}

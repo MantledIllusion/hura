@@ -9,8 +9,8 @@ import com.mantledillusion.injection.hura.core.lifecycle.uninjectables.Uninjecta
 import com.mantledillusion.injection.hura.core.lifecycle.uninjectables.UninjectableWithManualInjectionOnInjectedInjectorDuringInjectPhase;
 import com.mantledillusion.injection.hura.core.lifecycle.uninjectables.UninjectableWithStaticProcessMethod;
 import com.mantledillusion.injection.hura.core.lifecycle.uninjectables.UninjectableWithWrongTypeParameterProcessMethod;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
@@ -25,7 +25,7 @@ public class LifecycleTest extends AbstractInjectionTest {
         ClassProcessedLifecycleInjectable injectable = this.suite.injectInSuiteContext(ClassProcessedLifecycleInjectable.class,
                 Blueprint.PropertyAllocation.of(AbstractLifecycleInjectable.IMPL_PROPERTY_KEY, ClassProcessedLifecycleInjectable.class.getName()));
         this.suite.destroyInSuiteContext(injectable);
-        Assert.assertEquals(PHASES_WITH_PRECONSTRUCT, AbstractLifecycleInjectable.PHASES.get(ClassProcessedLifecycleInjectable.class));
+        Assertions.assertEquals(PHASES_WITH_PRECONSTRUCT, AbstractLifecycleInjectable.PHASES.get(ClassProcessedLifecycleInjectable.class));
     }
 
     @Test
@@ -33,7 +33,7 @@ public class LifecycleTest extends AbstractInjectionTest {
         MethodProcessedLifecycleInjectable injectable = this.suite.injectInSuiteContext(MethodProcessedLifecycleInjectable.class,
                 Blueprint.PropertyAllocation.of(AbstractLifecycleInjectable.IMPL_PROPERTY_KEY, MethodProcessedLifecycleInjectable.class.getName()));
         this.suite.destroyInSuiteContext(injectable);
-        Assert.assertEquals(PHASES_WITHOUT_PRECONSTRUCT, AbstractLifecycleInjectable.PHASES.get(MethodProcessedLifecycleInjectable.class));
+        Assertions.assertEquals(PHASES_WITHOUT_PRECONSTRUCT, AbstractLifecycleInjectable.PHASES.get(MethodProcessedLifecycleInjectable.class));
     }
 
     @Test
@@ -41,7 +41,7 @@ public class LifecycleTest extends AbstractInjectionTest {
         AnnotationProcessedLifecycleInjectable injectable = this.suite.injectInSuiteContext(AnnotationProcessedLifecycleInjectable.class,
                 Blueprint.PropertyAllocation.of(AbstractLifecycleInjectable.IMPL_PROPERTY_KEY, AnnotationProcessedLifecycleInjectable.class.getName()));
         this.suite.destroyInSuiteContext(injectable);
-        Assert.assertEquals(PHASES_WITH_PRECONSTRUCT, AbstractLifecycleInjectable.PHASES.get(AnnotationProcessedLifecycleInjectable.class));
+        Assertions.assertEquals(PHASES_WITH_PRECONSTRUCT, AbstractLifecycleInjectable.PHASES.get(AnnotationProcessedLifecycleInjectable.class));
     }
 
     @Test
@@ -49,37 +49,37 @@ public class LifecycleTest extends AbstractInjectionTest {
         PhasedProcessedLifecycleInjectable injectable = this.suite.injectInSuiteContext(PhasedProcessedLifecycleInjectable.class,
                 new PhasedProcessedLifecycleInjectableBlueprint());
         this.suite.destroyInSuiteContext(injectable);
-        Assert.assertEquals(PHASES_WITH_PRECONSTRUCT, AbstractLifecycleInjectable.PHASES.get(PhasedProcessedLifecycleInjectable.class));
+        Assertions.assertEquals(PHASES_WITH_PRECONSTRUCT, AbstractLifecycleInjectable.PHASES.get(PhasedProcessedLifecycleInjectable.class));
     }
 
-    @Test(expected= ProcessorException.class)
+    @Test
     public void testStaticPostProcessMethodInjection() {
-        this.suite.injectInSuiteContext(UninjectableWithStaticProcessMethod.class);
+        Assertions.assertThrows(ProcessorException.class, () -> this.suite.injectInSuiteContext(UninjectableWithStaticProcessMethod.class));
     }
 
-    @Test(expected=ProcessorException.class)
+    @Test
     public void testWrongParameterTypePostProcessMethodInjection() {
-        this.suite.injectInSuiteContext(UninjectableWithWrongTypeParameterProcessMethod.class);
+        Assertions.assertThrows(ProcessorException.class, () -> this.suite.injectInSuiteContext(UninjectableWithWrongTypeParameterProcessMethod.class));
     }
 
-    @Test(expected= IllegalArgumentException.class)
+    @Test
     public void testBlueprintPostProcessingWithoutPostProcessor() {
-        PhasedBeanProcessor.of(null, Phase.POST_CONSTRUCT);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> PhasedBeanProcessor.of(null, Phase.POST_CONSTRUCT));
     }
 
-    @Test(expected= IllegalArgumentException.class)
+    @Test
     public void testBlueprintPostProcessingWithoutPhase() {
-        PhasedBeanProcessor.of(((phase, bean, callback) -> {}), null);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> PhasedBeanProcessor.of(((phase, bean, callback) -> {}), null));
     }
 
-    @Test(expected=ProcessorException.class)
+    @Test
     public void testFailingPostProcessing() {
-        this.suite.injectInSuiteContext(UninjectableWithFailingProcessor.class);
+        Assertions.assertThrows(ProcessorException.class, () -> this.suite.injectInSuiteContext(UninjectableWithFailingProcessor.class));
     }
 
-    @Test(expected=IllegalArgumentException.class)
+    @Test
     public void testUnknownInstanceDestruction() {
-        this.suite.destroyInSuiteContext(new Object());
+        Assertions.assertThrows(IllegalArgumentException.class, () -> this.suite.destroyInSuiteContext(new Object()));
     }
 
     @Test
@@ -87,9 +87,9 @@ public class LifecycleTest extends AbstractInjectionTest {
         InjectableWithInjector injectable = this.suite.injectInSuiteContext(InjectableWithInjector.class);
         InjectableWithDestructionAwareness sub = injectable.injector.instantiate(InjectableWithDestructionAwareness.class);
 
-        Assert.assertFalse(sub.wasDestructed);
+        Assertions.assertFalse(sub.wasDestructed);
         this.suite.destroyInSuiteContext(injectable);
-        Assert.assertTrue(sub.wasDestructed);
+        Assertions.assertTrue(sub.wasDestructed);
     }
 
     @Test
@@ -97,9 +97,9 @@ public class LifecycleTest extends AbstractInjectionTest {
         Injector.RootInjector rootInjector = Injector.of();
         InjectableWithDestructionAwareness injectable = rootInjector.instantiate(InjectableWithDestructionAwareness.class);
 
-        Assert.assertFalse(injectable.wasDestructed);
+        Assertions.assertFalse(injectable.wasDestructed);
         rootInjector.shutdown();
-        Assert.assertTrue(injectable.wasDestructed);
+        Assertions.assertTrue(injectable.wasDestructed);
     }
 
     @Test
@@ -109,11 +109,11 @@ public class LifecycleTest extends AbstractInjectionTest {
         InjectableWithDestructionAwareness.InjectableWithDestructableSingleton sub =
                 injectable.injector.instantiate(InjectableWithDestructionAwareness.InjectableWithDestructableSingleton.class);
 
-        Assert.assertFalse(injectable.singleton.wasDestructed);
+        Assertions.assertFalse(injectable.singleton.wasDestructed);
         injectable.injector.destroy(sub);
-        Assert.assertFalse(injectable.singleton.wasDestructed);
+        Assertions.assertFalse(injectable.singleton.wasDestructed);
         this.suite.destroyInSuiteContext(injectable);
-        Assert.assertTrue(injectable.singleton.wasDestructed);
+        Assertions.assertTrue(injectable.singleton.wasDestructed);
     }
 
     @Test
@@ -125,16 +125,16 @@ public class LifecycleTest extends AbstractInjectionTest {
         InjectableWithDestructionAwareness.InjectableWithDestructableSingleton injectable =
                 rootInjector.instantiate(InjectableWithDestructionAwareness.InjectableWithDestructableSingleton.class);
 
-        Assert.assertFalse(injectable.singleton.wasDestructed);
+        Assertions.assertFalse(injectable.singleton.wasDestructed);
         rootInjector.destroy(injectable);
-        Assert.assertFalse(injectable.singleton.wasDestructed);
+        Assertions.assertFalse(injectable.singleton.wasDestructed);
         rootInjector.shutdown();
-        Assert.assertTrue(injectable.singleton.wasDestructed);
+        Assertions.assertTrue(injectable.singleton.wasDestructed);
     }
 
-    @Test(expected=ProcessorException.class)
+    @Test
     public void testManualInjectionOnInjectedInjectorDuringInjectProcessing() {
-        this.suite.injectInSuiteContext(UninjectableWithManualInjectionOnInjectedInjectorDuringInjectPhase.class);
+        Assertions.assertThrows(ProcessorException.class, () -> this.suite.injectInSuiteContext(UninjectableWithManualInjectionOnInjectedInjectorDuringInjectPhase.class));
     }
 
     @Test
