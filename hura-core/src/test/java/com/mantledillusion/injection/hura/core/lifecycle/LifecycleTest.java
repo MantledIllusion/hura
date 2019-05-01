@@ -2,6 +2,7 @@ package com.mantledillusion.injection.hura.core.lifecycle;
 
 import com.mantledillusion.injection.hura.core.*;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
+import com.mantledillusion.injection.hura.core.annotation.lifecycle.bean.BeanProcessor;
 import com.mantledillusion.injection.hura.core.exception.ProcessorException;
 import com.mantledillusion.injection.hura.core.lifecycle.injectables.*;
 import com.mantledillusion.injection.hura.core.lifecycle.misc.PhasedProcessedLifecycleInjectableBlueprint;
@@ -83,13 +84,23 @@ public class LifecycleTest extends AbstractInjectionTest {
     }
 
     @Test
-    public void testInjectorDestruction() {
-        InjectableWithInjector injectable = this.suite.injectInSuiteContext(InjectableWithInjector.class);
+    public void testInjectorLifecycle() {
+        BeanProcessor<InjectableWithInjector> processor = (phase, bean, callback) ->
+                Assertions.assertFalse(bean.injector.isActive());
+
+        InjectableWithInjector injectable = this.suite.injectInSuiteContext(InjectableWithInjector.class,
+                Blueprint.TypeAllocation.allocateToType(InjectableWithInjector.class, InjectableWithInjector.class,
+                        PhasedBeanProcessor.of(processor, Phase.POST_INJECT)));
+
+        Assertions.assertTrue(injectable.injector.isActive());
+
         InjectableWithDestructionAwareness sub = injectable.injector.instantiate(InjectableWithDestructionAwareness.class);
 
         Assertions.assertFalse(sub.wasDestructed);
         this.suite.destroyInSuiteContext(injectable);
         Assertions.assertTrue(sub.wasDestructed);
+
+        Assertions.assertFalse(injectable.injector.isActive());
     }
 
     @Test

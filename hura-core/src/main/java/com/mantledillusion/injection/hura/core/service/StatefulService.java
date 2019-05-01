@@ -24,7 +24,7 @@ public interface StatefulService {
      * @throws ShutdownException If {@link #isActive()} = true
      */
     default void checkActive() throws ShutdownException {
-        if (isActive()) {
+        if (!isActive()) {
             throw new ShutdownException("The service is already shutdown; it cannot be used anymore.");
         }
     }

@@ -133,7 +133,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
 
         private final InjectionChain chain;
 
-        private boolean isShutdown = false;
+        private boolean isActive = true;
 
         private TemporalInjectorCallback(InjectionChain chain) {
             this.chain = chain;
@@ -141,11 +141,11 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
 
         @Override
         public boolean isActive() {
-            return isShutdown;
+            return isActive;
         }
 
         private synchronized void shutdown() {
-            this.isShutdown = true;
+            this.isActive = false;
         }
 
         @Override
@@ -615,7 +615,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
     private <T> void registerPostConstructProcessors(T instance, InjectionChain injectionChain,
                                                      List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> finalizers) {
         if (instance instanceof Injector) {
-            injectionChain.addActivateable(() -> this.state = InjectorState.ACTIVE);
+            injectionChain.addActivateable(() -> ((Injector) instance).state = InjectorState.ACTIVE);
         }
         for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> finalizer : finalizers) {
             injectionChain.addPostConstructables(() -> finalizer.process(instance, null));
@@ -852,6 +852,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
 
         return ((Injector) injector).resolveSingletonsAndPerform(chain, destroyables -> {
             injector.setRootDestroyables(destroyables);
+            ((Injector) injector).state = InjectorState.ACTIVE;
             return injector;
         });
     }
