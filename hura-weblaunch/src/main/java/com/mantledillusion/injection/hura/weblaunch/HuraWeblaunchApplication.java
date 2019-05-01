@@ -1,18 +1,22 @@
 package com.mantledillusion.injection.hura.weblaunch;
 
+import com.mantledillusion.essentials.object.Null;
 import com.mantledillusion.injection.hura.weblaunch.exception.WeblaunchException;
 import com.mantledillusion.injection.hura.web.HuraServletContainerInitializer;
 import com.mantledillusion.injection.hura.web.HuraWebApplicationInitializer;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
+import io.undertow.server.handlers.resource.ResourceManager;
 import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
 import io.undertow.servlet.api.ServletContainerInitializerInfo;
+import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -34,6 +38,7 @@ public final class HuraWeblaunchApplication {
     public static final class HuraWeblaunchApplicationBuilder {
 
         private final Set<Class<? extends HuraWebApplicationInitializer>> initializerTypes;
+        private ResourceManager resourceManager = ResourceManager.EMPTY_RESOURCE_MANAGER;
         private Integer port;
 
         private HuraWeblaunchApplicationBuilder() {
@@ -51,6 +56,20 @@ public final class HuraWeblaunchApplication {
                 throw new IllegalArgumentException("Cannot build an application using a null initializer");
             }
             this.initializerTypes.add(initializerType);
+            return this;
+        }
+
+        /**
+         * Sets the {@link ResourceManager} of the {@link Undertow} {@link DeploymentInfo}.
+         *
+         * @param resourceManager The {@link ResourceManager} to set; might <b>not</b> be null.
+         * @return this
+         */
+        public synchronized HuraWeblaunchApplicationBuilder setResourceManager(ResourceManager resourceManager) {
+            if (resourceManager == null) {
+                throw new IllegalArgumentException("Cannot build an application using a null initializer");
+            }
+            this.resourceManager = resourceManager;
             return this;
         }
 
@@ -81,14 +100,15 @@ public final class HuraWeblaunchApplication {
                 ServletContainerInitializerInfo initializerInfo = new ServletContainerInitializerInfo(
                         HuraServletContainerInitializer.class, new HashSet<>(this.initializerTypes));
 
-                DeploymentInfo servletBuilder = Servlets
+                DeploymentInfo deployment = Servlets
                         .deployment()
                         .setClassLoader(HuraWeblaunchApplication.class.getClassLoader())
                         .setDeploymentName(HuraWeblaunchApplication.class.getSimpleName())
                         .setContextPath("/")
-                        .addServletContainerInitializer(initializerInfo);
+                        .addServletContainerInitializer(initializerInfo)
+                        .setResourceManager(this.resourceManager);
 
-                DeploymentManager manager = Servlets.defaultContainer().addDeployment(servletBuilder);
+                DeploymentManager manager = Servlets.defaultContainer().addDeployment(deployment);
                 manager.deploy();
 
                 HttpHandler applicationHttpHandler = manager.start();
@@ -105,7 +125,10 @@ public final class HuraWeblaunchApplication {
 
                 LOGGER.info("Started up web server in " + (System.currentTimeMillis()-ms) + " ms");
 
-                return new HuraWeblaunchApplication(server);
+                HuraWeblaunchApplication app = new HuraWeblaunchApplication(server);
+                Runtime.getRuntime().addShutdownHook(new Thread(() -> app.shutdown()));
+
+                return app;
             } catch (Exception e) {
                 throw new WeblaunchException("Unable to start up application server", e);
             }
@@ -122,6 +145,16 @@ public final class HuraWeblaunchApplication {
 
     private HuraWeblaunchApplication(Undertow server) {
         this.server = server;
+    }
+
+    private void shutdown() {
+        long ms = System.currentTimeMillis();
+        try {
+            this.server.stop();
+            LOGGER.info("Stopped web server in " + (System.currentTimeMillis()-ms) + " ms");
+        } catch (Exception e) {
+            LOGGER.error("Unable to cleanly stop web server", e);
+        }
     }
 
     /**
