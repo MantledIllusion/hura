@@ -3,7 +3,6 @@ package com.mantledillusion.injection.hura.weblaunch;
 import com.mantledillusion.injection.hura.weblaunch.exception.WeblaunchException;
 import com.mantledillusion.injection.hura.web.HuraServletContainerInitializer;
 import com.mantledillusion.injection.hura.web.HuraWebApplicationInitializer;
-import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.resource.ResourceManager;
@@ -14,7 +13,6 @@ import io.undertow.servlet.api.ServletContainerInitializerInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import java.io.File;
@@ -26,7 +24,6 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 import java.util.HashSet;
 import java.util.Set;
 
