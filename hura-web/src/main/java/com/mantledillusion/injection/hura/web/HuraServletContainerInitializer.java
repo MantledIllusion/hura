@@ -32,7 +32,9 @@ public final class HuraServletContainerInitializer implements ServletContainerIn
                 Class<? extends HuraWebApplicationInitializer> applicationClass = (Class<? extends HuraWebApplicationInitializer>) c;
                 HuraWebApplicationInitializer initializer = this.serverInjector.instantiate(applicationClass);
 
-                HuraWebApplication application = this.serverInjector.instantiate(HuraWebApplication.class, initializer);
+                HuraWebEnvironment webEnvironment = new HuraWebEnvironment(applicationClass.getPackage().getName(), applicationClass.getName());
+
+                HuraWebApplication application = this.serverInjector.instantiate(HuraWebApplication.class, initializer, webEnvironment);
                 application.configure(ctx);
 
                 HuraWebApplication.LOGGER.info("Started up web application '" + c.getSimpleName() + "' in " + (System.currentTimeMillis()-ms) + "ms");

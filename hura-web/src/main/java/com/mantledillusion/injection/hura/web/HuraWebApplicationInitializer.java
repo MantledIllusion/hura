@@ -15,4 +15,13 @@ import com.mantledillusion.injection.hura.core.Blueprint;
  */
 public interface HuraWebApplicationInitializer extends Blueprint {
 
+    /**
+     * {@link com.mantledillusion.injection.hura.core.Blueprint.PropertyAllocation} key for the base {@link Package} of a Hura Web Application.
+     */
+    String PKEY_BASEPACKAGE = "hura.web.application.basePackage";
+
+    /**
+     * {@link com.mantledillusion.injection.hura.core.Blueprint.PropertyAllocation} key for the implementing {@link Class} of the {@link HuraWebApplicationInitializer} initializing the application.
+     */
+    String PKEY_INITIALIZER = "hura.web.application.initializerClass";
 }
