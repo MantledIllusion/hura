@@ -1,6 +1,5 @@
 package com.mantledillusion.injection.hura.weblaunch;
 
-import com.mantledillusion.essentials.object.Null;
 import com.mantledillusion.injection.hura.weblaunch.exception.WeblaunchException;
 import com.mantledillusion.injection.hura.web.HuraServletContainerInitializer;
 import com.mantledillusion.injection.hura.web.HuraWebApplicationInitializer;
@@ -11,12 +10,23 @@ import io.undertow.servlet.Servlets;
 import io.undertow.servlet.api.DeploymentInfo;
 import io.undertow.servlet.api.DeploymentManager;
 import io.undertow.servlet.api.ServletContainerInitializerInfo;
-import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -40,6 +50,7 @@ public final class HuraWeblaunchApplication {
         private final Set<Class<? extends HuraWebApplicationInitializer>> initializerTypes;
         private ResourceManager resourceManager = ResourceManager.EMPTY_RESOURCE_MANAGER;
         private Integer port;
+        private SSLContext sslContext;
 
         private HuraWeblaunchApplicationBuilder() {
             this.initializerTypes = new HashSet<>();
@@ -70,6 +81,74 @@ public final class HuraWeblaunchApplication {
                 throw new IllegalArgumentException("Cannot build an application using a null initializer");
             }
             this.resourceManager = resourceManager;
+            return this;
+        }
+
+        /**
+         * Enables SSL for the {@link Undertow} HTTPS listener using the given certificate.
+         * <p>
+         * Uses {@link #setSslCertificate(File, String, String)} for X.509 certificates.
+         *
+         * @param x509Certificate The X.509 certificate file to load; might <b>not</b> be null or return either {@link File#isFile()} = false or {@link File#exists()} = false.
+         * @return this
+         */
+        public synchronized HuraWeblaunchApplicationBuilder setSslCertificate(File x509Certificate) {
+            return setSslCertificate(x509Certificate, "X.509", TrustManagerFactory.getDefaultAlgorithm());
+        }
+
+        /**
+         * Enables SSL for the {@link Undertow} HTTPS listener using the given certificate.
+         *
+         * @param certificate The certificate file to load; might <b>not</b> be null or return either {@link File#isFile()} = false or {@link File#exists()} = false.
+         * @param certificateType The type of the certificate; might <b>not</b> be null and has to describe a known algorithm.
+         * @param tmfAlgorithm The algorithm type of the {@link TrustManagerFactory}, which should match the certificate type; might <b>not</b> be null and has to describe a known algorithm.
+         * @return this
+         */
+        public synchronized HuraWeblaunchApplicationBuilder setSslCertificate(File certificate, String certificateType, String tmfAlgorithm) {
+            if (certificate == null || !certificate.exists() || !certificate.isFile()) {
+                throw new IllegalArgumentException("Cannot load a SSL certificate that is either null, does not exist in the file system or is no file.");
+            }
+
+            CertificateFactory cf;
+            try {
+                cf = CertificateFactory.getInstance(certificateType);
+            } catch (CertificateException e) {
+                throw new IllegalArgumentException("Cannot load a SSL certificate with a non-matching certificate type", e);
+            }
+
+            TrustManagerFactory tmf;
+            try {
+                tmf = TrustManagerFactory.getInstance(tmfAlgorithm);
+            } catch (NoSuchAlgorithmException e) {
+                throw new IllegalArgumentException("Cannot load a SSL certificate with a non-matching trust manager factory algorithm", e);
+            }
+
+            InputStream is = null;
+            try {
+                is = new FileInputStream(certificate);
+
+                KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
+                ks.load(null);
+
+                Certificate caCert = cf.generateCertificate(is);
+                ks.setCertificateEntry("caCert", caCert);
+
+                tmf.init(ks);
+
+                SSLContext sslContext = SSLContext.getInstance("TLS");
+                sslContext.init(null, tmf.getTrustManagers(), null);
+                this.sslContext = sslContext;
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Cannot load the given SSL certificate into an SSL context", e);
+            } finally {
+                if (is != null) {
+                    try {
+                        is.close();
+                    } catch (IOException e) {
+                        throw new IllegalStateException("Cannot close the file input stream to the given SSL certificate", e);
+                    }
+                }
+            }
             return this;
         }
 
@@ -116,9 +195,12 @@ public final class HuraWeblaunchApplication {
                 //applicationHttpHandler = Handlers.path(Handlers.redirect("/")).addPrefixPath("/", applicationHttpHandler);
 
                 Undertow.Builder builder = Undertow.builder();
-                // TODO SSL option
-                // builder.addHttpsListener(determinePort(), "localhost", );
-                builder.addHttpListener(determinePort(), "localhost");
+
+                if (this.sslContext == null) {
+                    builder.addHttpListener(determinePort(), "localhost");
+                } else {
+                    builder.addHttpsListener(determinePort(), "localhost", this.sslContext, null);
+                }
 
                 Undertow server = builder.setHandler(applicationHttpHandler).build();
                 server.start();
