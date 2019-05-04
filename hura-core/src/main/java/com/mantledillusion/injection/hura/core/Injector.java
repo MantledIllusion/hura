@@ -104,7 +104,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
             this.rootDestroyables.clear();
 
             if (failingDestructionCount > 0) {
-                ((Injector) this).failDestruction(this, failingDestructionCount);
+                ((Injector) this).failDestruction(this, failingDestructionCount, null);
             }
         }
     }
@@ -363,7 +363,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
                     destroy(instance, chain.getPostDestroyables(), false);
 
             if (failingDestructionCount > 0) {
-                failDestruction(instance, failingDestructionCount);
+                failDestruction(instance, failingDestructionCount, e);
             } else {
                 throw e;
             }
@@ -409,16 +409,16 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
         }
 
         if (throwOnFailures && failingDestructionCount > 0) {
-            failDestruction(bean, failingDestructionCount);
+            failDestruction(bean, failingDestructionCount, null);
         }
         return failingDestructionCount;
     }
 
-    private void failDestruction(Object bean, int failingDestructionCount) {
+    private void failDestruction(Object bean, int failingDestructionCount, Exception originalException) {
         String beanDescription = bean == null ? "yet uninstantiated bean" :
                 "instantiated " + bean.getClass().getSimpleName() + " instance (@" + System.identityHashCode(bean) + ")";
         throw new ProcessorException("Unable to destroy " + beanDescription
-                + "; the execution of " + failingDestructionCount + " processors failed");
+                + "; the execution of " + failingDestructionCount + " processors failed.", originalException);
     }
 
     @SuppressWarnings("unchecked")
