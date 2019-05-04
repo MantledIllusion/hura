@@ -3,6 +3,7 @@ package com.mantledillusion.injection.hura.weblaunch;
 import com.mantledillusion.injection.hura.weblaunch.exception.WeblaunchException;
 import com.mantledillusion.injection.hura.web.HuraServletContainerInitializer;
 import com.mantledillusion.injection.hura.web.HuraWebApplicationInitializer;
+import io.undertow.Handlers;
 import io.undertow.Undertow;
 import io.undertow.server.HttpHandler;
 import io.undertow.server.handlers.resource.ResourceManager;
@@ -191,8 +192,6 @@ public final class HuraWeblaunchApplication {
                 manager.deploy();
 
                 HttpHandler applicationHttpHandler = manager.start();
-                // TODO redirect option
-                //applicationHttpHandler = Handlers.path(Handlers.redirect("/")).addPrefixPath("/", applicationHttpHandler);
 
                 Undertow.Builder builder = Undertow.builder();
 
