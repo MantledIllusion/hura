@@ -167,15 +167,6 @@ final class InjectionProcessors<T> {
 				processorList.add((bean, tCallback) -> postProcessor.process(phase, bean, tCallback));
 			}
 
-			if (!m.isAccessible()) {
-				try {
-					m.setAccessible(true);
-				} catch (SecurityException e) {
-					throw new ProcessorException("Unable to gain access to the method '" + m + "' of the type "
-							+ clazz.getSimpleName() + " which is inaccessible.", e);
-				}
-			}
-
 			LifecycleAnnotationProcessor<T> processor = (bean, tCallback) -> {
 				Object[] parameters = new Object[m.getParameterCount()];
 

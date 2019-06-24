@@ -16,7 +16,9 @@ import com.mantledillusion.injection.hura.core.annotation.instruction.Construct;
 import com.mantledillusion.injection.hura.core.annotation.instruction.Optional;
 import com.mantledillusion.injection.hura.core.annotation.property.Matches;
 import com.mantledillusion.injection.hura.core.annotation.property.Resolve;
+import com.mantledillusion.injection.hura.core.exception.BlueprintException;
 import com.mantledillusion.injection.hura.core.exception.InjectionException;
+import com.mantledillusion.injection.hura.core.exception.ValidatorException;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
@@ -145,7 +147,7 @@ final class ReflectionCache {
 									+ " who either has no parameters or whose parameters are fully annotated; no "
 									+ " constructor suitable for injection could be found.");
 						} else if (c.getParameterCount() == 0 && !Modifier.isPublic(c.getModifiers())) {
-							throw new InjectionException("The only injectables constructor in the type "
+							throw new InjectionException("The only injectable constructor in the type "
 									+ type.getSimpleName()
 									+ " is a non-public no-args constructor. If this constructor should be used for"
 									+ " instantiation during injection, it has to be annotated with the @"
@@ -463,7 +465,16 @@ final class ReflectionCache {
 
 		@Override
 		protected List<Method> load(AnnotatedTypeIdentifier id) throws Exception {
-			return MethodEssentials.getDeclaredMethodsAnnotatedWith(id.type, id.annotationType);
+			List<Method> methods = MethodEssentials.getDeclaredMethodsAnnotatedWith(id.type, id.annotationType);
+			methods.stream().filter(m -> !m.isAccessible()).forEach(m -> {
+				try {
+					m.setAccessible(true);
+				} catch (SecurityException e) {
+					throw new ValidatorException("Unable to gain access to the method '" + m + "' of the type '"
+							+ m.getDeclaringClass().getSimpleName() + "'", e);
+				}
+			});
+			return methods;
 		}
 
 		private List<Method> retrieve(AnnotatedTypeIdentifier id) {
@@ -478,7 +489,7 @@ final class ReflectionCache {
 	}
 
 	// ###############################################################################################################
-	// ############################################ ANNOTATED METHOD #################################################
+	// ########################################## ANNOTATED ANNOTATION ###############################################
 	// ###############################################################################################################
 
 	private static final class AnnotatedAnnotationCache

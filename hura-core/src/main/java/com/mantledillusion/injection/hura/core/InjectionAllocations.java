@@ -83,15 +83,6 @@ class InjectionAllocations {
 						+ Define.class.getSimpleName() + "', but is not parameterless as required.");
 			}
 
-			if (!m.isAccessible()) {
-				try {
-					m.setAccessible(true);
-				} catch (SecurityException e) {
-					throw new BlueprintException("Unable to gain access to the method '" + m + "' of the type '"
-							+ m.getDeclaringClass().getSimpleName() + "'", e);
-				}
-			}
-
 			Object definable;
 			try {
 				definable = m.invoke(blueprint);

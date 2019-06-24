@@ -6,6 +6,7 @@ import com.mantledillusion.injection.hura.core.ReflectionCache.InjectableConstru
 import com.mantledillusion.injection.hura.core.ReflectionCache.InjectableConstructor.ParamSettingType;
 import com.mantledillusion.injection.hura.core.ReflectionCache.InjectableField;
 import com.mantledillusion.injection.hura.core.ReflectionCache.ResolvableField;
+import com.mantledillusion.injection.hura.core.annotation.event.Subscribe;
 import com.mantledillusion.injection.hura.core.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.core.annotation.injection.Qualifier;
 import com.mantledillusion.injection.hura.core.annotation.instruction.Construct;
@@ -539,6 +540,10 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
         handleDestroying(injectionChain, set, instance, isAllocatedInjection,
                 applicators.getProcessorsOfPhase(Phase.PRE_DESTROY),
                 applicators.getProcessorsOfPhase(Phase.POST_DESTROY));
+
+        for (Method m: ReflectionCache.getMethodsAnnotatedWith(instance.getClass(), Subscribe.class)) {
+            injectionChain.getEventBackbone().subscribe(instance, m);
+        }
 
         registerPostConstructProcessors(instance, injectionChain, applicators.getProcessorsOfPhase(Phase.POST_CONSTRUCT));
 

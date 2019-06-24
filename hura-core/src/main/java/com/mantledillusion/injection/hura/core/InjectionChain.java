@@ -90,6 +90,7 @@ final class InjectionChain {
 	private final ChainLock chainLock;
 	private final LinkedHashSet<Constructor<?>> constructorChain;
 	private final DependencyContext dependency;
+	private final Bus.EventBackbone eventBackbone;
 
 	// Processability
 	private final List<SelfSustainingProcessor> aggregateables;
@@ -102,7 +103,7 @@ final class InjectionChain {
 						   TypeContext typeContext,
 						   Map<String, AbstractAllocator<?>> sequenceSingletonAllocations, ChainLock chainLock,
 						   LinkedHashSet<Constructor<?>> constructorChain, DependencyContext dependency,
-						   List<SelfSustainingProcessor> aggregateables,
+						   Bus.EventBackbone eventBackbone, List<SelfSustainingProcessor> aggregateables,
 						   List<SelfSustainingProcessor> activatables, List<SelfSustainingProcessor> postConstructables,
 						   List<SelfSustainingProcessor> preDestroyables, List<SelfSustainingProcessor> postDestroyables) {
 		this.singletonContext = singletonContext;
@@ -119,6 +120,7 @@ final class InjectionChain {
 		}
 		this.constructorChain = constructorChain;
 		this.dependency = dependency;
+		this.eventBackbone = eventBackbone;
 
 		this.aggregateables = aggregateables;
 		this.activateables = activatables;
@@ -159,8 +161,9 @@ final class InjectionChain {
 		TypeContext typeContext = this.typeContext.merge(allocations.getTypeAllocations());
 
 		return new InjectionChain(this.singletonContext, resolvingContext, mappingContext, typeContext,
-				new HashMap<>(this.sequenceSingletonAllocations), this.chainLock, this.constructorChain,
-				this.dependency, this.aggregateables,
+				new HashMap<>(this.sequenceSingletonAllocations), this.chainLock,
+				this.constructorChain, this.dependency,
+				this.eventBackbone, this.aggregateables,
 				this.activateables, this.postConstructables,
 				this.preDestroyables, this.postDestroyables);
 	}
@@ -176,7 +179,8 @@ final class InjectionChain {
 
 		return new InjectionChain(this.singletonContext, this.resolvingContext, this.mappingContext, this.typeContext,
 				this.sequenceSingletonAllocations, this.chainLock,
-				constructorChain, dependency, this.aggregateables,
+				constructorChain, dependency,
+				this.eventBackbone, this.aggregateables,
 				this.activateables, this.postConstructables,
 				this.preDestroyables, this.postDestroyables);
 	}
@@ -188,9 +192,13 @@ final class InjectionChain {
 		SingletonContext singletonContext = new SingletonContext(new Object(),
 				resolvingContext, mappingContext, typeContext);
 
+		Bus.EventBackbone backbone = new Bus.EventBackbone();
+		singletonContext.addSingleton(Bus.QUALIFIER_BACKBONE, backbone, true, true);
+
 		return new InjectionChain(singletonContext, resolvingContext, mappingContext, typeContext,
 				allocations.getSingletonAllocations(), null,
-				new LinkedHashSet<>(), DependencyContext.INDEPENDENT, new ArrayList<>(),
+				new LinkedHashSet<>(), DependencyContext.INDEPENDENT,
+				backbone, new ArrayList<>(),
 				new ArrayList<>(), new ArrayList<>(),
 				new ArrayList<>(), new ArrayList<>());
 	}
@@ -204,11 +212,18 @@ final class InjectionChain {
 		SingletonContext singletonContext = new SingletonContext(injectionTreeLock, baseSingletonContext,
 				resolvingContext, mappingContext, typeContext);
 
+		Bus.EventBackbone backbone = new Bus.EventBackbone(singletonContext.retrieveSingleton(Bus.QUALIFIER_BACKBONE),
+				resolvingContext.getProperty(Bus.PROPERTY_BUS_ISOLATION));
+		singletonContext.addSingleton(Bus.QUALIFIER_BACKBONE, backbone, true, true);
+		List<SelfSustainingProcessor> postDestroyables = new ArrayList<>();
+		postDestroyables.add(backbone::detachFromParent);
+
 		return new InjectionChain(singletonContext, resolvingContext, mappingContext, typeContext,
 				allocations.getSingletonAllocations(), null,
-				new LinkedHashSet<>(), DependencyContext.INDEPENDENT, new ArrayList<>(),
+				new LinkedHashSet<>(), DependencyContext.INDEPENDENT,
+				backbone, new ArrayList<>(),
 				new ArrayList<>(), new ArrayList<>(),
-				new ArrayList<>(), new ArrayList<>());
+				new ArrayList<>(), postDestroyables);
 	}
 
 	// SingletonAllocation Allocation
@@ -297,6 +312,10 @@ final class InjectionChain {
 			}
 		});
 		return sb.toString();
+	}
+
+	Bus.EventBackbone getEventBackbone() {
+		return this.eventBackbone;
 	}
 
 	// Processables
