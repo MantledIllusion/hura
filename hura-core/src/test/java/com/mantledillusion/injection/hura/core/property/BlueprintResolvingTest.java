@@ -10,8 +10,11 @@ import com.mantledillusion.injection.hura.core.property.injectables.InjectableWi
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class BlueprintResolvingTest extends AbstractInjectionTest {
@@ -56,5 +59,18 @@ public class BlueprintResolvingTest extends AbstractInjectionTest {
 	@Test
 	public void testMultiplePropertyBlueprintDefinition() {
 		Assertions.assertThrows(IllegalArgumentException.class, () -> Injector.of(PropertyAllocation.of("key", "a"), PropertyAllocation.of("key", "b")));
+	}
+
+	@Test
+	public void testFilePropertyDefinition() {
+		InjectableWithProperty injectable = this.suite.injectInSuiteContext(InjectableWithProperty.class, new Blueprint() {
+
+			@Define
+			public List<PropertyAllocation> propertyDefinitionMethod() throws URISyntaxException {
+				return PropertyAllocation.of(new File(BlueprintResolvingTest.class.getResource("/properties/test.properties").toURI()));
+			}
+		});
+
+		Assertions.assertEquals(injectable.propertyValue, "test");
 	}
 }

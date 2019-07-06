@@ -4,8 +4,16 @@ import com.mantledillusion.injection.hura.core.annotation.instruction.Define;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.List;
+import java.util.Properties;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Interface for a group of {@link Allocation}s.
@@ -48,6 +56,7 @@ public interface Blueprint {
      * <li>{@link SingletonAllocation}</li>
      * <li>{@link PropertyAllocation}</li>
      * <li>{@link MappingAllocation}</li>
+     * <li>{@link TypeAllocation}</li>
      * </ul>
      */
     abstract class Allocation {
@@ -84,6 +93,40 @@ public interface Blueprint {
                 throw new IllegalArgumentException("Cannot create property with a null value");
             }
             return new PropertyAllocation(key, value);
+        }
+
+        /**
+         * Factory {@link Method} for {@link PropertyAllocation} instances.
+         *
+         * @param propertyFile The property {@link File} to read; might <b>not</b> be null.
+         * @return A {@link List} of {@link PropertyAllocation}s, never null, might be empty
+         */
+        public static List<PropertyAllocation> of(File propertyFile) {
+            if (propertyFile == null) {
+                throw new IllegalArgumentException("Cannot create allocations from a null property file");
+            }
+            try (InputStream is = new FileInputStream(propertyFile)) {
+                Properties properties = new Properties();
+                properties.load(is);
+                return of(properties);
+            } catch (IOException e) {
+                throw new IllegalArgumentException("Could not read property file '"+propertyFile.getName()+"'", e);
+            }
+        }
+
+        /**
+         * Factory {@link Method} for {@link PropertyAllocation} instances.
+         *
+         * @param properties The {@link Properties} instance to convert; might <b>not</b> be null.
+         * @return A {@link List} of {@link PropertyAllocation}s, never null, might be empty
+         */
+        public static List<PropertyAllocation> of(Properties properties) {
+            if (properties == null) {
+                throw new IllegalArgumentException("Cannot create allocations from a null properties instance");
+            }
+            return properties.stringPropertyNames().stream()
+                    .map(key -> of(key, properties.getProperty(key)))
+                    .collect(Collectors.toList());
         }
 
         /**
