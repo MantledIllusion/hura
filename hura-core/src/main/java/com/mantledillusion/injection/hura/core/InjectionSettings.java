@@ -26,8 +26,8 @@ final class InjectionSettings<T> {
 	final List<Class<? extends Blueprint>> extensions;
 
 	private InjectionSettings(Class<T> type, boolean isIndependent, String qualifier, boolean isContext,
-                              Optional.InjectionMode injectionMode, boolean overwriteWithNull, List<Blueprint.Allocation> allocations,
-                              List<Class<? extends Blueprint>> extensions) {
+                              Optional.InjectionMode injectionMode, boolean overwriteWithNull,
+							  List<Blueprint.Allocation> allocations, List<Class<? extends Blueprint>> extensions) {
 		this.type = type;
 		this.isIndependent = isIndependent;
 		this.qualifier = qualifier;
@@ -57,19 +57,23 @@ final class InjectionSettings<T> {
 				Collections.emptyList(), Collections.emptyList());
 	}
 
-	static <T> InjectionSettings<T> of(Class<T> type, Inject inject, Qualifier qualifier, Optional optional, Adjust adjust) {
+	static <T> InjectionSettings<T> of(Class<T> type, Inject inject, Qualifier qualifier, Optional optional,
+									   Adjust adjust) {
 		return of(type, qualifier, optional, adjust, inject.overwriteWithNull());
 	}
 
 	static <T> InjectionSettings<T> of(Class<T> type, Plugin plugin, Optional optional, Adjust adjust) {
 		InjectionSettings<T> set = of(type, null, optional, adjust, false);
 
-		set.allocations.add(Blueprint.TypeAllocation.allocateToPlugin(type, new File(plugin.directory()), plugin.pluginId()));
+		set.allocations.add(Blueprint.TypeAllocation.allocateToPlugin(type, new File(plugin.directory()),
+				plugin.pluginId(), InjectionUtils.parseVersion(plugin.versionFrom()),
+				InjectionUtils.parseVersion(plugin.versionUntil())));
 
 		return set;
 	}
 
-	private static <T> InjectionSettings<T> of(Class<T> type, Qualifier qualifier, Optional optional, Adjust adjust, boolean overwriteWithNull) {
+	private static <T> InjectionSettings<T> of(Class<T> type, Qualifier qualifier, Optional optional, Adjust adjust,
+											   boolean overwriteWithNull) {
 		List<Blueprint.Allocation> allocations = new ArrayList<>();
 		String singletonQualifier = StringUtils.EMPTY;
 		if (qualifier != null) {
@@ -94,8 +98,8 @@ final class InjectionSettings<T> {
 	}
 
 	static InjectionSettings<Object> of(String qualifier) {
-		return new InjectionSettings<>(Object.class, false, qualifier, false, Optional.InjectionMode.EAGER,
-				false, Collections.emptyList(), Collections.emptyList());
+		return new InjectionSettings<>(Object.class, false, qualifier, false,
+				Optional.InjectionMode.EAGER, false, Collections.emptyList(), Collections.emptyList());
 	}
 
 	private static boolean isContext(Class<?> type) {

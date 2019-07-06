@@ -49,6 +49,13 @@ public class PluginTest extends AbstractInjectionTest {
     }
 
     @Test
+    public void testPluginVersionExclusion() {
+        InjectableWithVersionExcludingPlugin injectable = this.suite.injectInSuiteContext(InjectableWithVersionExcludingPlugin.class);
+
+        Assertions.assertEquals(1, injectable.injectable.getVersion());
+    }
+
+    @Test
     public void testPluginWithFullFileName() {
         Assertions.assertThrows(PluginException.class, () -> this.suite.injectInSuiteContext(UninjectableWithJarExtensionPlugin.class));
     }

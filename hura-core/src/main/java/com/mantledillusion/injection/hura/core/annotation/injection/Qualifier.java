@@ -16,9 +16,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 /**
  * Extension {@link Annotation} to @{@link Inject}.
  * <p>
- * A {@link Field}/{@link Parameter} annotated with @{@link Inject}
- * and @{@link Qualifier} will be injected with a named {@link Blueprint.SingletonAllocation}
- * instead of an anonymous independent bean.
+ * A {@link Field}/{@link Parameter} annotated with @{@link Inject} and @{@link Qualifier} will be injected with a
+ * named {@link Blueprint.SingletonAllocation} instead of an anonymous independent bean.
  * <p>
  * {@link Field}s/{@link Parameter}s annotated with @{@link Qualifier} may not:
  * <ul>
@@ -33,9 +32,8 @@ public @interface Qualifier {
     /**
      * The qualifier.
      *
-     * @return The qualifier under which the {@link Blueprint.SingletonAllocation} to inject into the
-     * annotated {@link Field}/{@link Parameter} is registered in its injection context;
-     * never null, might be blank if no {@link Blueprint.SingletonAllocation} but an independent bean is desired
+     * @return The qualifier under which the {@link Blueprint.SingletonAllocation} to inject into the annotated
+     * {@link Field}/{@link Parameter} is registered in its injection context; never null
      */
     String value();
 }

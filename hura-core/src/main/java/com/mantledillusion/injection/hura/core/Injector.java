@@ -249,25 +249,32 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
         private final String pluginId;
         private final InjectionProcessors<T> applicators;
         private final Class<T> presetType;
+        private final int[] versionFrom;
+        private final int[] versionUntil;
 
-        PluginAllocator(File directory, String pluginId, InjectionProcessors<T> applicators) {
+        PluginAllocator(File directory, String pluginId, InjectionProcessors<T> applicators, int[] versionFrom, int[] versionUntil) {
             this.directory = directory;
             this.pluginId = pluginId;
             this.applicators = applicators;
             this.presetType = null;
+            this.versionFrom = versionFrom;
+            this.versionUntil = versionUntil;
         }
 
-        PluginAllocator(File directory, String pluginId, Class<T> presetType) {
+        PluginAllocator(File directory, String pluginId, Class<T> presetType, int[] versionFrom, int[] versionUntil) {
             this.directory = directory;
             this.pluginId = pluginId;
             this.applicators = InjectionProcessors.of();
             this.presetType = presetType;
+            this.versionFrom = versionFrom;
+            this.versionUntil = versionUntil;
         }
 
         @Override
         T allocate(Injector injector, InjectionChain injectionChain, InjectionSettings<T> set,
                    InjectionProcessors<T> applicators) {
-            Class<T> pluggableType = PluginCache.findPluggable(this.directory, this.pluginId, this.presetType == null ? set.type : this.presetType);
+            Class<T> pluggableType = PluginCache.findPluggable(this.directory, this.pluginId,
+                    this.presetType == null ? set.type : this.presetType, this.versionFrom, this.versionUntil);
             InjectionSettings<T> refinedSettings = set.refine(pluggableType);
             InjectionProcessors<T> refinedApplicators = injector.buildApplicators(injectionChain, refinedSettings);
             return injector.createAndInject(injectionChain, refinedSettings, this.applicators.merge(refinedApplicators),

@@ -16,9 +16,14 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * {@link Annotation} for {@link Field}s and {@link Parameter}s who have to be
- * injected by an {@link Injector} by using the service provider from the given
- * plugin for the annotated SPI.
+ * {@link Annotation} for {@link Field}s and {@link Parameter}s who have to be injected by an {@link Injector} by using
+ * the service provider from the given plugin for the annotated SPI.
+ * <p>
+ * Plugins are versioned by using a '_v...' file name infix right before the '.jar' extension for example
+ * 'samplePlugin_v3.0.1.jar'. This is not mandatory, so 'samplePlugin.jar' will be accepted as a version 0 plugin.
+ * <p>
+ * When encountering multiple plugins with matching plugin ids in a directory that also match the version range
+ * defined by {@link #versionFrom()} and {@link #versionUntil()}, the one with the highest version is used.
  * <p>
  * {@link Field}s/{@link Parameter}s annotated with @{@link Plugin} may not:
  * <ul>
@@ -40,26 +45,55 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface Plugin {
 
     /**
+     * A {@link String} {@link java.util.regex.Pattern} for valid {@link Integer}s.
+     */
+    String NUMBER_PATTERN = "(0|([1-9][0-9]*))";
+
+    /**
+     * A {@link String} {@link java.util.regex.Pattern} for '.' separated plugin versions like:
+     * <ul>
+     * <li>1.0</li>
+     * <li>1</li>
+     * <li>0</li>
+     * <li>4.2.0.9</li>
+     * </ul>
+     */
+    String VERSION_PATTERN = NUMBER_PATTERN+"(\\."+NUMBER_PATTERN+")*";
+
+    /**
      * The directory the plugin can be found in.
      *
-     * @return The directories path; has to exist and evaluate
-     * {@link File#isDirectory()} with true
+     * @return The directories path, has to exist and evaluate {@link File#isDirectory()} with true
      */
     String directory();
 
     /**
-     * The ID of the plugin to load, which determines the .JARs in the given
-     * directory that are considered a matching plugin for the injection.
+     * The ID of the plugin to load, which determines the .JARs in the given directory that are considered a matching
+     * plugin for the injection.
      * <p>
-     * NOTE: This is <b>not</b> the file name; the plugin id is neither
-     * versioned or ends with a '.jar' extension. For example, in a directory
-     * with 2 .JARs 'samplePlugin.jar' and 'samplePlugin_v2.jar', the plugin
-     * id would simply be 'samplePlugin'.
-     * <p>
-     * When encountering multiple plugins with matching plugin ids in a
-     * directory, the one with the highest version suffix is used.
+     * NOTE: This is <b>not</b> the file name; the plugin id is neither versioned nor ends with a '.jar' extension.
+     * For example, in a directory with 2 .JARs 'samplePlugin.jar' and 'samplePlugin_v2.0.jar', the plugin id would
+     * simply be 'samplePlugin'.
      *
-     * @return The plugin id;
+     * @return The plugin id, never null
      */
     String pluginId();
+
+    /**
+     * The minimum (inclusive) version the loaded plugin is allowed to have.
+     * <p>
+     * Has to match the pattern {@link #VERSION_PATTERN}, '0' by default.
+     *
+     * @return The version pattern, never null
+     */
+    String versionFrom() default "0";
+
+    /**
+     * The maximum (exclusive) version the loaded plugin is not allowed to have anymore.
+     * <p>
+     * Has to match the pattern {@link #VERSION_PATTERN}, {@link Integer#MAX_VALUE} by default.
+     *
+     * @return The version pattern, never null
+     */
+    String versionUntil() default ""+Integer.MAX_VALUE;
 }

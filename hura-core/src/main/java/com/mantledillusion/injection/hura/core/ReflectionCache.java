@@ -48,8 +48,8 @@ final class ReflectionCache {
 		}
 	}
 
-	private static abstract class NonWrappingCache<EntryType, Identifier extends LockIdentifier>
-			extends HydnoraCache<EntryType, Identifier> {
+	private static abstract class NonWrappingCache<Identifier extends LockIdentifier, EntryType>
+			extends HydnoraCache<Identifier, EntryType> {
 
 		private NonWrappingCache() {
 			setWrapRuntimeExceptions(false);
@@ -107,7 +107,7 @@ final class ReflectionCache {
 		}
 	}
 
-	private static final class ConstructorCache extends NonWrappingCache<InjectableConstructor<?>, TypeIdentifier<?>> {
+	private static final class ConstructorCache extends NonWrappingCache<TypeIdentifier<?>, InjectableConstructor<?>> {
 
 		@Override
 		protected InjectableConstructor<?> load(TypeIdentifier<?> id) throws Exception {
@@ -235,7 +235,7 @@ final class ReflectionCache {
 		}
 	}
 
-	private static final class ResolvableFieldCache extends NonWrappingCache<List<ResolvableField>, TypeIdentifier<?>> {
+	private static final class ResolvableFieldCache extends NonWrappingCache<TypeIdentifier<?>, List<ResolvableField>> {
 
 		@Override
 		protected List<ResolvableField> load(TypeIdentifier<?> id) throws Exception {
@@ -304,7 +304,7 @@ final class ReflectionCache {
 		}
 	}
 
-	private static final class InjectableFieldCache extends NonWrappingCache<List<InjectableField>, TypeIdentifier<?>> {
+	private static final class InjectableFieldCache extends NonWrappingCache<TypeIdentifier<?>, List<InjectableField>> {
 
 		@Override
 		protected List<InjectableField> load(TypeIdentifier<?> id) throws Exception {
@@ -373,7 +373,7 @@ final class ReflectionCache {
 		}
 	}
 
-	private static final class AggregateableFieldCache extends NonWrappingCache<List<AggregateableField>, TypeIdentifier<?>> {
+	private static final class AggregateableFieldCache extends NonWrappingCache<TypeIdentifier<?>, List<AggregateableField>> {
 
 		@Override
 		protected List<AggregateableField> load(TypeIdentifier<?> id) throws Exception {
@@ -439,7 +439,7 @@ final class ReflectionCache {
 	// ############################################# ANNOTATED TYPE ##################################################
 	// ###############################################################################################################
 
-	private static final class AnnotatedTypeCache extends NonWrappingCache<List<Class<?>>, AnnotatedTypeIdentifier> {
+	private static final class AnnotatedTypeCache extends NonWrappingCache<AnnotatedTypeIdentifier, List<Class<?>>> {
 
 		@Override
 		protected List<Class<?>> load(AnnotatedTypeIdentifier id) throws Exception {
@@ -461,7 +461,7 @@ final class ReflectionCache {
 	// ############################################ ANNOTATED METHOD #################################################
 	// ###############################################################################################################
 
-	private static final class AnnotatedMethodCache extends NonWrappingCache<List<Method>, AnnotatedTypeIdentifier> {
+	private static final class AnnotatedMethodCache extends NonWrappingCache<AnnotatedTypeIdentifier, List<Method>> {
 
 		@Override
 		protected List<Method> load(AnnotatedTypeIdentifier id) throws Exception {
@@ -493,7 +493,7 @@ final class ReflectionCache {
 	// ###############################################################################################################
 
 	private static final class AnnotatedAnnotationCache
-			extends NonWrappingCache<List<AnnotationOccurrence>, AnnotatedTypeIdentifier> {
+			extends NonWrappingCache<AnnotatedTypeIdentifier, List<AnnotationOccurrence>> {
 
 		@Override
 		protected List<AnnotationOccurrence> load(AnnotatedTypeIdentifier id) throws Exception {

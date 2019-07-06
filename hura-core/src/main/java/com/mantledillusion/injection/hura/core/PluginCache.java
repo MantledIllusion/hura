@@ -2,6 +2,7 @@ package com.mantledillusion.injection.hura.core;
 
 import com.mantledillusion.cache.hydnora.HydnoraCache;
 import com.mantledillusion.essentials.concurrency.locks.LockIdentifier;
+import com.mantledillusion.injection.hura.core.annotation.injection.Plugin;
 import com.mantledillusion.injection.hura.core.exception.PluginException;
 import org.apache.commons.lang3.StringUtils;
 
@@ -21,26 +22,23 @@ import java.util.jar.JarFile;
 final class PluginCache {
 
 	private static final String SPI_DIR = "META-INF/services/";
-	private static final String REGEX_PLUGINID_JAR = ".+\\.jar";
-	private static final String REGEX_PLUGINID_VERSION = ".+_v\\d+";
 	private static final String FILE_EXTENSION_JAR = ".jar";
-	private static final String FILE_SUFFIX_VERSION = "_v[1-9][0-9]*";
+	private static final String FILE_INFIX_VERSION = "_v";
+	private static final String FILE_SUFFIX_VERSION = FILE_INFIX_VERSION + Plugin.VERSION_PATTERN;
+	private static final String REGEX_PLUGINID_JAR = ".+\\"+FILE_EXTENSION_JAR;
+	private static final String REGEX_PLUGINID_VERSION = ".+" + FILE_SUFFIX_VERSION;
 
-	static final class PluginId extends LockIdentifier {
+	private static class PluginId extends LockIdentifier {
 
 		private final File directory;
 		private final String pluginName;
-		private final int version;
+		private final int[] version;
 
-		private PluginId(String checksum, File directory, String pluginName, int version) {
+		private PluginId(String checksum, File directory, String pluginName, int[] version) {
 			super(checksum);
 			this.directory = directory;
 			this.pluginName = pluginName;
 			this.version = version;
-		}
-
-		private boolean isVersioned() {
-			return this.version > 0;
 		}
 
 		private File toFile() {
@@ -49,7 +47,8 @@ final class PluginCache {
 
 		@Override
 		public String toString() {
-			return toPath(this.directory, this.pluginName + (version > 0 ? "_v" + version : StringUtils.EMPTY));
+			return toPath(this.directory, this.pluginName + (version.length > 0 ?
+					FILE_INFIX_VERSION + StringUtils.join(this.version, '.') : StringUtils.EMPTY));
 		}
 
 		private static String toPath(File directory, String fileName) {
@@ -57,7 +56,7 @@ final class PluginCache {
 		}
 		
 		private static PluginId from(File directory, String fileName) {
-			String checksum = null;
+			String checksum;
 			try {
 				MessageDigest md = MessageDigest.getInstance("MD5");
 				md.update(Files.readAllBytes(Paths.get(new File(toPath(directory, fileName)).toURI())));
@@ -71,17 +70,19 @@ final class PluginCache {
 			}
 
 			if (fileName.matches(".*" + FILE_SUFFIX_VERSION)) {
-				int versionIdx = fileName.lastIndexOf("_v");
+				int versionIdx = fileName.lastIndexOf(FILE_INFIX_VERSION);
 				return new PluginId(checksum, directory, fileName.substring(0, versionIdx),
-						Integer.parseInt(fileName.substring(versionIdx + 2)));
+						InjectionUtils.parseVersion(fileName.substring(versionIdx + 2)));
 			}
-			return new PluginId(checksum, directory, fileName, 0);
+			return new PluginId(checksum, directory, fileName, new int[0]);
 		}
+
 	}
 	
 	static final class PluginClassLoader extends URLClassLoader {
 
 		private final ReflectionCache pluginReflectionCache = new ReflectionCache();
+		private final Map<Class<?>, List<Class<?>>> pluggables = new HashMap<>();
 		
 		private PluginClassLoader(PluginId id) throws MalformedURLException {
 			super(new URL[] { id.toFile().toURI().toURL() }, Injector.class.getClassLoader());
@@ -92,18 +93,10 @@ final class PluginCache {
 		}
 	}
 
-	private static final class Plugin {
-
-		private final Map<Class<?>, List<Class<?>>> pluggables;
-
-		private Plugin(Map<Class<?>, List<Class<?>>> pluggables) {
-			this.pluggables = Collections.unmodifiableMap(pluggables);
-		}
-	}
-
-	private static final class PluggableCache extends HydnoraCache<Plugin, PluginId> {
+	private static final class PluggableCache extends HydnoraCache<PluginId, PluginClassLoader> {
 
 		private PluggableCache() {
+			super(ReferenceMode.WEAK);
 			setWrapRuntimeExceptions(false);
 		}
 
@@ -127,11 +120,10 @@ final class PluginCache {
 
 		@Override
 		@SuppressWarnings("resource")
-		protected Plugin load(PluginId id) throws Exception {
+		protected PluginClassLoader load(PluginId id) throws Exception {
 			PluginClassLoader pluginClassLoader = new PluginClassLoader(id);
 
 			try {
-				Map<Class<?>, List<Class<?>>> pluggables = new HashMap<>();
 				Enumeration<JarEntry> e = new JarFile(id.toFile()).entries();
 				while (e.hasMoreElements()) {
 					JarEntry entry = e.nextElement();
@@ -173,19 +165,13 @@ final class PluginCache {
 											+ entry.getName() + "' specifies the service provider '"+line+"' which is no implementation of "+spiClassName);
 								}
 
-								pluggables.computeIfAbsent(spiClass, c -> new ArrayList<>()).add(spClass);
+								pluginClassLoader.pluggables.computeIfAbsent(spiClass, c -> new ArrayList<>()).add(spClass);
 							}
 						}
 					}
 				}
-
-				if (id.isVersioned()) {
-					invalidate((existingPluginId, existingPlugin) -> existingPluginId.directory.equals(id.directory)
-							&& existingPluginId.pluginName.equals(id.pluginName)
-							&& existingPluginId.version <= id.version);
-				}
 				
-				return new Plugin(pluggables);
+				return pluginClassLoader;
 			} catch (Exception e) {
 				boolean closedPluginClassloader = true;
 				try {
@@ -205,7 +191,8 @@ final class PluginCache {
 	private PluginCache() {
 	}
 
-	static <T, T2 extends T> Class<T2> findPluggable(File directory, String pluginId, Class<T> spiType) {
+	static <T, T2 extends T> Class<T2> findPluggable(File directory, String pluginId, Class<T> spiType,
+													 int[] versionFrom, int[] versionUntil) {
 	    if (pluginId.matches(REGEX_PLUGINID_JAR)) {
 			throw new PluginException("Cannot load a plugin for the SPI '" + spiType.getName()
 					+ "'; the pluginId '" + pluginId + "' ends with a " + FILE_EXTENSION_JAR
@@ -220,14 +207,16 @@ final class PluginCache {
         }
 
 		PluginId foundPlugin = null;
-		for (File file : directory
-				.listFiles((dir, name) -> name.startsWith(pluginId) && name.endsWith(FILE_EXTENSION_JAR))) {
+		for (File file : directory.listFiles(
+				(dir, name) -> name.startsWith(pluginId) && name.endsWith(FILE_EXTENSION_JAR))) {
 			String fileName = file.getName();
 			String version = fileName.substring(pluginId.length(), fileName.length() - 4);
 
 			if (version.isEmpty() || version.matches(FILE_SUFFIX_VERSION)) {
 				PluginId filePlugin = PluginId.from(directory, fileName.substring(0, fileName.length() - 4));
-				if (foundPlugin == null || foundPlugin.version < filePlugin.version) {
+				if (InjectionUtils.compareVersions(filePlugin.version, versionFrom) >= 0 &&
+						InjectionUtils.compareVersions(filePlugin.version, versionUntil) <0 &&
+						(foundPlugin == null || InjectionUtils.compareVersions(filePlugin.version, foundPlugin.version) > 0)) {
 					foundPlugin = filePlugin;
 				}
 			}
@@ -240,4 +229,5 @@ final class PluginCache {
 
 		return CACHE.retrieve(foundPlugin, spiType);
 	}
+
 }

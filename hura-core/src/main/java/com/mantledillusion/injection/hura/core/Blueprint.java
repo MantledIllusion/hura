@@ -212,6 +212,31 @@ public interface Blueprint {
          * @return A new {@link SingletonAllocation} instance; never null
          */
         public static <T> SingletonAllocation of(String qualifier, Class<T> beanClass, File directory, String pluginId) {
+            return of(qualifier, beanClass, directory, pluginId, new int[] {0}, new int[] {Integer.MAX_VALUE});
+        }
+
+        /**
+         * Factory {@link Method} for {@link SingletonAllocation} instances.
+         * <p>
+         * Allocates the qualifier to the specified {@link Class}.
+         *
+         * @param <T>       The type of the singleton.
+         * @param qualifier The qualifier on whose injections the given instance may be
+         *                  referenced at; might <b>not</b> be null.
+         * @param beanClass The {@link Class} of the {@link SingletonAllocation} to find a plugin for;
+         *                  might <b>not</b> be null.
+         * @param directory The directory to find the plugin in; might <b>not</b> be null and
+         *                  {@link File#isDirectory()} has to return true.
+         * @param pluginId  The ID of the plugin to use, with which it can be found in the
+         *                  given directory; might <b>not</b> be null.
+         * @param versionFrom The version (inclusive) from which plugins are allowed to be injected; might <b>not</b>
+         *                    be null.
+         * @param versionUntil The version (exclusive) from which plugins are not allowed to be injected anymore;
+         *                     might <b>not</b> be null.
+         * @return A new {@link SingletonAllocation} instance; never null
+         */
+        public static <T> SingletonAllocation of(String qualifier, Class<T> beanClass, File directory, String pluginId,
+                                                 int[] versionFrom, int[] versionUntil) {
             if (qualifier == null) {
                 throw new IllegalArgumentException("Cannot create singleton with a null qualifier");
             } else if (beanClass == null) {
@@ -222,8 +247,13 @@ public interface Blueprint {
                 throw new IllegalArgumentException("Cannot create singleton with a plugin from a non-directory.");
             } else if (pluginId == null) {
                 throw new IllegalArgumentException("Cannot create singleton with a plugin with a null ID.");
+            } else if (versionFrom == null) {
+                throw new IllegalArgumentException("Cannot create singleton with a plugin with an unknown version from.");
+            } else if (versionUntil == null) {
+                throw new IllegalArgumentException("Cannot create singleton with a plugin with an unknown version until.");
             }
-            return new SingletonAllocation(qualifier, new Injector.PluginAllocator<>(directory, pluginId, beanClass));
+            return new SingletonAllocation(qualifier, new Injector.PluginAllocator<>(directory, pluginId, beanClass,
+                    versionFrom, versionUntil));
         }
 
         /**
@@ -350,7 +380,8 @@ public interface Blueprint {
          * @return A newly build allocation, never null
          */
         @SafeVarargs
-        public static final <T, T2 extends T> TypeAllocation allocateToType(Class<T> type, Class<T2> clazz, PhasedBeanProcessor<? super T2>... processors) {
+        public static final <T, T2 extends T> TypeAllocation allocateToType(Class<T> type, Class<T2> clazz,
+                                                                            PhasedBeanProcessor<? super T2>... processors) {
             if (type == null) {
                 throw new IllegalArgumentException("Unable to allocate a null type.");
             } else if (clazz == null) {
@@ -373,7 +404,32 @@ public interface Blueprint {
          * @return A newly build allocation, never null
          */
         @SafeVarargs
-        public static final <T> TypeAllocation allocateToPlugin(Class<T> type, File directory, String pluginId, PhasedBeanProcessor<? super T>... processors) {
+        public static final <T> TypeAllocation allocateToPlugin(Class<T> type, File directory, String pluginId,
+                                                                PhasedBeanProcessor<? super T>... processors) {
+            return allocateToPlugin(type, directory, pluginId, new int[] {0}, new int[] {Integer.MAX_VALUE}, processors);
+        }
+
+        /**
+         * Allocate to the plugin with the given ID that should be used upon injection.
+         *
+         * @param <T>        The bean type.
+         * @param type       The {@link Class} of the bean type; might not be null.
+         * @param directory  The directory to find the plugin in; might <b>not</b> be null and
+         *                   {@link File#isDirectory()} has to return true.
+         * @param pluginId   The ID of the plugin to use, with which it can be found in the
+         *                   given directory; might <b>not</b> be null.
+         * @param versionFrom The version (inclusive) from which plugins are allowed to be injected; might <b>not</b>
+         *                    be null.
+         * @param versionUntil The version (exclusive) from which plugins are not allowed to be injected anymore;
+         *                     might <b>not</b> be null.
+         * @param processors The {@link PhasedBeanProcessor}s to apply on every instantiated bean;
+         *                   might be null or contain nulls, both is ignored.
+         * @return A newly build allocation, never null
+         */
+        @SafeVarargs
+        public static final <T> TypeAllocation allocateToPlugin(Class<T> type, File directory, String pluginId,
+                                                                int[] versionFrom, int[] versionUntil,
+                                                                PhasedBeanProcessor<? super T>... processors) {
             if (type == null) {
                 throw new IllegalArgumentException("Unable to allocate a null type.");
             } else if (directory == null) {
@@ -382,8 +438,12 @@ public interface Blueprint {
                 throw new IllegalArgumentException("Unable to allocate a bean to a plugin from a non-directory.");
             } else if (pluginId == null) {
                 throw new IllegalArgumentException("Unable to allocate a bean to a plugin with a null ID.");
+            } else if (versionFrom == null) {
+                throw new IllegalArgumentException("Unable to allocate a bean to a plugin with an unknown version from.");
+            } else if (versionUntil == null) {
+                throw new IllegalArgumentException("Unable to allocate a bean to a plugin with an unknown version until.");
             }
-            return new TypeAllocation(type, new Injector.PluginAllocator<>(directory, pluginId, InjectionProcessors.of(processors)));
+            return new TypeAllocation(type, new Injector.PluginAllocator<>(directory, pluginId, InjectionProcessors.of(processors), versionFrom, versionUntil));
         }
 
         Class<?> getType() {

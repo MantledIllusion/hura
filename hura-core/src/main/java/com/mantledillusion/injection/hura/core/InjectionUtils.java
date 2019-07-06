@@ -9,6 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
 
 import java.lang.reflect.*;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -138,5 +139,44 @@ public final class InjectionUtils {
 		Type collectionType = TypeUtils.parameterize(Collection.class, collectionGenericType)
 				.getActualTypeArguments()[0];
 		return collectionType instanceof Class ? (Class<?>) collectionType : Object.class;
+	}
+
+	/**
+	 * Compares the given versions.
+	 * <p>
+	 * The version arrays might have a different length; in this case the shorter one is appended with 0 until it
+	 * matches the length of the longer one.
+	 *
+	 * @param v1 The first version to compare; might <b>not</b> be null.
+	 * @param v2 The second version to compare; might <b>not</b> be null.
+	 * @return 1 of the first version is higher, 2 if the second one is, 0 if both are equal
+	 */
+	public static int compareVersions(int[] v1, int[] v2) {
+        v1 = Arrays.copyOf(v1, Math.max(v1.length, v2.length));
+        v2 = Arrays.copyOf(v2, Math.max(v1.length, v2.length));
+        for (int i=0; i<Math.min(v1.length, v2.length); i++) {
+            if (v1[i] > v2[i]) {
+                return 1;
+            } else if (v1[i] < v2[i]) {
+                return -1;
+            }
+        }
+        return 0;
+    }
+
+	/**
+	 * Splits a given {@link String} version (like '1.0.3') into its int parts.
+	 *
+	 * @param version The versin to parse; might <b>not</b> be null.
+	 * @return The parsed version, never null
+	 */
+	public static int[] parseVersion(String version) {
+		String[] split = version.split("\\.");
+		int[] v = new int[split.length];
+		for (int i=0; i<split.length; i++) {
+			v[i] = Integer.parseInt(split[i]);
+		}
+		return v;
+
 	}
 }
