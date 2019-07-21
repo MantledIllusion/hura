@@ -32,6 +32,10 @@ final class ResolvingSettings {
 		return new ResolvingSettings(propertyKey, matcher, false);
 	}
 
+	static ResolvingSettings of(String propertyKey, boolean forced) {
+		return new ResolvingSettings(propertyKey, Matches.DEFAULT_MATCHER, forced);
+	}
+
 	static ResolvingSettings of(String propertyKey, String matcher, boolean forced) {
 		return new ResolvingSettings(propertyKey, matcher, forced);
 	}

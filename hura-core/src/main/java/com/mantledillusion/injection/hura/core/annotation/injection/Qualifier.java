@@ -31,6 +31,8 @@ public @interface Qualifier {
 
     /**
      * The qualifier.
+     * <p>
+     * <b>Resolvable Value</b>; properties can be used within it.
      *
      * @return The qualifier under which the {@link Blueprint.SingletonAllocation} to inject into the annotated
      * {@link Field}/{@link Parameter} is registered in its injection context; never null

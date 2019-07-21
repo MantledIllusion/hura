@@ -6,6 +6,7 @@ import com.mantledillusion.injection.hura.core.Injector;
 import com.mantledillusion.injection.hura.core.Injector.RootInjector;
 import com.mantledillusion.injection.hura.core.exception.ProcessorException;
 import com.mantledillusion.injection.hura.core.exception.ResolvingException;
+import com.mantledillusion.injection.hura.core.exception.ValidatorException;
 import com.mantledillusion.injection.hura.core.property.injectables.*;
 import com.mantledillusion.injection.hura.core.property.uninjectables.*;
 import org.junit.jupiter.api.Assertions;
@@ -68,6 +69,20 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 		String propertyValue = "non2DigitPropertyValue";
 		Assertions.assertThrows(ResolvingException.class, () -> this.suite.injectInSuiteContext(InjectableWithMatchedProperty.class,
 				Blueprint.PropertyAllocation.of("property.key", propertyValue)));
+	}
+
+	@Test
+	public void testPropertyResolvedMatching() {
+		String propertyValue = "string";
+
+		InjectableWithResolvedMatchedProperty injectable = this.suite.injectInSuiteContext(InjectableWithResolvedMatchedProperty.class,
+				Blueprint.PropertyAllocation.of("property.key", propertyValue),
+				Blueprint.PropertyAllocation.of("matcher", "\\w+"));
+		Assertions.assertEquals(propertyValue, injectable.value);
+
+		Assertions.assertThrows(ResolvingException.class, () -> this.suite.injectInSuiteContext(InjectableWithResolvedMatchedProperty.class,
+				Blueprint.PropertyAllocation.of("property.key", propertyValue),
+				Blueprint.PropertyAllocation.of("matcher", "\\d+")));
 	}
 	
 	@Test
@@ -154,7 +169,7 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 
 	@Test
 	public void testUnparsableMatcherPropertyResolving() {
-		Assertions.assertThrows(ProcessorException.class, () -> this.suite.injectInSuiteContext(UninjectableWithUnparsableMatcherProperty.class,
+		Assertions.assertThrows(ValidatorException.class, () -> this.suite.injectInSuiteContext(UninjectableWithUnparsableMatcherProperty.class,
 				Blueprint.PropertyAllocation.of("property.key", "unneededValue")));
 	}
 

@@ -23,13 +23,5 @@ class MatchesValidator implements AnnotationProcessor<Matches, AnnotatedElement>
 					+ " is not annotated with @" + Resolve.class.getSimpleName()
 					+ ", which it has to be to be annotated with @" + Matches.class.getSimpleName());
 		}
-
-		try {
-			Pattern.compile(annotationInstance.value());
-		} catch (PatternSyntaxException | NullPointerException e) {
-			throw new ValidatorException("The " + ValidatorUtils.getDescription(annotatedElement)
-					+ " is annotated with @" + Resolve.class.getSimpleName() + ", but the matcher '"
-					+ annotationInstance.value() + "' is no valid pattern.", e);
-		}
 	}
 }

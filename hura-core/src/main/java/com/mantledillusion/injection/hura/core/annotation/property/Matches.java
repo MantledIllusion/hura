@@ -34,6 +34,8 @@ public @interface Matches {
 
 	/**
 	 * The {@link Pattern} matcher for the {@link Resolve} value to match.
+	 * <p>
+	 * <b>Resolvable Value</b>; properties can be used within it.
 	 * 
 	 * @return The matcher for the {@link Resolve}s value; never null, must be
 	 *         parsable by {@link Pattern#compile(String)}

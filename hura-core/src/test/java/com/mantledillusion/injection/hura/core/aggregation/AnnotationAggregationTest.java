@@ -134,6 +134,21 @@ public class AnnotationAggregationTest extends AbstractInjectionTest {
     }
 
     @Test
+    public void testPropertyFilteredAggregation() {
+        Injectable singletonA = new Injectable();
+        Injectable singletonB = new Injectable();
+
+        InjectableWithPropertyFilteredAggregation injectable = this.suite.injectInRootContext(InjectableWithPropertyFilteredAggregation.class,
+                Blueprint.PropertyAllocation.of(InjectableWithPropertyFilteredAggregation.PROPERTY_KEY, "B"),
+                Blueprint.SingletonAllocation.of("A", singletonA),
+                Blueprint.SingletonAllocation.of("B", singletonB));
+
+        Assertions.assertNotNull(injectable.singletons);
+        Assertions.assertEquals(1, injectable.singletons.size());
+        Assertions.assertTrue(injectable.singletons.contains(singletonB));
+    }
+
+    @Test
     public void testPredicateFilteredAggregation() {
         InjectableWithName singletonA = new InjectableWithName("singletonA");
         InjectableWithName singletonB = new InjectableWithName("singletonB");

@@ -6,7 +6,6 @@ import com.mantledillusion.injection.hura.core.annotation.instruction.Construct;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.annotation.AnnotationProcessor;
 import com.mantledillusion.injection.hura.core.exception.ValidatorException;
-import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
@@ -14,8 +13,6 @@ import java.lang.reflect.Modifier;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 class AggregateValidator implements AnnotationProcessor<Aggregate, AnnotatedElement> {
 
@@ -54,16 +51,6 @@ class AggregateValidator implements AnnotationProcessor<Aggregate, AnnotatedElem
 								+ Collection.class.getSimpleName() + " that is neither " + List.class.getSimpleName()
 								+ ", " + Set.class.getSimpleName() + " nor " + Collection.class.getSimpleName()
 								+ " itself.");
-			}
-
-			if (!StringUtils.isEmpty(annotationInstance.qualifierMatcher())) {
-				try {
-					Pattern.compile(annotationInstance.qualifierMatcher());
-				} catch (PatternSyntaxException | NullPointerException e) {
-					throw new ValidatorException("The " + ValidatorUtils.getDescription(annotatedElement)
-							+ " is annotated with @" + Aggregate.class.getSimpleName() + ", but the qualifierMatcher '"
-							+ annotationInstance.qualifierMatcher() + "' is no valid pattern.", e);
-				}
 			}
 		}
 	}

@@ -65,9 +65,8 @@ final class InjectionSettings<T> {
 	static <T> InjectionSettings<T> of(Class<T> type, Plugin plugin, Optional optional, Adjust adjust) {
 		InjectionSettings<T> set = of(type, null, optional, adjust, false);
 
-		set.allocations.add(Blueprint.TypeAllocation.allocateToPlugin(type, new File(plugin.directory()),
-				plugin.pluginId(), InjectionUtils.parseVersion(plugin.versionFrom()),
-				InjectionUtils.parseVersion(plugin.versionUntil())));
+		set.allocations.add(Blueprint.TypeAllocation.allocateToPlugin(type, plugin.directory(),
+				plugin.pluginId(), plugin.versionFrom(), plugin.versionUntil()));
 
 		return set;
 	}

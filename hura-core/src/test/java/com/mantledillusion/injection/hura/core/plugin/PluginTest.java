@@ -56,6 +56,17 @@ public class PluginTest extends AbstractInjectionTest {
     }
 
     @Test
+    public void testResolvedPlugin() {
+        InjectableWithResolvedPlugin injectable = this.suite.injectInSuiteContext(InjectableWithResolvedPlugin.class,
+                Blueprint.PropertyAllocation.of(InjectableWithResolvedPlugin.PKEY_DIR, "src/test/resources/plugins"),
+                Blueprint.PropertyAllocation.of(InjectableWithResolvedPlugin.PKEY_PLUGINID, "VersionPromotingPlugin"),
+                Blueprint.PropertyAllocation.of(InjectableWithResolvedPlugin.PKEY_VERSIONFROM, "1.0"),
+                Blueprint.PropertyAllocation.of(InjectableWithResolvedPlugin.PKEY_VERSIONUNTIL, "2.0"));
+
+        Assertions.assertEquals(1, injectable.injectable.getVersion());
+    }
+
+    @Test
     public void testPluginWithFullFileName() {
         Assertions.assertThrows(PluginException.class, () -> this.suite.injectInSuiteContext(UninjectableWithJarExtensionPlugin.class));
     }

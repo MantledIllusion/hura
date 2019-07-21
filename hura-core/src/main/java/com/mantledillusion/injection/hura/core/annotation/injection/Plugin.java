@@ -62,6 +62,8 @@ public @interface Plugin {
 
     /**
      * The directory the plugin can be found in.
+     * <p>
+     * <b>Resolvable Value</b>; properties can be used within it.
      *
      * @return The directories path, has to exist and evaluate {@link File#isDirectory()} with true
      */
@@ -74,6 +76,8 @@ public @interface Plugin {
      * NOTE: This is <b>not</b> the file name; the plugin id is neither versioned nor ends with a '.jar' extension.
      * For example, in a directory with 2 .JARs 'samplePlugin.jar' and 'samplePlugin_v2.0.jar', the plugin id would
      * simply be 'samplePlugin'.
+     * <p>
+     * <b>Resolvable Value</b>; properties can be used within it.
      *
      * @return The plugin id, never null
      */
@@ -83,6 +87,8 @@ public @interface Plugin {
      * The minimum (inclusive) version the loaded plugin is allowed to have.
      * <p>
      * Has to match the pattern {@link #VERSION_PATTERN}, '0' by default.
+     * <p>
+     * <b>Resolvable Value</b>; properties can be used within it.
      *
      * @return The version pattern, never null
      */
@@ -92,6 +98,8 @@ public @interface Plugin {
      * The maximum (exclusive) version the loaded plugin is not allowed to have anymore.
      * <p>
      * Has to match the pattern {@link #VERSION_PATTERN}, {@link Integer#MAX_VALUE} by default.
+     * <p>
+     * <b>Resolvable Value</b>; properties can be used within it.
      *
      * @return The version pattern, never null
      */

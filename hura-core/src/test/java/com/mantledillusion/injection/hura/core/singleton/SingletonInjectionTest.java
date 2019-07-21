@@ -75,6 +75,16 @@ public class SingletonInjectionTest extends AbstractInjectionTest {
 	}
 
 	@Test
+	public void testResolvedSingletonInjection() {
+		Injectable singleton = new Injectable();
+		InjectableWithResolvedSingleton injectable = this.suite.injectInRootContext(InjectableWithResolvedSingleton.class,
+				Blueprint.PropertyAllocation.of(InjectableWithResolvedSingleton.PKEY_QUALIFIER, "singletonQualifier"),
+				SingletonAllocation.of("singletonQualifier", singleton));
+
+		Assertions.assertSame(singleton, injectable.singleton);
+	}
+
+	@Test
 	public void testSingletonMapping() {
 		String qualifier = "theQualifierToMapTo";
 		Injectable singleton = new Injectable();

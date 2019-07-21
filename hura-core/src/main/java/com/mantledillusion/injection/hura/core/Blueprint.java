@@ -295,8 +295,9 @@ public interface Blueprint {
             } else if (versionUntil == null) {
                 throw new IllegalArgumentException("Cannot create singleton with a plugin with an unknown version until.");
             }
-            return new SingletonAllocation(qualifier, new Injector.PluginAllocator<>(directory, pluginId, beanClass,
-                    versionFrom, versionUntil));
+            return new SingletonAllocation(qualifier, new Injector.PluginAllocator<>(directory.getAbsolutePath(),
+                    pluginId, beanClass, StringUtils.join(versionFrom, '.'),
+                    StringUtils.join(versionUntil, '.')));
         }
 
         /**
@@ -486,7 +487,15 @@ public interface Blueprint {
             } else if (versionUntil == null) {
                 throw new IllegalArgumentException("Unable to allocate a bean to a plugin with an unknown version until.");
             }
-            return new TypeAllocation(type, new Injector.PluginAllocator<>(directory, pluginId, InjectionProcessors.of(processors), versionFrom, versionUntil));
+            return new TypeAllocation(type, new Injector.PluginAllocator<>(directory.getAbsolutePath(), pluginId,
+                    InjectionProcessors.of(processors), StringUtils.join(versionFrom, '.'),
+                    StringUtils.join(versionUntil, '.')));
+        }
+
+        static final <T> TypeAllocation allocateToPlugin(Class<T> type, String directory, String pluginId,
+                                                         String versionFrom, String versionUntil) {
+            return new TypeAllocation(type, new Injector.PluginAllocator<>(directory, pluginId,
+                    InjectionProcessors.of(), versionFrom, versionUntil));
         }
 
         Class<?> getType() {

@@ -6,18 +6,18 @@ import com.mantledillusion.injection.hura.core.ReflectionCache.InjectableConstru
 import com.mantledillusion.injection.hura.core.ReflectionCache.InjectableConstructor.ParamSettingType;
 import com.mantledillusion.injection.hura.core.ReflectionCache.InjectableField;
 import com.mantledillusion.injection.hura.core.ReflectionCache.ResolvableField;
+import com.mantledillusion.injection.hura.core.annotation.ValidatorUtils;
 import com.mantledillusion.injection.hura.core.annotation.event.Subscribe;
+import com.mantledillusion.injection.hura.core.annotation.injection.Aggregate;
 import com.mantledillusion.injection.hura.core.annotation.injection.Inject;
+import com.mantledillusion.injection.hura.core.annotation.injection.Plugin;
 import com.mantledillusion.injection.hura.core.annotation.injection.Qualifier;
 import com.mantledillusion.injection.hura.core.annotation.instruction.Construct;
 import com.mantledillusion.injection.hura.core.annotation.instruction.Context;
 import com.mantledillusion.injection.hura.core.annotation.instruction.Optional;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.bean.PreDestroy;
-import com.mantledillusion.injection.hura.core.exception.AggregationException;
-import com.mantledillusion.injection.hura.core.exception.InjectionException;
-import com.mantledillusion.injection.hura.core.exception.ProcessorException;
-import com.mantledillusion.injection.hura.core.exception.ShutdownException;
+import com.mantledillusion.injection.hura.core.exception.*;
 import com.mantledillusion.injection.hura.core.service.AggregationProvider;
 import com.mantledillusion.injection.hura.core.service.InjectionProvider;
 import com.mantledillusion.injection.hura.core.service.ResolvingProvider;
@@ -32,6 +32,8 @@ import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.BiPredicate;
 import java.util.function.Function;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 /**
  * An {@link Injector} for instantiating and injecting beans.
@@ -245,14 +247,14 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
 
     static final class PluginAllocator<T> extends AbstractAllocator<T> {
 
-        private final File directory;
+        private final String directory;
         private final String pluginId;
         private final InjectionProcessors<T> applicators;
         private final Class<T> presetType;
-        private final int[] versionFrom;
-        private final int[] versionUntil;
+        private final String versionFrom;
+        private final String versionUntil;
 
-        PluginAllocator(File directory, String pluginId, InjectionProcessors<T> applicators, int[] versionFrom, int[] versionUntil) {
+        PluginAllocator(String directory, String pluginId, InjectionProcessors<T> applicators, String versionFrom, String versionUntil) {
             this.directory = directory;
             this.pluginId = pluginId;
             this.applicators = applicators;
@@ -261,7 +263,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
             this.versionUntil = versionUntil;
         }
 
-        PluginAllocator(File directory, String pluginId, Class<T> presetType, int[] versionFrom, int[] versionUntil) {
+        PluginAllocator(String directory, String pluginId, Class<T> presetType, String versionFrom, String versionUntil) {
             this.directory = directory;
             this.pluginId = pluginId;
             this.applicators = InjectionProcessors.of();
@@ -273,8 +275,31 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
         @Override
         T allocate(Injector injector, InjectionChain injectionChain, InjectionSettings<T> set,
                    InjectionProcessors<T> applicators) {
-            Class<T> pluggableType = PluginCache.findPluggable(this.directory, this.pluginId,
-                    this.presetType == null ? set.type : this.presetType, this.versionFrom, this.versionUntil);
+            String directory = injectionChain.resolve(ResolvingSettings.of(this.directory, true));
+            if (!new File(directory).isDirectory()) {
+                throw new ValidatorException("The directory '" + directory + "' (resolved from '" + this.directory
+                                + "') is no valid directory.");
+            }
+
+            String pluginId = injectionChain.resolve(ResolvingSettings.of(this.pluginId, true));
+
+            String versionFrom = injectionChain.resolve(ResolvingSettings.of(this.versionFrom, true));
+            if (!versionFrom.matches(Plugin.VERSION_PATTERN)) {
+                throw new ValidatorException(
+                        "The version from '" + versionFrom + "' (resolved from '" + this.versionFrom
+                                + "') does not follow the valid pattern " + Plugin.VERSION_PATTERN + ".");
+            }
+
+            String versionUntil = injectionChain.resolve(ResolvingSettings.of(this.versionUntil, true));
+            if (!versionUntil.matches(Plugin.VERSION_PATTERN)) {
+                throw new ValidatorException(
+                        "The version until '" + versionUntil + "' (resolved from '" + this.versionUntil
+                                + "') does not follow the valid pattern " + Plugin.VERSION_PATTERN + ".");
+            }
+
+            Class<T> pluggableType = PluginCache.findPluggable(new File(directory), pluginId,
+                    this.presetType == null ? set.type : this.presetType, InjectionUtils.parseVersion(versionFrom),
+                    InjectionUtils.parseVersion(versionUntil));
             InjectionSettings<T> refinedSettings = set.refine(pluggableType);
             InjectionProcessors<T> refinedApplicators = injector.buildApplicators(injectionChain, refinedSettings);
             return injector.createAndInject(injectionChain, refinedSettings, this.applicators.merge(refinedApplicators),
@@ -448,6 +473,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
         } else {
             Object singleton = null;
 
+            set = set.refine(injectionChain.resolve(ResolvingSettings.of(set.qualifier, true)));
             if (injectionChain.hasMapping(set.qualifier)) {
                 set = set.refine(injectionChain.map(set.qualifier));
             }
@@ -653,7 +679,15 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
         chain.addAggregateable(() -> {
             List<BiPredicate<String, T>> predicates = new ArrayList<>();
             if (fieldSet.qualifierMatcher != null) {
-                predicates.add((qualifier, bean) -> qualifier.matches(fieldSet.qualifierMatcher));
+                String qualifierMatcher = chain.resolve(ResolvingSettings.of(fieldSet.qualifierMatcher, true));
+                try {
+                    Pattern.compile(qualifierMatcher);
+                } catch (PatternSyntaxException | NullPointerException e) {
+                    throw new AggregationException("The " + ValidatorUtils.getDescription(field)
+                            + " is annotated with @" + Aggregate.class.getSimpleName() + ", but the qualifierMatcher '"
+                            + qualifierMatcher + "' (resolved from '" + fieldSet.qualifierMatcher + "') is no valid pattern.", e);
+                }
+                predicates.add((qualifier, bean) -> qualifier.matches(qualifierMatcher));
             }
             for (Class<? extends BiPredicate<String, T>> predicateType: fieldSet.predicates) {
                 predicates.add(instantiate(chain, InjectionSettings.of(predicateType)));

@@ -37,7 +37,10 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 public @interface Aggregate {
 
     /**
-     * If set, causes a {@link BiPredicate} to be added that matches the singleton's qualifiers against the given {@link java.util.regex.Pattern}.
+     * If set, causes a {@link BiPredicate} to be added that matches the singleton's qualifiers against the given
+     * {@link java.util.regex.Pattern}.
+     * <p>
+     * <b>Resolvable Value</b>; properties can be used within it.
      *
      * @return The matcher for the singleton's qualifier, never null, ignored if empty
      */
@@ -51,9 +54,11 @@ public @interface Aggregate {
     Class<? extends BiPredicate<String, ? extends Object>>[] predicates() default {};
 
     /**
-     * When @{@link Aggregate} is used on a non-{@link java.util.Collection} field, only one singleton is allowed to match all the predicates.
+     * When @{@link Aggregate} is used on a non-{@link java.util.Collection} field, only one singleton is allowed to
+     * match all the predicates.
      * <p>
-     * If set to true (and multiple singletons match the predicates), a single random singleton of the aggregated ones is set to the field instead of causing an {@link AggregationException}.
+     * If set to true (and multiple singletons match the predicates), a single random singleton of the aggregated ones
+     * is set to the field instead of causing an {@link AggregationException}.
      *
      * @return True if a random singleton should be assigned to the field if multiple are found, false otherwise
      */

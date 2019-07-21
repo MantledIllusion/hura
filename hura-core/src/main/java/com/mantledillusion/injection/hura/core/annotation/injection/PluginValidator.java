@@ -29,24 +29,7 @@ class PluginValidator implements AnnotationProcessor<Plugin, AnnotatedElement> {
 					"The " + ValidatorUtils.getDescription(annotatedElement) + " is annotated with @"
 							+ Plugin.class.getSimpleName() + ", but is also annotated with @"
 							+ Aggregate.class.getSimpleName() + ", which is not allowed.");
-		} else if (!new File(annotationInstance.directory()).isDirectory()) {
-			throw new ValidatorException(
-					"The " + ValidatorUtils.getDescription(annotatedElement) + " is annotated with @"
-							+ Plugin.class.getSimpleName() + ", but the given directory '"
-							+ annotationInstance.directory() + "' is no valid directory.");
-		} else if (!annotationInstance.versionFrom().matches(Plugin.VERSION_PATTERN)) {
-			throw new ValidatorException(
-					"The " + ValidatorUtils.getDescription(annotatedElement) + " is annotated with @"
-							+ Plugin.class.getSimpleName() + ", but the given from version '"
-							+ annotationInstance.versionFrom() + "' does not follow the valid pattern "
-							+ Plugin.VERSION_PATTERN + " .");
-		} else if (!annotationInstance.versionUntil().matches(Plugin.VERSION_PATTERN)) {
-			throw new ValidatorException(
-					"The " + ValidatorUtils.getDescription(annotatedElement) + " is annotated with @"
-							+ Plugin.class.getSimpleName() + ", but the given until version '"
-							+ annotationInstance.versionUntil() + "' does not follow the valid pattern "
-							+ Plugin.VERSION_PATTERN + " .");
-		}else if (annotatedElement instanceof Field) {
+		} else if (annotatedElement instanceof Field) {
 			Field field = (Field) annotatedElement;
 			if (Modifier.isStatic(field.getModifiers())) {
 				throw new ValidatorException(

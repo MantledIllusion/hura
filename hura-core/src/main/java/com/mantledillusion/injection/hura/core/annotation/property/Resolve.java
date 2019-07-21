@@ -40,6 +40,8 @@ public @interface Resolve {
 
 	/**
 	 * The property key to resolve.
+	 * <p>
+	 * <b>Resolvable Value</b>; properties can be used within it.
 	 * 
 	 * @return The property key to resolve; never null or empty
 	 */
