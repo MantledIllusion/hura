@@ -26,6 +26,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * The class representing a Hura Weblaunch application.
@@ -35,10 +36,16 @@ import java.util.Set;
 public final class HuraWeblaunchApplication {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HuraWeblaunchApplication.class);
+    private static final String REGEX_NONEMPTY = ".+";
     private static final String REGEX_NUMERIC = "[1-9][0-9]*";
     private static final int MAX_PORT = 65535;
 
+    public static final String DEFAULT_SERVER_HOST = "localhost";
+    public static final String PROP_SERVER_HOST = "hura.weblaunch.server.host";
+
+    public static final int DEFAULT_SERVER_PORT = 8080;
     public static final String PROP_SERVER_PORT = "hura.weblaunch.server.port";
+
 
     /**
      * Builder to initialize and {@link #startUp(String...)} a {@link HuraWeblaunchApplication}.
@@ -47,6 +54,7 @@ public final class HuraWeblaunchApplication {
 
         private final Set<Class<? extends HuraWebApplicationInitializer>> initializerTypes;
         private ResourceManager resourceManager = ResourceManager.EMPTY_RESOURCE_MANAGER;
+        private String host;
         private Integer port;
         private SSLContext sslContext;
 
@@ -151,7 +159,25 @@ public final class HuraWeblaunchApplication {
         }
 
         /**
+         * Sets the {@link Undertow} server's host.
+         * <p>
+         * Default value is {@link #DEFAULT_SERVER_HOST}
+         *
+         * @param host The host to use; may not be empty.
+         * @return this
+         */
+        public synchronized HuraWeblaunchApplicationBuilder setHost(String host) {
+            if (host != null && host.isEmpty()) {
+                throw new IllegalArgumentException("Cannot set the host to an empty value");
+            }
+            this.host = host;
+            return this;
+        }
+
+        /**
          * Sets the {@link Undertow} server's port.
+         * <p>
+         * Default value is {@link #DEFAULT_SERVER_PORT}
          *
          * @param port The port to use; may not be &lt;0 or &gt;{@link #MAX_PORT}.
          * @return this
@@ -192,10 +218,12 @@ public final class HuraWeblaunchApplication {
 
                 Undertow.Builder builder = Undertow.builder();
 
+                String host = fromSystemProperties(this.host, PROP_SERVER_HOST, REGEX_NONEMPTY, s -> s, DEFAULT_SERVER_HOST);
+                int port = fromSystemProperties(this.port, PROP_SERVER_PORT, REGEX_NUMERIC, Integer::parseInt, DEFAULT_SERVER_PORT);
                 if (this.sslContext == null) {
-                    builder.addHttpListener(determinePort(), "localhost");
+                    builder.addHttpListener(port, host);
                 } else {
-                    builder.addHttpsListener(determinePort(), "localhost", this.sslContext, null);
+                    builder.addHttpsListener(port, host, this.sslContext, null);
                 }
 
                 Undertow server = builder.setHandler(applicationHttpHandler).build();
@@ -212,10 +240,11 @@ public final class HuraWeblaunchApplication {
             }
         }
 
-        private int determinePort() {
-            return this.port != null ? port : (System.getProperty(PROP_SERVER_PORT) != null &&
-                    System.getProperty(PROP_SERVER_PORT).matches(REGEX_NUMERIC) ?
-                    Integer.parseInt(System.getProperty(PROP_SERVER_PORT)) : 8080);
+        private <T> T fromSystemProperties(T configValue, String propertyKey, String propertyValueMatcher,
+                                           Function<String, T> converter, T defaultValue) {
+            return configValue != null ? configValue : (System.getProperty(propertyKey) != null &&
+                    System.getProperty(propertyKey).matches(propertyValueMatcher) ?
+                    converter.apply(System.getProperty(propertyKey)) : defaultValue);
         }
     }
 
