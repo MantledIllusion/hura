@@ -82,8 +82,8 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
         private Map<Phase, List<SelfSustainingProcessor>> rootDestroyables;
 
         private RootInjector(SingletonContext singletonContext, ResolvingContext resolvingContext,
-                             MappingContext mappingContext, TypeContext typeContext) {
-            super(singletonContext, resolvingContext, mappingContext, typeContext);
+                             AliasContext aliasContext, TypeContext typeContext) {
+            super(singletonContext, resolvingContext, aliasContext, typeContext);
         }
 
         private void setRootDestroyables(Map<Phase, List<SelfSustainingProcessor>> rootDestroyables) {
@@ -314,7 +314,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
 
     private final SingletonContext singletonContext;
     private final ResolvingContext resolvingContext;
-    private final MappingContext mappingContext;
+    private final AliasContext aliasContext;
     private final TypeContext typeContext;
 
     private final IdentityHashMap<Object, Map<Phase, List<SelfSustainingProcessor>>> beans = new IdentityHashMap<>();
@@ -325,11 +325,11 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
     private Injector(
             @Inject @Qualifier(SingletonContext.INJECTION_CONTEXT_SINGLETON_ID) SingletonContext singletonContext,
             @Inject @Qualifier(ResolvingContext.RESOLVING_CONTEXT_SINGLETON_ID) ResolvingContext resolvingContext,
-            @Inject @Qualifier(MappingContext.MAPPING_CONTEXT_SINGLETON_ID) MappingContext mappingContext,
+            @Inject @Qualifier(AliasContext.ALIAS_CONTEXT_SINGLETON_ID) AliasContext aliasContext,
             @Inject @Qualifier(TypeContext.TYPE_CONTEXT_SINGLETON_ID) TypeContext typeContext) {
         this.singletonContext = singletonContext;
         this.resolvingContext = resolvingContext;
-        this.mappingContext = mappingContext;
+        this.aliasContext = aliasContext;
         this.typeContext = typeContext;
     }
 
@@ -366,7 +366,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
         InjectionSettings<T> settings = InjectionSettings.of(type);
 
         InjectionChain chain = InjectionChain.forInjection(this.singletonContext.getInjectionTreeLock(),
-                this.singletonContext, this.resolvingContext, this.mappingContext, this.typeContext, allocations);
+                this.singletonContext, this.resolvingContext, this.aliasContext, this.typeContext, allocations);
 
         return resolveSingletonsAndPerform(chain, destroyables -> {
             T instance = instantiate(chain, settings);
@@ -834,7 +834,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
      * special functionality that only the root of the injection tree has.
      *
      * @param allocation {@link Blueprint.Allocation} to be used during injection, for
-     *                    example {@link Blueprint.SingletonAllocation}s, {@link Blueprint.MappingAllocation}s
+     *                    example {@link Blueprint.SingletonAllocation}s, {@link Blueprint.AliasAllocation}s
      *                    or{@link Blueprint.PropertyAllocation}s and {@link Blueprint.TypeAllocation}s; might be null.
      * @param allocations More {@link Blueprint.Allocation}s to be used during injection; might be null or contain nulls.
      * @return A new {@link RootInjector} instance; never null
@@ -858,7 +858,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
      * special functionality that only the root of the injection tree has.
      *
      * @param blueprint {@link Blueprint} to be used during injection, for
-     *                   defining bindings such as {@link Blueprint.SingletonAllocation}s, {@link Blueprint.MappingAllocation}s
+     *                   defining bindings such as {@link Blueprint.SingletonAllocation}s, {@link Blueprint.AliasAllocation}s
      *                   or{@link Blueprint.PropertyAllocation}s and {@link Blueprint.TypeAllocation}s; might be null.
      * @param blueprints More {@link Blueprint}s to be used during injection; might be null or contain nulls.
      * @return A new {@link RootInjector} instance; never null
@@ -882,7 +882,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
      * special functionality that only the root of the injection tree has.
      *
      * @param blueprints {@link Blueprint}s to be used during injection, for
-     *                   defining bindings such as {@link Blueprint.SingletonAllocation}s, {@link Blueprint.MappingAllocation}s
+     *                   defining bindings such as {@link Blueprint.SingletonAllocation}s, {@link Blueprint.AliasAllocation}s
      *                   or{@link Blueprint.PropertyAllocation}s and {@link Blueprint.TypeAllocation}s; might be null or contain nulls.
      * @return A new {@link RootInjector} instance; never null
      */
@@ -894,7 +894,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
         InjectionChain chain = InjectionChain.forRoot(allocations);
 
         RootInjector injector = new RootInjector(chain.getSingletonContext(), chain.getResolvingContext(),
-                chain.getMappingContext(), chain.getTypeContext());
+                chain.getAliasContext(), chain.getTypeContext());
 
         return ((Injector) injector).resolveSingletonsAndPerform(chain, destroyables -> {
             injector.setRootDestroyables(destroyables);

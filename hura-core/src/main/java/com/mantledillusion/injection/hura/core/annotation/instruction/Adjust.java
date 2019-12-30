@@ -1,7 +1,7 @@
 package com.mantledillusion.injection.hura.core.annotation.instruction;
 
 import com.mantledillusion.injection.hura.core.Blueprint;
-import com.mantledillusion.injection.hura.core.Blueprint.MappingAllocation;
+import com.mantledillusion.injection.hura.core.Blueprint.AliasAllocation;
 import com.mantledillusion.injection.hura.core.Blueprint.PropertyAllocation;
 import com.mantledillusion.injection.hura.core.Injector;
 import com.mantledillusion.injection.hura.core.annotation.injection.Inject;
@@ -69,9 +69,9 @@ public @interface Adjust {
 	}
 
 	/**
-	 * Defines a {@link MappingAllocation}.
+	 * Defines a {@link AliasAllocation}.
 	 */
-	@interface MappingDef {
+	@interface AliasDef {
 
 		/**
 		 * The qualifier that is mapped. SingletonAllocation references to this mapping base ID
@@ -79,7 +79,7 @@ public @interface Adjust {
 		 * 
 		 * @return The qualifier to map; might <b>not</b> be null.
 		 */
-		String base();
+		String qualifier();
 
 		/**
 		 * The qualifier that is mapped to. SingletonAllocation references to the mapping base
@@ -87,7 +87,7 @@ public @interface Adjust {
 		 * 
 		 * @return The qualifier to map to; might <b>not</b> be null.
 		 */
-		String target();
+		String alias();
 	}
 
 	/**
@@ -106,19 +106,19 @@ public @interface Adjust {
 	PropertyDef[] properties() default {};
 
 	/**
-	 * Specifies an array of {@link Blueprint.MappingAllocation}s that should adjust the injection.
+	 * Specifies an array of {@link AliasAllocation}s that should adjust the injection.
 	 * <p>
 	 * This is a convenience function for not having to implement a
 	 * {@link Blueprint} for the {@link #extensions()} if only a
-	 * {@link MappingAllocation} adjustment is needed.
+	 * {@link AliasAllocation} adjustment is needed.
 	 * <p>
-	 * Note that if any of the {@link #extensions()} define a {@link MappingAllocation} of the
-	 * same qualifier/mode pair, the {@link MappingAllocation} defined here overrides it.
+	 * Note that if any of the {@link #extensions()} define a {@link AliasAllocation} of the
+	 * same qualifier/mode pair, the {@link AliasAllocation} defined here overrides it.
 	 * 
-	 * @return The {@link Blueprint.MappingAllocation}s to adjust with; might be null or contain nulls,
+	 * @return The {@link AliasAllocation}s to adjust with; might be null or contain nulls,
 	 *         both is ignored
 	 */
-	MappingDef[] mappings() default {};
+	AliasDef[] aliases() default {};
 
 	/**
 	 * Specifies an array of {@link Blueprint} implementations that should

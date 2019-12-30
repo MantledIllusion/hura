@@ -1,7 +1,7 @@
 package com.mantledillusion.injection.hura.core.annotation.instruction;
 
 import com.mantledillusion.injection.hura.core.Blueprint;
-import com.mantledillusion.injection.hura.core.Blueprint.MappingAllocation;
+import com.mantledillusion.injection.hura.core.Blueprint.AliasAllocation;
 import com.mantledillusion.injection.hura.core.Blueprint.PropertyAllocation;
 import com.mantledillusion.injection.hura.core.Blueprint.SingletonAllocation;
 import com.mantledillusion.injection.hura.core.Blueprint.TypeAllocation;
@@ -28,7 +28,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <ul>
  * <li>{@link SingletonAllocation}</li>
  * <li>{@link PropertyAllocation}</li>
- * <li>{@link MappingAllocation}</li>
+ * <li>{@link AliasAllocation}</li>
  * <li>{@link TypeAllocation}</li>
  * <li>{@link Collection} of such {@link Blueprint.Allocation}s</li>
  * </ul>

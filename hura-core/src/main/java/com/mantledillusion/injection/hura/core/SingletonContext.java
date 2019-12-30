@@ -28,11 +28,11 @@ class SingletonContext {
     private final Object injectionTreeLock;
     private final Map<String, SingletonInstance> singletonBeans;
 
-    SingletonContext(Object injectionTreeLock, ResolvingContext resolvingContext, MappingContext mappingContext, TypeContext typeContext) {
-        this(injectionTreeLock, null, resolvingContext, mappingContext, typeContext);
+    SingletonContext(Object injectionTreeLock, ResolvingContext resolvingContext, AliasContext aliasContext, TypeContext typeContext) {
+        this(injectionTreeLock, null, resolvingContext, aliasContext, typeContext);
     }
 
-    SingletonContext(Object injectionTreeLock, SingletonContext baseContext, ResolvingContext resolvingContext, MappingContext mappingContext, TypeContext typeContext) {
+    SingletonContext(Object injectionTreeLock, SingletonContext baseContext, ResolvingContext resolvingContext, AliasContext aliasContext, TypeContext typeContext) {
         this.injectionTreeLock = injectionTreeLock;
         this.singletonBeans = new HashMap<>();
         if (baseContext != null) {
@@ -49,8 +49,8 @@ class SingletonContext {
         if (resolvingContext != null) {
             addSingleton(ResolvingContext.RESOLVING_CONTEXT_SINGLETON_ID, resolvingContext, true, false);
         }
-        if (mappingContext != null) {
-            addSingleton(MappingContext.MAPPING_CONTEXT_SINGLETON_ID, mappingContext, true, false);
+        if (aliasContext != null) {
+            addSingleton(AliasContext.ALIAS_CONTEXT_SINGLETON_ID, aliasContext, true, false);
         }
         if (typeContext != null) {
             addSingleton(TypeContext.TYPE_CONTEXT_SINGLETON_ID, typeContext, true, false);

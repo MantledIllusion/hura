@@ -8,7 +8,6 @@ import com.mantledillusion.injection.hura.core.annotation.instruction.Context;
 import com.mantledillusion.injection.hura.core.annotation.instruction.Optional;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -87,8 +86,8 @@ final class InjectionSettings<T> {
 			for (Adjust.PropertyDef property : adjust.properties()) {
 				allocations.add(Blueprint.PropertyAllocation.of(property.key(), property.value()));
 			}
-			for (Adjust.MappingDef mapping : adjust.mappings()) {
-				allocations.add(Blueprint.MappingAllocation.of(mapping.base(), mapping.target()));
+			for (Adjust.AliasDef mapping : adjust.aliases()) {
+				allocations.add(Blueprint.AliasAllocation.of(mapping.qualifier(), mapping.alias()));
 			}
 			extensions = Arrays.asList(adjust.extensions());
 		}

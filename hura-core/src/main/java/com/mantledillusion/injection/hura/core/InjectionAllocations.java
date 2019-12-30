@@ -4,7 +4,7 @@ import com.mantledillusion.injection.hura.core.Injector.AbstractAllocator;
 import com.mantledillusion.injection.hura.core.annotation.ValidatorUtils;
 import com.mantledillusion.injection.hura.core.annotation.instruction.Define;
 import com.mantledillusion.injection.hura.core.exception.BlueprintException;
-import com.mantledillusion.injection.hura.core.exception.MappingException;
+import com.mantledillusion.injection.hura.core.exception.AliasException;
 import com.mantledillusion.injection.hura.core.exception.ValidatorException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.reflect.TypeUtils;
@@ -21,7 +21,7 @@ class InjectionAllocations {
 	private final Map<Type, AbstractAllocator<?>> typeAllocations = new HashMap<>();
 	private final Map<String, AbstractAllocator<?>> singletonAllocations = new HashMap<>();
 	private final Map<String, String> propertyAllocations = new HashMap<>();
-	private final Map<String, String> mappingAllocations = new HashMap<>();
+	private final Map<String, String> aliasAllocations = new HashMap<>();
 
 	private InjectionAllocations() {
 	}
@@ -38,8 +38,8 @@ class InjectionAllocations {
 		return propertyAllocations;
 	}
 
-	Map<String, String> getMappingAllocations() {
-		return mappingAllocations;
+	Map<String, String> getAliasAllocations() {
+		return aliasAllocations;
 	}
 
 	static InjectionAllocations ofBlueprints(Collection<Blueprint> blueprints) {
@@ -131,18 +131,18 @@ class InjectionAllocations {
 									+ property.getValue() + "'");
 				}
 				injectionAllocations.propertyAllocations.put(propertyKey, property.getValue());
-			} else if (allocation instanceof Blueprint.MappingAllocation) {
-				Blueprint.MappingAllocation mapping = (Blueprint.MappingAllocation) allocation;
-				String mappingBase = mapping.getBase();
-				String mappingTarget = mapping.getTarget();
-				if (injectionAllocations.mappingAllocations.containsKey(mappingBase)) {
-					throw new IllegalArgumentException("There were 2 or more singleton mapping " +
-							"targets defined for the mapping base '" + mappingBase + "'; '"
-							+ injectionAllocations.propertyAllocations.get(mappingBase) + "' and '"
-							+ mappingTarget + "'");
+			} else if (allocation instanceof Blueprint.AliasAllocation) {
+				Blueprint.AliasAllocation alias = (Blueprint.AliasAllocation) allocation;
+				String aliasBase = alias.getQualifier();
+				String aliasTarget = alias.getAlias();
+				if (injectionAllocations.aliasAllocations.containsKey(aliasBase)) {
+					throw new IllegalArgumentException("There were 2 or more singleton alias " +
+							"targets defined for the alias base '" + aliasBase + "'; '"
+							+ injectionAllocations.propertyAllocations.get(aliasBase) + "' and '"
+							+ aliasTarget + "'");
 				}
-				checkForCircularMapping(mappingBase, mappingTarget, injectionAllocations.mappingAllocations);
-				injectionAllocations.mappingAllocations.put(mappingBase, mappingTarget);
+				checkForCircularMapping(aliasBase, aliasTarget, injectionAllocations.aliasAllocations);
+				injectionAllocations.aliasAllocations.put(aliasBase, aliasTarget);
 			} else if (allocation instanceof Blueprint.TypeAllocation) {
 				Blueprint.TypeAllocation typeAllocation = (Blueprint.TypeAllocation) allocation;
 				Class<?> type = typeAllocation.getType();
@@ -165,7 +165,7 @@ class InjectionAllocations {
 		while (mappings.containsKey(target)) {
 			target = mappings.get(target);
 			if (mappingBase.equals(target)) {
-				throw new MappingException("qualifier mapping loop detected! Adding a mapping from '" + mappingBase
+				throw new AliasException("qualifier mapping loop detected! Adding a mapping from '" + mappingBase
 						+ "' to '" + mappingTarget + "' closes the mapping loop '"
 						+ StringUtils.join(qualifiers, "' -> '") + "'");
 			}

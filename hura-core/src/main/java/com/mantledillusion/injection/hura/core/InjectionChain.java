@@ -83,7 +83,7 @@ final class InjectionChain {
 	// Context
 	private final SingletonContext singletonContext;
 	private final ResolvingContext resolvingContext;
-	private final MappingContext mappingContext;
+	private final AliasContext aliasContext;
 	private final TypeContext typeContext;
 
 	// Injection Chain
@@ -99,7 +99,7 @@ final class InjectionChain {
 	private final List<SelfSustainingProcessor> preDestroyables;
 	private final List<SelfSustainingProcessor> postDestroyables;
 
-	private InjectionChain(SingletonContext singletonContext, ResolvingContext resolvingContext, MappingContext mappingContext,
+	private InjectionChain(SingletonContext singletonContext, ResolvingContext resolvingContext, AliasContext aliasContext,
 						   TypeContext typeContext,
 						   Map<String, AbstractAllocator<?>> sequenceSingletonAllocations, ChainLock chainLock,
 						   LinkedHashSet<Constructor<?>> constructorChain, DependencyContext dependency,
@@ -108,7 +108,7 @@ final class InjectionChain {
 						   List<SelfSustainingProcessor> preDestroyables, List<SelfSustainingProcessor> postDestroyables) {
 		this.singletonContext = singletonContext;
 		this.resolvingContext = resolvingContext;
-		this.mappingContext = mappingContext;
+		this.aliasContext = aliasContext;
 		this.typeContext = typeContext;
 		
 		this.sequenceSingletonAllocations = sequenceSingletonAllocations;
@@ -157,10 +157,10 @@ final class InjectionChain {
 		}
 
 		ResolvingContext resolvingContext = this.resolvingContext.merge(allocations.getPropertyAllocations());
-		MappingContext mappingContext = this.mappingContext.merge(allocations.getMappingAllocations());
+		AliasContext aliasContext = this.aliasContext.merge(allocations.getAliasAllocations());
 		TypeContext typeContext = this.typeContext.merge(allocations.getTypeAllocations());
 
-		return new InjectionChain(this.singletonContext, resolvingContext, mappingContext, typeContext,
+		return new InjectionChain(this.singletonContext, resolvingContext, aliasContext, typeContext,
 				new HashMap<>(this.sequenceSingletonAllocations), this.chainLock,
 				this.constructorChain, this.dependency,
 				this.eventBackbone, this.aggregateables,
@@ -177,7 +177,7 @@ final class InjectionChain {
 		LinkedHashSet<Constructor<?>> constructorChain = new LinkedHashSet<>(this.constructorChain);
 		constructorChain.add(c);
 
-		return new InjectionChain(this.singletonContext, this.resolvingContext, this.mappingContext, this.typeContext,
+		return new InjectionChain(this.singletonContext, this.resolvingContext, this.aliasContext, this.typeContext,
 				this.sequenceSingletonAllocations, this.chainLock,
 				constructorChain, dependency,
 				this.eventBackbone, this.aggregateables,
@@ -187,15 +187,15 @@ final class InjectionChain {
 
 	static InjectionChain forRoot(InjectionAllocations allocations) {
 		ResolvingContext resolvingContext = new ResolvingContext().merge(allocations.getPropertyAllocations());
-		MappingContext mappingContext = new MappingContext().merge(allocations.getMappingAllocations());
+		AliasContext aliasContext = new AliasContext().merge(allocations.getAliasAllocations());
 		TypeContext typeContext = new TypeContext().merge(allocations.getTypeAllocations());
 		SingletonContext singletonContext = new SingletonContext(new Object(),
-				resolvingContext, mappingContext, typeContext);
+				resolvingContext, aliasContext, typeContext);
 
 		Bus.EventBackbone backbone = new Bus.EventBackbone();
 		singletonContext.addSingleton(Bus.QUALIFIER_BACKBONE, backbone, true, true);
 
-		return new InjectionChain(singletonContext, resolvingContext, mappingContext, typeContext,
+		return new InjectionChain(singletonContext, resolvingContext, aliasContext, typeContext,
 				allocations.getSingletonAllocations(), null,
 				new LinkedHashSet<>(), DependencyContext.INDEPENDENT,
 				backbone, new ArrayList<>(),
@@ -204,13 +204,13 @@ final class InjectionChain {
 	}
 
 	static InjectionChain forInjection(Object injectionTreeLock, SingletonContext baseSingletonContext,
-									   ResolvingContext baseResolvingContext, MappingContext baseMappingContext,
+									   ResolvingContext baseResolvingContext, AliasContext baseAliasContext,
 									   TypeContext baseTypeContext, InjectionAllocations allocations) {
 		ResolvingContext resolvingContext = baseResolvingContext.merge(allocations.getPropertyAllocations());
-		MappingContext mappingContext = baseMappingContext.merge(allocations.getMappingAllocations());
+		AliasContext aliasContext = baseAliasContext.merge(allocations.getAliasAllocations());
 		TypeContext typeContext = baseTypeContext.merge(allocations.getTypeAllocations());
 		SingletonContext singletonContext = new SingletonContext(injectionTreeLock, baseSingletonContext,
-				resolvingContext, mappingContext, typeContext);
+				resolvingContext, aliasContext, typeContext);
 
 		Bus.EventBackbone backbone = new Bus.EventBackbone(singletonContext.retrieveSingleton(Bus.QUALIFIER_BACKBONE),
 				resolvingContext.getProperty(Bus.PROPERTY_BUS_ISOLATION));
@@ -218,7 +218,7 @@ final class InjectionChain {
 		List<SelfSustainingProcessor> postDestroyables = new ArrayList<>();
 		postDestroyables.add(backbone::detachFromParent);
 
-		return new InjectionChain(singletonContext, resolvingContext, mappingContext, typeContext,
+		return new InjectionChain(singletonContext, resolvingContext, aliasContext, typeContext,
 				allocations.getSingletonAllocations(), null,
 				new LinkedHashSet<>(), DependencyContext.INDEPENDENT,
 				backbone, new ArrayList<>(),
@@ -270,17 +270,17 @@ final class InjectionChain {
 		return this.resolvingContext.resolve(set);
 	}
 
-	// MappingAllocation Context
-	MappingContext getMappingContext() {
-		return this.mappingContext;
+	// Alias Context
+	AliasContext getAliasContext() {
+		return this.aliasContext;
 	}
 
 	boolean hasMapping(String qualifier) {
-		return this.mappingContext.hasMapping(qualifier);
+		return this.aliasContext.hasMapping(qualifier);
 	}
 
 	String map(String qualifier) {
-		return this.mappingContext.getMapping(qualifier);
+		return this.aliasContext.getAlias(qualifier);
 	}
 	
 	// Type Context

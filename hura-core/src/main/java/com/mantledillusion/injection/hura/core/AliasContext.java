@@ -5,18 +5,18 @@ import com.mantledillusion.injection.hura.core.annotation.instruction.Construct;
 import java.util.HashMap;
 import java.util.Map;
 
-final class MappingContext {
+final class AliasContext {
 
-	static final String MAPPING_CONTEXT_SINGLETON_ID = "_mappingContext";
+	static final String ALIAS_CONTEXT_SINGLETON_ID = "_aliasContext";
 
 	private final Map<String, String> mappings = new HashMap<>();
 
 	@Construct
-	MappingContext() {
+	AliasContext() {
 		this(null);
 	}
 
-	MappingContext(MappingContext base) {
+	AliasContext(AliasContext base) {
 		if (base != null) {
 			this.mappings.putAll(base.mappings);
 		}
@@ -26,15 +26,15 @@ final class MappingContext {
 		return this.mappings.containsKey(qualifier);
 	}
 
-	String getMapping(String qualifier) {
+	String getAlias(String qualifier) {
 		while (this.mappings.containsKey(qualifier)) {
 			qualifier = this.mappings.get(qualifier);
 		}
 		return qualifier;
 	}
 
-	MappingContext merge(Map<String, String> qualifierAllocations) {
-		MappingContext newContext = new MappingContext(this);
+	AliasContext merge(Map<String, String> qualifierAllocations) {
+		AliasContext newContext = new AliasContext(this);
 		newContext.mappings.putAll(qualifierAllocations);
 		return newContext;
 	}

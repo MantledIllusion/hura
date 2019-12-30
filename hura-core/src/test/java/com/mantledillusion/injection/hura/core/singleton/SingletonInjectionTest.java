@@ -3,7 +3,7 @@ package com.mantledillusion.injection.hura.core.singleton;
 import com.mantledillusion.injection.hura.core.*;
 import com.mantledillusion.injection.hura.core.Blueprint.SingletonAllocation;
 import com.mantledillusion.injection.hura.core.exception.InjectionException;
-import com.mantledillusion.injection.hura.core.exception.MappingException;
+import com.mantledillusion.injection.hura.core.exception.AliasException;
 import com.mantledillusion.injection.hura.core.exception.ProcessorException;
 import com.mantledillusion.injection.hura.core.singleton.injectables.*;
 import com.mantledillusion.injection.hura.core.singleton.uninjectables.UninjectableWithSingletonWithoutInject;
@@ -85,29 +85,29 @@ public class SingletonInjectionTest extends AbstractInjectionTest {
 	}
 
 	@Test
-	public void testSingletonMapping() {
+	public void testSingletonAlias() {
 		String qualifier = "theQualifierToMapTo";
 		Injectable singleton = new Injectable();
 		Injector rootInjector = Injector.of(SingletonAllocation.of(qualifier, singleton));
 
 		InjectableWithSequenceSingleton injectable = rootInjector.instantiate(InjectableWithSequenceSingleton.class,
-				Blueprint.MappingAllocation.of(InjectableWithSequenceSingleton.SINGLETON, qualifier));
+				Blueprint.AliasAllocation.of(InjectableWithSequenceSingleton.SINGLETON, qualifier));
 
 		Assertions.assertSame(singleton, injectable.sequenceSingleton);
 	}
 
 	@Test
-	public void testDefineDoubleMapping() {
+	public void testDefineDoubleAlias() {
 		Assertions.assertThrows(IllegalArgumentException.class, () -> Injector.of(
-				Blueprint.MappingAllocation.of("1", "2"),
-				Blueprint.MappingAllocation.of("1", "3")));
+				Blueprint.AliasAllocation.of("1", "2"),
+				Blueprint.AliasAllocation.of("1", "3")));
 	}
 
 	@Test
-	public void testDefineLoopedMappings() {
-		Assertions.assertThrows(MappingException.class, () -> Injector.of(
-				Blueprint.MappingAllocation.of("1", "2"),
-				Blueprint.MappingAllocation.of("2", "3"),
-				Blueprint.MappingAllocation.of("3", "1")));
+	public void testDefineLoopedAlias() {
+		Assertions.assertThrows(AliasException.class, () -> Injector.of(
+				Blueprint.AliasAllocation.of("1", "2"),
+				Blueprint.AliasAllocation.of("2", "3"),
+				Blueprint.AliasAllocation.of("3", "1")));
 	}
 }

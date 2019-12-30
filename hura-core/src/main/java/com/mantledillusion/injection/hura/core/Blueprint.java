@@ -8,12 +8,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Interface for a group of {@link Allocation}s.
@@ -55,7 +53,7 @@ public interface Blueprint {
      * <ul>
      * <li>{@link SingletonAllocation}</li>
      * <li>{@link PropertyAllocation}</li>
-     * <li>{@link MappingAllocation}</li>
+     * <li>{@link AliasAllocation}</li>
      * <li>{@link TypeAllocation}</li>
      * </ul>
      */
@@ -315,54 +313,52 @@ public interface Blueprint {
     }
 
     /**
-     * Defines an ID mapping of {@link SingletonAllocation} IDs, from a base to a target.
+     * Defines a qualifier mapping of {@link SingletonAllocation} qualifiers, from a base to a target.
      */
-    final class MappingAllocation extends Allocation {
+    final class AliasAllocation extends Allocation {
 
-        private final String base;
-        private final String target;
+        private final String qualifier;
+        private final String alias;
 
-        private MappingAllocation(String base, String target) {
-            this.base = base;
-            this.target = target;
+        private AliasAllocation(String qualifier, String alias) {
+            this.qualifier = qualifier;
+            this.alias = alias;
         }
 
         /**
-         * Factory {@link Method} for {@link MappingAllocation} instances.
+         * Factory {@link Method} for {@link AliasAllocation} instances.
          *
-         * @param base   The qualifier that is mapped. SingletonAllocation references to this
-         *               mapping base ID will reference the mapping target singleton
-         *               afterwards; might <b>not</b> be null.
-         * @param target The qualifier that is mapped to. SingletonAllocation references to the
-         *               mapping base ID will reference this mapping target ID's singleton
-         *               afterwards; might <b>not</b> be null.
-         * @return A new {@link MappingAllocation} instance; never null
+         * @param qualifier The qualifier that is mapped. SingletonAllocation references to this mapping base ID will
+         *                  reference the mapping target singleton afterwards; might <b>not</b> be null.
+         * @param alias The qualifier that is mapped to. SingletonAllocation references to the mapping base ID will
+         *              reference this mapping target ID's singleton afterwards; might <b>not</b> be null.
+         * @return A new {@link AliasAllocation} instance; never null
          */
-        public static MappingAllocation of(String base, String target) {
-            if (StringUtils.isEmpty(base)) {
-                throw new IllegalArgumentException("Cannot create a singleton mapping with a null qualifier");
-            } else if (target == null) {
-                throw new IllegalArgumentException("Cannot create a singleton mapping with a null mapping target");
+        public static AliasAllocation of(String qualifier, String alias) {
+            if (StringUtils.isEmpty(qualifier)) {
+                throw new IllegalArgumentException("Cannot create a singleton alias with a null qualifier");
+            } else if (alias == null) {
+                throw new IllegalArgumentException("Cannot create a singleton alias with a null alias");
             }
-            return new MappingAllocation(base, target);
+            return new AliasAllocation(qualifier, alias);
         }
 
         /**
-         * Returns the base qualifier to getMapping.
+         * Returns the base qualifier to map.
          *
          * @return The base qualifier; never null
          */
-        public String getBase() {
-            return base;
+        public String getQualifier() {
+            return qualifier;
         }
 
         /**
-         * Returns the target qualifier to getMapping to;
+         * Returns the target qualifier to map to;
          *
          * @return The target qualifier; never null.
          */
-        public String getTarget() {
-            return target;
+        public String getAlias() {
+            return alias;
         }
     }
 

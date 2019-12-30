@@ -37,7 +37,7 @@ public interface InjectionProvider extends StatefulService {
      *            null.
      * @param allocation
      *            The {@link Blueprint.Allocation} to be used during injection, for
-     *            example {@link Blueprint.SingletonAllocation}s, {@link Blueprint.MappingAllocation}s
+     *            example {@link Blueprint.SingletonAllocation}s, {@link Blueprint.AliasAllocation}s
      *            or{@link Blueprint.PropertyAllocation}s and {@link Blueprint.TypeAllocation}s;
      *            might be null.
      * @param allocations
@@ -58,7 +58,7 @@ public interface InjectionProvider extends StatefulService {
      *            null.
      * @param blueprint
      *            The {@link Blueprint} to be used during injection, for
-     *            defining bindings such as {@link Blueprint.SingletonAllocation}s, {@link Blueprint.MappingAllocation}s
+     *            defining bindings such as {@link Blueprint.SingletonAllocation}s, {@link Blueprint.AliasAllocation}s
      *            or{@link Blueprint.PropertyAllocation}s and {@link Blueprint.TypeAllocation}s; might be null.
      * @param blueprints
      *            More {@link Blueprint}s to be used during injection; might be null or contain nulls.
@@ -79,7 +79,7 @@ public interface InjectionProvider extends StatefulService {
      *            null.
      * @param blueprints
      *            {@link Blueprint}s to be used during injection, for
-     *            defining bindings such as {@link Blueprint.SingletonAllocation}s, {@link Blueprint.MappingAllocation}s
+     *            defining bindings such as {@link Blueprint.SingletonAllocation}s, {@link Blueprint.AliasAllocation}s
      *            or{@link Blueprint.PropertyAllocation}s and {@link Blueprint.TypeAllocation}s; might be null or contain nulls.
      * @return An injected instance of the given {@link Class}; never null
      * @throws ShutdownException If the instance has already been shut down

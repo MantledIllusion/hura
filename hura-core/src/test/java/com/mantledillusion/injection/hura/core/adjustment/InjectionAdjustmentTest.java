@@ -6,7 +6,7 @@ import com.mantledillusion.injection.hura.core.Injectable;
 import com.mantledillusion.injection.hura.core.InjectableInterface;
 import com.mantledillusion.injection.hura.core.adjustment.injectables.InjectableAlternative;
 import com.mantledillusion.injection.hura.core.adjustment.injectables.InjectableWithExtendingAdjustment;
-import com.mantledillusion.injection.hura.core.adjustment.injectables.InjectableWithMappingAdjustment;
+import com.mantledillusion.injection.hura.core.adjustment.injectables.InjectableWithAliasAdjustment;
 import com.mantledillusion.injection.hura.core.adjustment.injectables.InjectableWithPropertyAdjustment;
 import com.mantledillusion.injection.hura.core.adjustment.uninjectables.UninjectableWithInjectionlessAdjustment;
 import com.mantledillusion.injection.hura.core.adjustment.uninjectables.UninjectableWithSingletonAdjustment;
@@ -40,12 +40,11 @@ public class InjectionAdjustmentTest extends AbstractInjectionTest {
 	}
 
 	@Test
-	public void testMappingAdjustment() {
+	public void testAliasAdjustment() {
 		Injectable singleton = new Injectable();
-		InjectableWithMappingAdjustment injectable = this.suite.injectInSuiteContext(
-				InjectableWithMappingAdjustment.class,
-				Blueprint.SingletonAllocation.of(InjectableWithMappingAdjustment.SOME_QUALIFIER, singleton),
-				Blueprint.MappingAllocation.of(InjectableWithSequenceSingleton.SINGLETON, "predefinitionQualifier"));
+		InjectableWithAliasAdjustment injectable = this.suite.injectInSuiteContext(
+				InjectableWithAliasAdjustment.class,
+				Blueprint.SingletonAllocation.of(InjectableWithAliasAdjustment.SOME_QUALIFIER, singleton));
 		
 		Assertions.assertSame(singleton, injectable.singletonedInjectable.sequenceSingleton);
 	}
