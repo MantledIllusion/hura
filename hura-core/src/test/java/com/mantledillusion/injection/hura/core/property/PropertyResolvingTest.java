@@ -120,6 +120,14 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 	}
 
 	@Test
+	public void testDeepDefaultedPropertyNonResolving() {
+		InjectableWithDeepDefaultedProperty injectable = this.suite
+				.injectInSuiteContext(InjectableWithDeepDefaultedProperty.class);
+
+		Assertions.assertEquals("defaultValue", injectable.propertyValue);
+	}
+
+	@Test
 	public void testPropertyForcedResolving() {
 		String propertyValue = "value";
 		InjectableWithForcedProperty injectable = this.suite.injectInSuiteContext(InjectableWithForcedProperty.class,
