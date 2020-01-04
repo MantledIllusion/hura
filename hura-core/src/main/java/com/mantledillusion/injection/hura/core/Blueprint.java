@@ -225,15 +225,18 @@ public interface Blueprint {
          *                  referenced at; might <b>not</b> be null.
          * @param beanClass The {@link Class} to allocate as the type of a {@link SingletonAllocation};
          *                  might <b>not</b> be null.
+         * @param processors The {@link PhasedBeanProcessor}s to apply on every instantiated bean;
+         *                   might be null or contain nulls, both is ignored.
          * @return A new {@link SingletonAllocation} instance; never null
          */
-        public static <T> SingletonAllocation of(String qualifier, Class<T> beanClass) {
+        public static <T> SingletonAllocation of(String qualifier, Class<T> beanClass,
+                                                 PhasedBeanProcessor<T>... processors) {
             if (qualifier == null) {
                 throw new IllegalArgumentException("Cannot create singleton with a null qualifier");
             } else if (beanClass == null) {
                 throw new IllegalArgumentException("Cannot create singleton with a null bean class");
             }
-            return new SingletonAllocation(qualifier, new Injector.ClassAllocator<>(beanClass, InjectionProcessors.of()));
+            return new SingletonAllocation(qualifier, new Injector.ClassAllocator<>(beanClass, InjectionProcessors.of(processors)));
         }
 
         /**
@@ -414,20 +417,20 @@ public interface Blueprint {
          * @param <T>        The bean type.
          * @param <T2>       The allocated type.
          * @param type       The {@link Class} of the bean type; might not be null.
-         * @param clazz      The {@link Class} to use; might <b>not</b> be null.
+         * @param beanClass  The {@link Class} to use; might <b>not</b> be null.
          * @param processors The {@link PhasedBeanProcessor}s to apply on every instantiated bean;
          *                   might be null or contain nulls, both is ignored.
          * @return A newly build allocation, never null
          */
         @SafeVarargs
-        public static final <T, T2 extends T> TypeAllocation allocateToType(Class<T> type, Class<T2> clazz,
+        public static final <T, T2 extends T> TypeAllocation allocateToType(Class<T> type, Class<T2> beanClass,
                                                                             PhasedBeanProcessor<? super T2>... processors) {
             if (type == null) {
                 throw new IllegalArgumentException("Unable to allocate a null type.");
-            } else if (clazz == null) {
+            } else if (beanClass == null) {
                 throw new IllegalArgumentException("Unable to allocate a bean to a null class.");
             }
-            return new TypeAllocation(type, new Injector.ClassAllocator<>(clazz, InjectionProcessors.of(processors)));
+            return new TypeAllocation(type, new Injector.ClassAllocator<>(beanClass, InjectionProcessors.of(processors)));
         }
 
         /**
