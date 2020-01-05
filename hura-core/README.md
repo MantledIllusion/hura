@@ -220,7 +220,7 @@ public class SomeInjectableClass {
 }
 ```
 
-### 3.2 Injecting Singletons Beans
+### 3.2 Injecting and Aggregating Singletons Beans
 
 To inject a singleton, add _@Qualifier_ to a constructor parameter or field already annotated with _@Inject_ and provide a name for the singleton.
 
@@ -239,6 +239,8 @@ public class SomeInjectableClass {
     }
 }
 ```
+
+Note that **_Injector_** instances can never be singletons; since they contain information about their parent injection sequence, injecting it in multiple sequences would carry its injection context out of itself.
 
 ### 3.3 Optional Injections
 
@@ -278,7 +280,34 @@ public class SomeClassWithInjector {
 }
 ```
 
-Note that **_Injector_** instances can never be singletons; since they contain information about their parent injection sequence, injecting it in multiple sequences would carry its injection context out of itself.
+### 3.5 Aggregating Singletons
+
+Since singletons are named by their qualifier, they become addressable even after the injection sequence has finished because they reside in a singleton pool.
+
+From that pool, singletons are retrievable using the singleton aggregation functionality.
+
+Singleton aggregation works either through...
+- the _@Aggregate_ annotation
+- by calling the _**Injector**.aggregate()_ method of an injector that has been injected in the same or a downstream injection sequence as the singleton to aggregate
+
+Both the annotation and the _**Injector**_ allow to supply **_Predicate_** implementations for filtering through the singleton pool.
+
+ ```java
+public class SomeAggregatingClass {
+
+    @Inject
+    private Injector injector; 
+    @Aggregate(qualifierMatcher = "beanNumber//d+")
+    private Collection<Object> byField;
+    
+    private void aggregateManually() {
+        Collection<Serializable> byCall = this.injector.aggregate(SomeBeanSuperType.class, 
+            (qualifier, bean) -> bean.hasSomeCharacteristic());
+    }
+}
+ ```
+
+Note that in order to provide access to <u>all</u> singletons assigned during an injection sequence, aggregation is done right before the **_Phase_.POST_CONSTRUCT** milestone of injection, so this will be the point from which on aggregations are possible.
 
 ## 4. Property Injection
 
@@ -361,6 +390,29 @@ public class SomeClassWithProperty {
     private String positiveNumericInteger; 
 }
 ```
+
+### 4.5 Propertied Injection Settings
+
+Hura allows properties to be used in a lot String fields of the annotations the framework offers; in Hura, such fields are called resolvable values.
+
+The most basic of these is _@Resolve_, which uses this mechanism to fill its resolved value into a constructor parameter or field.
+
+But a lot more of Hura's framework annotations actually have one or more String fields that are resolvable values:
+- _@Aggregate_
+    - qualifierMatcher
+- _@Matches_
+    - value
+- _@Plugin_
+    - directory
+    - pluginId
+    - versionFrom
+    - versionTo
+- _@Qualifier_
+    - value
+- _@Resolve_
+    - value
+
+Using a propertied value instead of a static one offers a huge amount of configurability; for example, the plugin directory suddenly becomes easily configurable.
 
 ## 5. Plugin Injection
 
@@ -482,7 +534,34 @@ When used on a class, the annotations will execute the code of the given process
 
 When used on a method, the annotations will also execute the code of the given processors when the milestone is reached, but in addition to that the method will be called. The annotated method is allowed to have parameters, as long as these are either of the type **_Phase_** or the type **_TemporalInjectorCallback_**, in which cases these will be supplied to the method upon being called.
 
+```java
+public class SomeProcessedClass {
+
+    @PostConstruct
+    private void processThroughMethodAnnotation() {
+        // do whatever
+    }
+}
+```
+
 Using these annotations can be extremely useful by being placed on an interface's class, so all beans made from implementing types will be processed automatically.
+
+```java
+public class SomeBeanProcessor implements BeanProcessor<SomeProcessedInterface> {
+
+    void process(Phase phase, SomeProcessedInterface bean, TemporalInjectorCallback callback) throws Exception {
+        bean.processThroughClassAnnotation();
+    }
+}
+```
+
+```java
+@PostConstruct(value = SomeInterfaceProcessor.class)
+public interface SomeProcessedInterface {
+    
+    void processThroughClassAnnotation();
+}
+```
 
 Note that _@PreConstruct_ can <u>not</u> be used on methods; since the bean instance is not available on that milestone, there will not be an instance whose method would be callable.
 
@@ -494,11 +573,66 @@ The annotations allow an array of **_AnnotationProcessor_** implementing types t
 
 When used on an annotation which can be used anywhere on a bean's class, the annotations will execute the code of the given processors when the milestone is reached. The bean, the annotated annotation's instance and the element annotated by that instance will be supplied to the processor.
 
-Using these annotations can be extremely useful for creating own annotations, because they allow building custom framework functionality.
+```java
+@Retention(RUNTIME)
+@Target({TYPE})
+@PostConstruct(LifecycleAnnotationProcessor.class)
+public @interface SomeCustomAnnotation {
+
+}
+```
+
+```java
+import com.mantledillusion.injection.hura.core.annotation.lifecycle.annotation.AnnotationProcessor;
+
+public class SomeAnnotationProcessor implements AnnotationProcessor<SomeCustomAnnotation, Class<?>> {
+
+    void process(Phase phase, Object bean, SomeCustomAnnotation annotationInstance, Class<?> annotatedElement, TemporalInjectorCallback callback) throws Exception {
+        // do whatever
+    }
+}
+```
+
+```java
+@SomeCustomAnnotation
+public class SomeProcessedClass {
+
+}
+```
+
+Using these annotations can be extremely useful for creating own annotations, because they basically allow building custom framework functionality.
 
 ##### 6.2.3 BeanProcessors in Allocations
 
 When creating either a **_TypeAllocation_** or a **_SingletonAllocation_** for a type, an array of **_PhasedBeanProcessor_** instances can be provided to be executed at a certain milestone.
+
+```java
+public class SomeBeanProcessor implements BeanProcessor<SomeUnchangeableType> {
+
+    void process(Phase phase, SomeUnchangeableType bean, TemporalInjectorCallback callback) throws Exception {
+        bean.someUnchangeableMethod();
+    }
+}
+```
+
+```java
+public class SomeBlueprint implements Blueprint {
+
+    @Define
+    public Blueprint.TypeAllocation allocate() {
+        return TypeAllocation.allocateToType(Serializable.class, SomeUnchangeableType.class, PhasedBeanProcessor.of(new SomeBeanProcessor(), Phase.POST_CONSTRUCT));
+    }
+}
+```
+
+```java
+public final class SomeUnchangeableType {
+
+    public final void someUnchangeableMethod() {
+        // whatever
+    }
+}
+```
 
 This is especially useful when the allocated type is a class that cannot be modified to be annotated with a lifecycle annotation.
 
@@ -510,6 +644,14 @@ Hura is able to automatically connect every injected bean over an event bus. The
 
 An instance of the type **_Bus_** can be injected into any arbitrary bean. Using its _**Bus**.publish()_ methods any kind of event can be send into the event bus.
 
+```java
+public class SomeClassWithEventBus {
+
+    @Inject
+    private Bus bus;
+}
+```
+
 By default, an event send by any bean in an injection tree can be received by any other bean.
 
 By setting the property **_Bus_.PROPERTY_BUS_ISOLATION** to true, every **_Bus_** injected with this property set will limit receiving events send through this bus to beans of the same or downstream injection sequences. Additionally, this functionality can be enforced in the moment of sending events by switching isolation on manually when calling _**Bus**.publish()_.
@@ -517,6 +659,16 @@ By setting the property **_Bus_.PROPERTY_BUS_ISOLATION** to true, every **_Bus_*
 ### 7.2 Receiving Events
 
 To receive events, any method can be annotated with _@Subscribe_.
+
+```java
+public class SomeClassWithEventBusSubscription {
+
+    @Subscribe
+    public void receive(Object o) {
+        // do whatever
+    }
+}
+```
 
 The subscription to the event bus will be performed either...
 - ...for the methods 1 allowed parameter's type
