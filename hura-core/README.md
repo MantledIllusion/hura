@@ -132,16 +132,15 @@ public class SomeBlueprint implements Blueprint {
 The SingletonAllocation offers a way to bind beans to qualifiers in order to make them become singletons.
 
 ```java
-public class SomeBlueprint implements Blueprint {
-
+import com.mantledillusion.injection.hura.core.Blueprint;public class SomeBlueprint implements Blueprint {
     @Define
     public SingletonAllocation define1() {
-        return SingletonAllocation.of("SomeQualifier", SomeType.class);
+        return Blueprint.SingletonAllocation.allocateToType("SomeQualifier", SomeType.class);
     }
 
     @Define
     public SingletonAllocation define2() {
-        return SingletonAllocation.of("SomeOtherQualifier", new SomeOtherType());
+        return SingletonAllocation.allocateToInstance("SomeOtherQualifier", new SomeOtherType());
     }
 }
 ```
