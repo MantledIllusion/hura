@@ -169,7 +169,7 @@ public interface Blueprint {
          * @param bean      The instance to allocate as a {@link SingletonAllocation}; might <b>not</b> be null.
          * @return A new {@link SingletonAllocation} instance; never null
          */
-        public static SingletonAllocation of(Object bean) {
+        public static SingletonAllocation allocateToInstance(Object bean) {
             if (bean == null) {
                 throw new IllegalArgumentException("Cannot create an anonymous singleton with a null bean instance");
             }
@@ -187,7 +187,7 @@ public interface Blueprint {
          * @param bean      The instance to allocate as a {@link SingletonAllocation}; might be null.
          * @return A new {@link SingletonAllocation} instance; never null
          */
-        public static SingletonAllocation of(String qualifier, Object bean) {
+        public static SingletonAllocation allocateToInstance(String qualifier, Object bean) {
             if (qualifier == null) {
                 throw new IllegalArgumentException("Cannot create singleton with a null qualifier");
             }
@@ -206,7 +206,7 @@ public interface Blueprint {
          *                  {@link SingletonAllocation}; might <b>not</b> be null.
          * @return A new {@link SingletonAllocation} instance; never null
          */
-        public static <T> SingletonAllocation of(String qualifier, BeanProvider<T> provider) {
+        public static <T> SingletonAllocation allocateToProvider(String qualifier, BeanProvider<T> provider) {
             if (qualifier == null) {
                 throw new IllegalArgumentException("Cannot create singleton with a null qualifier");
             } else if (provider == null) {
@@ -229,8 +229,8 @@ public interface Blueprint {
          *                   might be null or contain nulls, both is ignored.
          * @return A new {@link SingletonAllocation} instance; never null
          */
-        public static <T> SingletonAllocation of(String qualifier, Class<T> beanClass,
-                                                 PhasedBeanProcessor<T>... processors) {
+        public static <T> SingletonAllocation allocateToType(String qualifier, Class<T> beanClass,
+                                                             PhasedBeanProcessor<T>... processors) {
             if (qualifier == null) {
                 throw new IllegalArgumentException("Cannot create singleton with a null qualifier");
             } else if (beanClass == null) {
@@ -255,8 +255,9 @@ public interface Blueprint {
          *                  given directory; might <b>not</b> be null.
          * @return A new {@link SingletonAllocation} instance; never null
          */
-        public static <T> SingletonAllocation of(String qualifier, Class<T> beanClass, File directory, String pluginId) {
-            return of(qualifier, beanClass, directory, pluginId, new int[] {0}, new int[] {Integer.MAX_VALUE});
+        public static <T> SingletonAllocation allocateToPlugin(String qualifier, Class<T> beanClass, File directory,
+                                                               String pluginId) {
+            return allocateToPlugin(qualifier, beanClass, directory, pluginId, new int[] {0}, new int[] {Integer.MAX_VALUE});
         }
 
         /**
@@ -279,8 +280,8 @@ public interface Blueprint {
          *                     might <b>not</b> be null.
          * @return A new {@link SingletonAllocation} instance; never null
          */
-        public static <T> SingletonAllocation of(String qualifier, Class<T> beanClass, File directory, String pluginId,
-                                                 int[] versionFrom, int[] versionUntil) {
+        public static <T> SingletonAllocation allocateToPlugin(String qualifier, Class<T> beanClass, File directory,
+                                                               String pluginId, int[] versionFrom, int[] versionUntil) {
             if (qualifier == null) {
                 throw new IllegalArgumentException("Cannot create singleton with a null qualifier");
             } else if (beanClass == null) {

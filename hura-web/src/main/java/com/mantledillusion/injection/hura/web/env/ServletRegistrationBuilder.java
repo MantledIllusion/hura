@@ -129,7 +129,7 @@ public final class ServletRegistrationBuilder {
      */
     public synchronized Blueprint.SingletonAllocation build() {
         String qualifier = SERVLET_REGISTRATION_QUALIFIER_PREFIX + UUID.randomUUID().toString();
-        Blueprint.SingletonAllocation configurationSingleton = Blueprint.SingletonAllocation.of(qualifier, new ServletContextConfiguration() {
+        Blueprint.SingletonAllocation configurationSingleton = Blueprint.SingletonAllocation.allocateToInstance(qualifier, new ServletContextConfiguration() {
 
             private final String name = ServletRegistrationBuilder.this.name;
             private final Class<? extends Servlet> servletType = ServletRegistrationBuilder.this.servletType;

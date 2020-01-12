@@ -22,7 +22,7 @@ public class SingletonInjectionTest extends AbstractInjectionTest {
 
 		Injectable singleton = new Injectable();
 		InjectableWithInjector main = this.suite.injectInSuiteContext(InjectableWithInjector.class,
-				SingletonAllocation.of(InjectableWithSequenceSingleton.SINGLETON, singleton));
+				SingletonAllocation.allocateToInstance(InjectableWithSequenceSingleton.SINGLETON, singleton));
 		InjectableWithSequenceSingleton childA = main.injector.instantiate(InjectableWithSequenceSingleton.class);
 		InjectableWithSequenceSingleton childB = main.injector.instantiate(InjectableWithSequenceSingleton.class);
 
@@ -60,7 +60,7 @@ public class SingletonInjectionTest extends AbstractInjectionTest {
 	@Test
 	public void testDifferentTypeSingletonInjectionWithAllocation() {
 		Injectable bean = new Injectable();
-		SingletonAllocation singleton = Blueprint.SingletonAllocation.of(InjectableWithSingletonAllocationRequired.SINGLETON, bean);
+		SingletonAllocation singleton = Blueprint.SingletonAllocation.allocateToInstance(InjectableWithSingletonAllocationRequired.SINGLETON, bean);
 
 		InjectableWithSingletonAllocationRequired injectable = this.suite
 				.injectInSuiteContext(InjectableWithSingletonAllocationRequired.class, singleton);
@@ -79,7 +79,7 @@ public class SingletonInjectionTest extends AbstractInjectionTest {
 		Injectable singleton = new Injectable();
 		InjectableWithResolvedSingleton injectable = this.suite.injectInRootContext(InjectableWithResolvedSingleton.class,
 				Blueprint.PropertyAllocation.of(InjectableWithResolvedSingleton.PKEY_QUALIFIER, "singletonQualifier"),
-				SingletonAllocation.of("singletonQualifier", singleton));
+				SingletonAllocation.allocateToInstance("singletonQualifier", singleton));
 
 		Assertions.assertSame(singleton, injectable.singleton);
 	}
@@ -88,7 +88,7 @@ public class SingletonInjectionTest extends AbstractInjectionTest {
 	public void testSingletonAlias() {
 		String qualifier = "theQualifierToMapTo";
 		Injectable singleton = new Injectable();
-		Injector rootInjector = Injector.of(SingletonAllocation.of(qualifier, singleton));
+		Injector rootInjector = Injector.of(SingletonAllocation.allocateToInstance(qualifier, singleton));
 
 		InjectableWithSequenceSingleton injectable = rootInjector.instantiate(InjectableWithSequenceSingleton.class,
 				Blueprint.AliasAllocation.of(InjectableWithSequenceSingleton.SINGLETON, qualifier));

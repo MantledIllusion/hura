@@ -15,7 +15,7 @@ public class InjectorAggregationTest extends AbstractInjectionTest {
         Injectable singleton = new Injectable();
 
         InjectableWithInjector injectable = this.suite.injectInRootContext(InjectableWithInjector.class,
-                Blueprint.SingletonAllocation.of(InjectableWithInjectorAndSingleton.QUALIFIER, singleton));
+                Blueprint.SingletonAllocation.allocateToInstance(InjectableWithInjectorAndSingleton.QUALIFIER, singleton));
 
         Collection<Object> allSingletons = injectable.injector.aggregate();
         Assertions.assertEquals(1, allSingletons.size());
@@ -37,8 +37,8 @@ public class InjectorAggregationTest extends AbstractInjectionTest {
         InjectableInterfaceImpl singletonB = new InjectableInterfaceImpl();
 
         InjectableWithInjector injectable = this.suite.injectInRootContext(InjectableWithInjector.class,
-                Blueprint.SingletonAllocation.of("singletonA", singletonA),
-                Blueprint.SingletonAllocation.of("singletonB", singletonB));
+                Blueprint.SingletonAllocation.allocateToInstance("singletonA", singletonA),
+                Blueprint.SingletonAllocation.allocateToInstance("singletonB", singletonB));
 
         Collection<InjectableInterfaceImpl> allSingletons = injectable.injector.aggregate(InjectableInterfaceImpl.class);
         Assertions.assertEquals(1, allSingletons.size());
@@ -51,8 +51,8 @@ public class InjectorAggregationTest extends AbstractInjectionTest {
         Injectable singletonB = new Injectable();
 
         InjectableWithInjector injectable = this.suite.injectInRootContext(InjectableWithInjector.class,
-                Blueprint.SingletonAllocation.of("singletonA", singletonA),
-                Blueprint.SingletonAllocation.of("singletonB", singletonB));
+                Blueprint.SingletonAllocation.allocateToInstance("singletonA", singletonA),
+                Blueprint.SingletonAllocation.allocateToInstance("singletonB", singletonB));
 
         Collection<Object> allSingletons = injectable.injector.aggregate(".*B");
         Assertions.assertEquals(1, allSingletons.size());
@@ -65,8 +65,8 @@ public class InjectorAggregationTest extends AbstractInjectionTest {
         InjectableWithName singletonB = new InjectableWithName("singletonB");
 
         InjectableWithInjector injectable = this.suite.injectInRootContext(InjectableWithInjector.class,
-                Blueprint.SingletonAllocation.of("singletonA", singletonA),
-                Blueprint.SingletonAllocation.of("singletonB", singletonB));
+                Blueprint.SingletonAllocation.allocateToInstance("singletonA", singletonA),
+                Blueprint.SingletonAllocation.allocateToInstance("singletonB", singletonB));
 
         Collection<InjectableWithName> allSingletons = injectable.injector.aggregate(InjectableWithName.class, (qualifier, bean) -> bean.name.equals("singletonB"));
         Assertions.assertEquals(1, allSingletons.size());

@@ -13,7 +13,6 @@ import com.mantledillusion.injection.hura.core.adjustment.uninjectables.Uninject
 import com.mantledillusion.injection.hura.core.annotation.instruction.Define;
 import com.mantledillusion.injection.hura.core.exception.ProcessorException;
 import com.mantledillusion.injection.hura.core.property.injectables.InjectableWithProperty;
-import com.mantledillusion.injection.hura.core.singleton.injectables.InjectableWithSequenceSingleton;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -44,7 +43,7 @@ public class InjectionAdjustmentTest extends AbstractInjectionTest {
 		Injectable singleton = new Injectable();
 		InjectableWithAliasAdjustment injectable = this.suite.injectInSuiteContext(
 				InjectableWithAliasAdjustment.class,
-				Blueprint.SingletonAllocation.of(InjectableWithAliasAdjustment.SOME_QUALIFIER, singleton));
+				Blueprint.SingletonAllocation.allocateToInstance(InjectableWithAliasAdjustment.SOME_QUALIFIER, singleton));
 		
 		Assertions.assertSame(singleton, injectable.singletonedInjectable.sequenceSingleton);
 	}

@@ -103,7 +103,7 @@ public final class FilterRegistrationBuilder {
      */
     public synchronized Blueprint.SingletonAllocation build() {
         String qualifier = FILTER_REGISTRATION_QUALIFIER_PREFIX + UUID.randomUUID().toString();
-        Blueprint.SingletonAllocation configurationSingleton = Blueprint.SingletonAllocation.of(qualifier, new ServletContextConfiguration() {
+        Blueprint.SingletonAllocation configurationSingleton = Blueprint.SingletonAllocation.allocateToInstance(qualifier, new ServletContextConfiguration() {
 
             private final String name = FilterRegistrationBuilder.this.name;
             private final Class<? extends Filter> filterType = FilterRegistrationBuilder.this.filterType;

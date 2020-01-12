@@ -152,7 +152,7 @@ public class LifecycleTest extends AbstractInjectionTest {
 
     @Test
     public void testRootSingletonDestruction() {
-        Injector.RootInjector rootInjector = Injector.of(Blueprint.SingletonAllocation.of(
+        Injector.RootInjector rootInjector = Injector.of(Blueprint.SingletonAllocation.allocateToType(
                 InjectableWithDestructionAwareness.InjectableWithDestructableSingleton.QUALIFIER,
                 InjectableWithDestructionAwareness.class));
 

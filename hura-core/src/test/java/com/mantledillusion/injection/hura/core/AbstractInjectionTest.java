@@ -37,7 +37,7 @@ public class AbstractInjectionTest {
 		}
 		
 		public <T> T injectInSuiteContext(Class<T> type, ExampleContext context) {
-			return this.injector.instantiate(type, Blueprint.SingletonAllocation.of(ExampleContext.SINGLETON, context));
+			return this.injector.instantiate(type, Blueprint.SingletonAllocation.allocateToInstance(ExampleContext.SINGLETON, context));
 		}
 		
 		public void destroyInSuiteContext(Object wiredInstance) {

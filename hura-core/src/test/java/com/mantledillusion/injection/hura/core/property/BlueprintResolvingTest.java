@@ -43,7 +43,7 @@ public class BlueprintResolvingTest extends AbstractInjectionTest {
 			
 			@Define
 			public Set<Blueprint.Allocation> propertyDefinitionMethod() {
-				return new HashSet<>(Arrays.asList(PropertyAllocation.of("property.key", propertyValue), Blueprint.SingletonAllocation.of("qualifier", singleton)));
+				return new HashSet<>(Arrays.asList(PropertyAllocation.of("property.key", propertyValue), Blueprint.SingletonAllocation.allocateToInstance("qualifier", singleton)));
 			}
 		});
 

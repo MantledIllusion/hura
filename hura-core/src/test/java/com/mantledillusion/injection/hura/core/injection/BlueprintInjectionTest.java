@@ -79,7 +79,7 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 			
 			@Define
 			public Blueprint.SingletonAllocation singletonInstanceAllocationMethod() {
-				return Blueprint.SingletonAllocation.of(InjectableWithExplicitSingleton.SINGLETON, instance);
+				return Blueprint.SingletonAllocation.allocateToInstance(InjectableWithExplicitSingleton.SINGLETON, instance);
 			}
 		});
 
@@ -93,7 +93,7 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 			
 			@Define
 			public Blueprint.SingletonAllocation singletonProviderAllocationMethod() {
-				return Blueprint.SingletonAllocation.of(InjectableWithExplicitSingleton.SINGLETON, callback -> instance);
+				return Blueprint.SingletonAllocation.allocateToProvider(InjectableWithExplicitSingleton.SINGLETON, callback -> instance);
 			}
 		});
 
@@ -106,7 +106,7 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 			
 			@Define
 			public Blueprint.SingletonAllocation singletonTypeAllocationMethod() {
-				return Blueprint.SingletonAllocation.of(InjectableWithExplicitSingleton.SINGLETON, Injectable.class);
+				return Blueprint.SingletonAllocation.allocateToType(InjectableWithExplicitSingleton.SINGLETON, Injectable.class);
 			}
 		});
 
@@ -119,7 +119,7 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 
 			@Define
 			public Blueprint.SingletonAllocation singletonTypeAllocationMethod() {
-				return Blueprint.SingletonAllocation.of(InjectableWithExplicitSingleton.SINGLETON, InjectableInterface.class, new File("src/test/resources/plugins"), "InjectableInterfacePlugin");
+				return Blueprint.SingletonAllocation.allocateToPlugin(InjectableWithExplicitSingleton.SINGLETON, InjectableInterface.class, new File("src/test/resources/plugins"), "InjectableInterfacePlugin");
 			}
 		});
 

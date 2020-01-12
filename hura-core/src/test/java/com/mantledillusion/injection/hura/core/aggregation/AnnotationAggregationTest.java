@@ -18,8 +18,8 @@ public class AnnotationAggregationTest extends AbstractInjectionTest {
         Injectable singletonB = new Injectable();
 
         InjectableWithUnfilteredCollectionAggregation injectable = this.suite.injectInRootContext(InjectableWithUnfilteredCollectionAggregation.class,
-                Blueprint.SingletonAllocation.of("singletonA", singletonA),
-                Blueprint.SingletonAllocation.of("singletonB", singletonB));
+                Blueprint.SingletonAllocation.allocateToInstance("singletonA", singletonA),
+                Blueprint.SingletonAllocation.allocateToInstance("singletonB", singletonB));
 
         Assertions.assertNotNull(injectable.singletons);
         Assertions.assertEquals(2, injectable.singletons.size());
@@ -33,8 +33,8 @@ public class AnnotationAggregationTest extends AbstractInjectionTest {
         Injectable singletonB = new Injectable();
 
         InjectableWithUnfilteredListAggregation injectable = this.suite.injectInRootContext(InjectableWithUnfilteredListAggregation.class,
-                Blueprint.SingletonAllocation.of("singletonA", singletonA),
-                Blueprint.SingletonAllocation.of("singletonB", singletonB));
+                Blueprint.SingletonAllocation.allocateToInstance("singletonA", singletonA),
+                Blueprint.SingletonAllocation.allocateToInstance("singletonB", singletonB));
 
         Assertions.assertNotNull(injectable.singletons);
         Assertions.assertEquals(2, injectable.singletons.size());
@@ -48,8 +48,8 @@ public class AnnotationAggregationTest extends AbstractInjectionTest {
         Injectable singletonB = new Injectable();
 
         InjectableWithUnfilteredSetAggregation injectable = this.suite.injectInRootContext(InjectableWithUnfilteredSetAggregation.class,
-                Blueprint.SingletonAllocation.of("singletonA", singletonA),
-                Blueprint.SingletonAllocation.of("singletonB", singletonB));
+                Blueprint.SingletonAllocation.allocateToInstance("singletonA", singletonA),
+                Blueprint.SingletonAllocation.allocateToInstance("singletonB", singletonB));
 
         Assertions.assertNotNull(injectable.singletons);
         Assertions.assertEquals(2, injectable.singletons.size());
@@ -62,7 +62,7 @@ public class AnnotationAggregationTest extends AbstractInjectionTest {
         Injectable singleton = new Injectable();
 
         InjectableWithUnfilteredSingleAggregation injectable = this.suite.injectInRootContext(InjectableWithUnfilteredSingleAggregation.class,
-                Blueprint.SingletonAllocation.of("singleton", singleton));
+                Blueprint.SingletonAllocation.allocateToInstance("singleton", singleton));
 
         Assertions.assertNotNull(injectable.singleton);
         Assertions.assertSame(singleton, injectable.singleton);
@@ -86,8 +86,8 @@ public class AnnotationAggregationTest extends AbstractInjectionTest {
         Injectable singletonB = new Injectable();
 
         Assertions.assertThrows(ProcessorException.class, () -> this.suite.injectInRootContext(InjectableWithUnfilteredSingleAggregation.class,
-                Blueprint.SingletonAllocation.of("singletonA", singletonA),
-                Blueprint.SingletonAllocation.of("singletonB", singletonB)));
+                Blueprint.SingletonAllocation.allocateToInstance("singletonA", singletonA),
+                Blueprint.SingletonAllocation.allocateToInstance("singletonB", singletonB)));
     }
 
     @Test
@@ -96,8 +96,8 @@ public class AnnotationAggregationTest extends AbstractInjectionTest {
         Injectable singletonB = new Injectable();
 
         InjectableWithUnfilteredDistinctSingleAggregation injectable = this.suite.injectInRootContext(InjectableWithUnfilteredDistinctSingleAggregation.class,
-                Blueprint.SingletonAllocation.of("singletonA", singletonA),
-                Blueprint.SingletonAllocation.of("singletonB", singletonB));
+                Blueprint.SingletonAllocation.allocateToInstance("singletonA", singletonA),
+                Blueprint.SingletonAllocation.allocateToInstance("singletonB", singletonB));
 
         Assertions.assertTrue(injectable.singleton == singletonA || injectable.singleton == singletonB);
     }
@@ -108,8 +108,8 @@ public class AnnotationAggregationTest extends AbstractInjectionTest {
         InjectableInterfaceImpl singletonB = new InjectableInterfaceImpl();
 
         InjectableWithTypeFilteredAggregation injectable = this.suite.injectInRootContext(InjectableWithTypeFilteredAggregation.class,
-                Blueprint.SingletonAllocation.of("singletonA", singletonA),
-                Blueprint.SingletonAllocation.of("singletonB", singletonB));
+                Blueprint.SingletonAllocation.allocateToInstance("singletonA", singletonA),
+                Blueprint.SingletonAllocation.allocateToInstance("singletonB", singletonB));
 
         Assertions.assertNotNull(injectable.singletons);
         Assertions.assertEquals(1, injectable.singletons.size());
@@ -123,9 +123,9 @@ public class AnnotationAggregationTest extends AbstractInjectionTest {
         Injectable singletonC = new Injectable();
 
         InjectableWithQualifierFilteredAggregation injectable = this.suite.injectInRootContext(InjectableWithQualifierFilteredAggregation.class,
-                Blueprint.SingletonAllocation.of(InjectableWithQualifierFilteredAggregation.QUALIFIER_PREFIX+"A", singletonA),
-                Blueprint.SingletonAllocation.of(InjectableWithQualifierFilteredAggregation.QUALIFIER_PREFIX+"B", singletonB),
-                Blueprint.SingletonAllocation.of("someSingletonC", singletonC));
+                Blueprint.SingletonAllocation.allocateToInstance(InjectableWithQualifierFilteredAggregation.QUALIFIER_PREFIX+"A", singletonA),
+                Blueprint.SingletonAllocation.allocateToInstance(InjectableWithQualifierFilteredAggregation.QUALIFIER_PREFIX+"B", singletonB),
+                Blueprint.SingletonAllocation.allocateToInstance("someSingletonC", singletonC));
 
         Assertions.assertNotNull(injectable.singletons);
         Assertions.assertEquals(2, injectable.singletons.size());
@@ -140,8 +140,8 @@ public class AnnotationAggregationTest extends AbstractInjectionTest {
 
         InjectableWithPropertyFilteredAggregation injectable = this.suite.injectInRootContext(InjectableWithPropertyFilteredAggregation.class,
                 Blueprint.PropertyAllocation.of(InjectableWithPropertyFilteredAggregation.PROPERTY_KEY, "B"),
-                Blueprint.SingletonAllocation.of("A", singletonA),
-                Blueprint.SingletonAllocation.of("B", singletonB));
+                Blueprint.SingletonAllocation.allocateToInstance("A", singletonA),
+                Blueprint.SingletonAllocation.allocateToInstance("B", singletonB));
 
         Assertions.assertNotNull(injectable.singletons);
         Assertions.assertEquals(1, injectable.singletons.size());
@@ -154,8 +154,8 @@ public class AnnotationAggregationTest extends AbstractInjectionTest {
         InjectableWithName singletonB = new InjectableWithName("singletonB");
 
         InjectableWithPredicateFilteredCollectionAggregation injectable = this.suite.injectInRootContext(InjectableWithPredicateFilteredCollectionAggregation.class,
-                Blueprint.SingletonAllocation.of("A", singletonA),
-                Blueprint.SingletonAllocation.of("B", singletonB),
+                Blueprint.SingletonAllocation.allocateToInstance("A", singletonA),
+                Blueprint.SingletonAllocation.allocateToInstance("B", singletonB),
                 Blueprint.PropertyAllocation.of(PropertyDependentPredicate.NAME_PROPERTY_ID, "singletonB"));
 
         Assertions.assertNotNull(injectable.singletons);
