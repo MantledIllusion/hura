@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -177,6 +178,11 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
 
             InjectionChain chain = this.chain.extendBy(InjectionAllocations.ofBlueprints(blueprints));
             InjectionSettings<T> set = InjectionSettings.of(clazz);
+            return Injector.this.instantiate(chain, set);
+        }
+
+        <T> T instantiate(Method m, InjectionSettings<T> set) {
+            InjectionChain chain = this.chain.extendBy(m, set);
             return Injector.this.instantiate(chain, set);
         }
     }
@@ -538,11 +544,6 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
         process(null, set.type, injectionChain, applicators.getProcessorsOfPhase(Phase.PRE_CONSTRUCT));
 
         InjectableConstructor<T> injectableConstructor = ReflectionCache.getInjectableConstructor(set.type);
-
-        if (injectionChain.containsConstructor(injectableConstructor.getConstructor())) {
-            throw new InjectionException("Injection dependency cycle detected: "
-                    + injectionChain.getStringifiedChainSinceConstructor(injectableConstructor.getConstructor()));
-        }
 
         injectionChain = injectionChain.extendBy(injectableConstructor.getConstructor(), set);
 

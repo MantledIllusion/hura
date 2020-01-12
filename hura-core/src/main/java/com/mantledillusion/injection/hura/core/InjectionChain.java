@@ -8,6 +8,8 @@ import com.mantledillusion.injection.hura.core.exception.InjectionException;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Executable;
+import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.BiPredicate;
@@ -88,7 +90,7 @@ final class InjectionChain {
 
 	// Injection Chain
 	private final ChainLock chainLock;
-	private final LinkedHashSet<Constructor<?>> constructorChain;
+	private final LinkedHashSet<Executable> executableChain;
 	private final DependencyContext dependency;
 	private final Bus.EventBackbone eventBackbone;
 
@@ -102,7 +104,7 @@ final class InjectionChain {
 	private InjectionChain(SingletonContext singletonContext, ResolvingContext resolvingContext, AliasContext aliasContext,
 						   TypeContext typeContext,
 						   Map<String, AbstractAllocator<?>> sequenceSingletonAllocations, ChainLock chainLock,
-						   LinkedHashSet<Constructor<?>> constructorChain, DependencyContext dependency,
+						   LinkedHashSet<Executable> executableChain, DependencyContext dependency,
 						   Bus.EventBackbone eventBackbone, List<SelfSustainingProcessor> aggregateables,
 						   List<SelfSustainingProcessor> activatables, List<SelfSustainingProcessor> postConstructables,
 						   List<SelfSustainingProcessor> preDestroyables, List<SelfSustainingProcessor> postDestroyables) {
@@ -118,7 +120,7 @@ final class InjectionChain {
 		} else {
 			this.chainLock = new ChainLock(chainLock);
 		}
-		this.constructorChain = constructorChain;
+		this.executableChain = executableChain;
 		this.dependency = dependency;
 		this.eventBackbone = eventBackbone;
 
@@ -162,27 +164,65 @@ final class InjectionChain {
 
 		return new InjectionChain(this.singletonContext, resolvingContext, aliasContext, typeContext,
 				new HashMap<>(this.sequenceSingletonAllocations), this.chainLock,
-				this.constructorChain, this.dependency,
+				this.executableChain, this.dependency,
 				this.eventBackbone, this.aggregateables,
 				this.activateables, this.postConstructables,
 				this.preDestroyables, this.postDestroyables);
 	}
 
 	InjectionChain extendBy(Constructor<?> c, InjectionSettings<?> set) {
+		if (this.executableChain.contains(c)) {
+			throw new InjectionException("Injection dependency cycle detected: " + getStringifiedChainSinceExecutable(c));
+		}
+
 		DependencyContext dependency = DependencyContext.of(set.isIndependent);
 		if (this.dependency.ordinal() > dependency.ordinal()) {
 			dependency = this.dependency;
 		}
 
-		LinkedHashSet<Constructor<?>> constructorChain = new LinkedHashSet<>(this.constructorChain);
-		constructorChain.add(c);
+		LinkedHashSet<Executable> executableChain = new LinkedHashSet<>(this.executableChain);
+		executableChain.add(c);
 
 		return new InjectionChain(this.singletonContext, this.resolvingContext, this.aliasContext, this.typeContext,
 				this.sequenceSingletonAllocations, this.chainLock,
-				constructorChain, dependency,
+				executableChain, dependency,
 				this.eventBackbone, this.aggregateables,
 				this.activateables, this.postConstructables,
 				this.preDestroyables, this.postDestroyables);
+	}
+
+	InjectionChain extendBy(Method m, InjectionSettings<?> set) {
+		if (this.executableChain.contains(m)) {
+			throw new InjectionException("Injection dependency cycle detected: " + getStringifiedChainSinceExecutable(m));
+		}
+
+		DependencyContext dependency = DependencyContext.of(set.isIndependent);
+		if (this.dependency.ordinal() > dependency.ordinal()) {
+			dependency = this.dependency;
+		}
+
+		LinkedHashSet<Executable> executableChain = new LinkedHashSet<>(this.executableChain);
+		executableChain.add(m);
+
+		return new InjectionChain(this.singletonContext, this.resolvingContext, this.aliasContext, this.typeContext,
+				this.sequenceSingletonAllocations, this.chainLock,
+				executableChain, dependency,
+				this.eventBackbone, this.aggregateables,
+				this.activateables, this.postConstructables,
+				this.preDestroyables, this.postDestroyables);
+	}
+
+	private String getStringifiedChainSinceExecutable(Executable e) {
+		StringBuilder sb = new StringBuilder();
+		this.executableChain.forEach(constructor -> {
+			if (constructor == e || sb.length() > 0) {
+				if (sb.length() > 0) {
+					sb.append(" -> ");
+				}
+				sb.append(e).append(e.toString());
+			}
+		});
+		return sb.toString();
 	}
 
 	static InjectionChain forRoot(InjectionAllocations allocations) {
@@ -297,22 +337,6 @@ final class InjectionChain {
 	}
 
 	// Injection Chain
-	boolean containsConstructor(Constructor<?> c) {
-		return this.constructorChain.contains(c);
-	}
-
-	String getStringifiedChainSinceConstructor(Constructor<?> c) {
-		StringBuilder sb = new StringBuilder();
-		this.constructorChain.forEach(constructor -> {
-			if (constructor == c || sb.length() > 0) {
-				if (sb.length() > 0) {
-					sb.append(" -> ");
-				}
-				sb.append(c).append(c.toString());
-			}
-		});
-		return sb.toString();
-	}
 
 	Bus.EventBackbone getEventBackbone() {
 		return this.eventBackbone;

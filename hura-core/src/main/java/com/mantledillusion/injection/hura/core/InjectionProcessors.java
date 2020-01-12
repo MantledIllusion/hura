@@ -2,6 +2,11 @@ package com.mantledillusion.injection.hura.core;
 
 import com.mantledillusion.essentials.reflection.AnnotationEssentials.AnnotationOccurrence;
 import com.mantledillusion.injection.hura.core.Injector.TemporalInjectorCallback;
+import com.mantledillusion.injection.hura.core.annotation.injection.Inject;
+import com.mantledillusion.injection.hura.core.annotation.injection.Plugin;
+import com.mantledillusion.injection.hura.core.annotation.injection.Qualifier;
+import com.mantledillusion.injection.hura.core.annotation.instruction.Adjust;
+import com.mantledillusion.injection.hura.core.annotation.instruction.Optional;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.annotation.AnnotationProcessor;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.bean.*;
@@ -177,6 +182,16 @@ final class InjectionProcessors<T> {
 						instance = phase;
 					} else if (parameter.getType().isAssignableFrom(TemporalInjectorCallback.class)) {
 						instance = tCallback;
+					} else if (parameter.isAnnotationPresent(Inject.class)) {
+						InjectionSettings<?> injectionSettings = InjectionSettings.of(parameter.getType(),
+								parameter.getAnnotation(Inject.class), parameter.getAnnotation(Qualifier.class),
+								parameter.getAnnotation(Optional.class), parameter.getAnnotation(Adjust.class));
+						instance = tCallback.instantiate(m, injectionSettings);
+					} else if (parameter.isAnnotationPresent(Plugin.class)) {
+						InjectionSettings<?> injectionSettings = InjectionSettings.of(parameter.getType(),
+								parameter.getAnnotation(Plugin.class),
+								parameter.getAnnotation(Optional.class), parameter.getAnnotation(Adjust.class));
+						instance = tCallback.instantiate(m, injectionSettings);
 					}
 					parameters[parameterIndex] = instance;
 					parameterIndex++;

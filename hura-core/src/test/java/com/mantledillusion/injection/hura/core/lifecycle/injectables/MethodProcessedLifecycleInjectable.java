@@ -10,10 +10,14 @@ import com.mantledillusion.injection.hura.core.annotation.lifecycle.bean.PreDest
 public class MethodProcessedLifecycleInjectable extends AbstractLifecycleInjectable {
 
     @PostInject
+    private void process(Phase phase, Injector.TemporalInjectorCallback callback) throws Exception {
+        AbstractLifecycleInjectable.add(phase, this, callback);
+    }
+
     @PostConstruct
     @PreDestroy
     @PostDestroy
-    private void process(Phase phase, Injector.TemporalInjectorCallback callback) throws Exception {
-        AbstractLifecycleInjectable.add(phase, this, callback);
+    private void process2(Phase phase) throws Exception {
+        AbstractLifecycleInjectable.add(phase, this, null);
     }
 }

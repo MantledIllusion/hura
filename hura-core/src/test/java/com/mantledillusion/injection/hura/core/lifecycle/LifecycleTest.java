@@ -64,6 +64,29 @@ public class LifecycleTest extends AbstractInjectionTest {
     }
 
     @Test
+    public void testInjectParameterMethodInjectionDuringPostInject() {
+        InjectableWithInjectedParameterMethodDuringPostInjectPhase injectable = this.suite.injectInSuiteContext(InjectableWithInjectedParameterMethodDuringPostInjectPhase.class);
+        Assertions.assertSame(injectable.sequenceSingleton, injectable.methodInjectedBean.sequenceSingleton);
+    }
+
+    @Test
+    public void testInjectParameterMethodInjectionDuringPostConstruct() {
+        Assertions.assertThrows(ProcessorException.class, () -> suite.injectInSuiteContext(InjectableWithInjectedParameterMethodDuringPostConstructPhase.class));
+    }
+
+    @Test
+    public void testPluginParameterMethodInjectionDuringPostInject() {
+        InjectableWithPluginParameterMethodDuringPostInjectPhase injectable = this.suite.injectInSuiteContext(InjectableWithPluginParameterMethodDuringPostInjectPhase.class);
+        Assertions.assertNotNull(injectable.methodInjectedBean);
+        Assertions.assertNotNull(injectable.methodInjectedBean.getBean());
+    }
+
+    @Test
+    public void testPluginParameterMethodInjectionDuringPostConstruct() {
+        Assertions.assertThrows(ProcessorException.class, () -> suite.injectInSuiteContext(InjectableWithPluginParameterMethodDuringPostConstructPhase.class));
+    }
+
+    @Test
     public void testBlueprintPostProcessingWithoutPostProcessor() {
         Assertions.assertThrows(IllegalArgumentException.class, () -> PhasedBeanProcessor.of(null, Phase.POST_CONSTRUCT));
     }

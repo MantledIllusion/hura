@@ -6,7 +6,7 @@ class PostDestroyValidator extends AbstractLifecycleAnnotationValidator<PostDest
 
     @Construct
     PostDestroyValidator() {
-        super(PostDestroy.class);
+        super(PostDestroy.class, false, false, false);
     }
 
     @Override

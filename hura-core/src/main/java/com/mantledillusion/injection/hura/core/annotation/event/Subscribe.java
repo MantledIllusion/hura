@@ -23,7 +23,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <ul>
  * <li>be a static {@link java.lang.reflect.Method}</li>
  * <li>declare more than one {@link java.lang.reflect.Parameter}</li>
- * <li>declare no {@link java.lang.reflect.Parameter} without specifying at least one exntension {@link Class}</li>
+ * <li>declare no {@link java.lang.reflect.Parameter} without specifying at least one extension {@link Class}</li>
  * <li>declare an extension {@link Class} that is not assignable by its {@link java.lang.reflect.Parameter}</li>
  * </ul>
  */

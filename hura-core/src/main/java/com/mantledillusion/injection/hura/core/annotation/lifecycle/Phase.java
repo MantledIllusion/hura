@@ -16,6 +16,7 @@ public enum Phase {
      * Availability:<br>
      * - Bean: <b>NO</b>
      * - {@link Injector.TemporalInjectorCallback}: <b>YES</b>
+     * - @Inject/@Plugin method parameters: <b>NO</b>
      */
     PRE_CONSTRUCT,
 
@@ -29,6 +30,7 @@ public enum Phase {
      * Availability:<br>
      * - Bean: <b>YES</b>
      * - {@link Injector.TemporalInjectorCallback}: <b>YES</b>
+     * - @Inject/@Plugin method parameters: <b>YES</b>
      */
     POST_INJECT,
 
@@ -43,6 +45,7 @@ public enum Phase {
      * Availability:<br>
      * - Bean: <b>YES</b>
      * - {@link Injector.TemporalInjectorCallback}: <b>NO</b>
+     * - @Inject/@Plugin method parameters: <b>NO</b>
      */
     POST_CONSTRUCT,
 
@@ -55,6 +58,7 @@ public enum Phase {
      * Availability:<br>
      * - Bean: <b>YES</b>
      * - {@link Injector.TemporalInjectorCallback}: <b>NO</b>
+     * - @Inject/@Plugin annotated method parameters: <b>NO</b>
      */
     PRE_DESTROY,
 
@@ -67,6 +71,7 @@ public enum Phase {
      * Availability:<br>
      * - Bean: <b>YES</b>
      * - {@link Injector.TemporalInjectorCallback}: <b>NO</b>
+     * - @Inject/@Plugin annotated method parameters: <b>NO</b>
      */
     POST_DESTROY
 }
