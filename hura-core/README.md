@@ -531,17 +531,19 @@ The annotations allow an array of **_BeanProcessor_** implementing types to be d
 
 When used on a class, the annotations will execute the code of the given processors when the milestone is reached.
 
-When used on a method, the annotations will also execute the code of the given processors when the milestone is reached, but in addition to that the method will be called. The annotated method is allowed to have parameters, as long as these are either of the type **_Phase_** or the type **_TemporalInjectorCallback_**, in which cases these will be supplied to the method upon being called.
+When used on a method, the annotations will also execute the code of the given processors when the milestone is reached, but in addition to that the method will be called. Depending on the **_Phase_** of the annotation used to annotate the method, the method is allowed to have certain types of parameters or injection annotations on parameters.
 
 ```java
 public class SomeProcessedClass {
 
-    @PostConstruct
-    private void processThroughMethodAnnotation() {
+    @PostInject
+    private void processThroughMethodAnnotation(Phase phase, TemporalInjectorCallback callback, @Inject SomeBeanClass bean) {
         // do whatever
-    }
+__    }
 }
 ```
+
+Note that _@PreConstruct_ can <u>not</u> be used on methods; since the bean instance is not available on that milestone, there will not be an instance whose method would be callable.
 
 Using these annotations can be extremely useful by being placed on an interface's class, so all beans made from implementing types will be processed automatically.
 
@@ -562,7 +564,7 @@ public interface SomeProcessedInterface {
 }
 ```
 
-Note that _@PreConstruct_ can <u>not</u> be used on methods; since the bean instance is not available on that milestone, there will not be an instance whose method would be callable.
+The **_BeanProcessor_** interface has parameters for the bean and a **_TemporalInjectorCallback_**, but these parameters will only be supplied when the processor is used in certain **_Phase_**'s annotations.
 
 ##### 6.2.2 Annotation Annotations
 
@@ -600,6 +602,8 @@ public class SomeProcessedClass {
 ```
 
 Using these annotations can be extremely useful for creating own annotations, because they basically allow building custom framework functionality.
+
+The **_AnnotationProcessor_** interface has parameters for the bean and a **_TemporalInjectorCallback_**, but these parameters will only be supplied when the processor is used in certain **_Phase_**'s annotations.
 
 ##### 6.2.3 BeanProcessors in Allocations
 
