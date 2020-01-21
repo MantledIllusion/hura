@@ -1,6 +1,6 @@
 package com.mantledillusion.injection.hura.core.annotation.property;
 
-import com.mantledillusion.injection.hura.core.Injector.TemporalInjectorCallback;
+import com.mantledillusion.injection.hura.core.Injector;
 import com.mantledillusion.injection.hura.core.annotation.ValidatorUtils;
 import com.mantledillusion.injection.hura.core.annotation.instruction.Construct;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
@@ -17,7 +17,8 @@ class ResolveValidator implements AnnotationProcessor<Resolve, AnnotatedElement>
     ResolveValidator() {}
 
 	@Override
-	public void process(Phase phase, Object bean, Resolve annotationInstance, AnnotatedElement annotatedElement, TemporalInjectorCallback callback) throws Exception {
+	public void process(Phase phase, Object bean, Resolve annotationInstance, AnnotatedElement annotatedElement,
+						Injector.TemporalInjectorCallback callback) throws Exception {
 		Type genericType;
 		if (annotatedElement instanceof Field) {
 			Field annotatedField = (Field) annotatedElement;

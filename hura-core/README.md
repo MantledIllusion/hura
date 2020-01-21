@@ -479,7 +479,7 @@ The Java language provides the two method annotations _@PostConstruct_ and _@Pre
 
 Hura allows the same kind of life cycle bean code execution, but through more than just annotated methods and on a finer grained life cycle milestone level.
 
-Depending on the milestone at which the code is executed, the bean to execute the code on might not yet be available. Also Hura will provide a **_TemporalInjectorCallback_** instance when executing code for some milestones; it allows performing manual injection operations in the milestone's currently running injection sequence.
+Depending on the milestone at which the code is executed, the bean to execute the code on might not yet be available. Also Hura will provide a **_TemporalInjectorCallback_** instance when executing code for some milestones; it allows performing manual operations in the milestone's currently running injection sequence.
 
 ### 6.1 Lifecycle Milestones
 
@@ -487,13 +487,15 @@ The lifecycle milestones at which Hura is able to execute code are defined by th
 
 ##### 6.1.1 PRE_CONSTRUCT
 - Bean available: No
-- **_TemporalInjectorCallback_** available: Yes
+- **_InjectionProvider_** available: Yes
+- **_ResolvingProvider_** available: Yes
 
 The milestone right before the bean is instantiated.
 
 ##### 6.1.2 POST_INJECT
 - Bean available: Yes
-- **_TemporalInjectorCallback_** available: Yes
+- **_InjectionProvider_** available: Yes
+- **_ResolvingProvider_** available: Yes
 
 The milestone right after the bean has been instantiated and all downstream beans have been injected.
 
@@ -501,7 +503,8 @@ The injection sequence <u>is not</u> completed at this point; for example, the b
 
 ##### 6.1.3 POST_CONSTRUCT
 - Bean available: Yes
-- **_TemporalInjectorCallback_** available: No
+- **_InjectionProvider_** available: No
+- **_ResolvingProvider_** available: Yes
 
 The milestone right after the bean has been instantiated and all downstream and upstream beans have been injected.
 
@@ -509,13 +512,15 @@ The injection sequence <u>is</u> completed at this point; the injection of all o
 
 ##### 6.1.4 PRE_DESTROY
 - Bean available: Yes
-- **_TemporalInjectorCallback_** available: No
+- **_InjectionProvider_** available: No
+- **_ResolvingProvider_** available: Yes
 
 The milestone right before the bean being destroyed.
 
 ##### 6.1.5 POST_DESTROY
 - Bean available: Yes
-- **_TemporalInjectorCallback_** available: No
+- **_InjectionProvider_** available: No
+- **_ResolvingProvider_** available: No
 
 The milestone right after the bean and all other beans of the same injection sequence have been destroyed.
 
@@ -537,9 +542,9 @@ When used on a method, the annotations will also execute the code of the given p
 public class SomeProcessedClass {
 
     @PostInject
-    private void processThroughMethodAnnotation(Phase phase, TemporalInjectorCallback callback, @Inject SomeBeanClass bean) {
+    private void processThroughMethodAnnotation(Phase phase, InjectionProvider injectionProvider, ResolvingProvider resolvingProvider, @Inject SomeBeanClass bean) {
         // do whatever
-__    }
+    }
 }
 ```
 

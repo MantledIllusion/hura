@@ -1,6 +1,6 @@
 package com.mantledillusion.injection.hura.core.annotation.instruction;
 
-import com.mantledillusion.injection.hura.core.Injector.TemporalInjectorCallback;
+import com.mantledillusion.injection.hura.core.Injector;
 import com.mantledillusion.injection.hura.core.annotation.ValidatorUtils;
 import com.mantledillusion.injection.hura.core.annotation.injection.Aggregate;
 import com.mantledillusion.injection.hura.core.annotation.injection.Inject;
@@ -18,7 +18,8 @@ class OptionalValidator implements AnnotationProcessor<Optional, AnnotatedElemen
 	OptionalValidator() {}
 
 	@Override
-	public void process(Phase phase, Object bean, Optional annotationInstance, AnnotatedElement annotatedElement, TemporalInjectorCallback callback) throws Exception {
+	public void process(Phase phase, Object bean, Optional annotationInstance, AnnotatedElement annotatedElement,
+						Injector.TemporalInjectorCallback callback) throws Exception {
 		if (!annotatedElement.isAnnotationPresent(Inject.class)
 				&& !annotatedElement.isAnnotationPresent(Plugin.class)
 				&& !annotatedElement.isAnnotationPresent(Aggregate.class)

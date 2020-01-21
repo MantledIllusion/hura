@@ -30,7 +30,7 @@ final class AggregationSettings<T> {
         this.optional = optional;
     }
 
-    static <T> AggregationSettings of(Class<T> type, AggregationMode aggregationMode, Aggregate aggregate, Optional optional) {
+    static <T> AggregationSettings<T> of(Class<T> type, AggregationMode aggregationMode, Aggregate aggregate, Optional optional) {
         return new AggregationSettings(type, aggregationMode, StringUtils.defaultIfEmpty(aggregate.qualifierMatcher(), null), aggregate.predicates(), aggregate.distinct(), optional != null);
     }
 }

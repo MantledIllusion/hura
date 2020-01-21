@@ -6,7 +6,7 @@ class PostConstructValidator extends AbstractLifecycleAnnotationValidator<PostCo
 
     @Construct
     PostConstructValidator() {
-        super(PostConstruct.class, false, false, false);
+        super(PostConstruct.class, false, true);
     }
 
     @Override

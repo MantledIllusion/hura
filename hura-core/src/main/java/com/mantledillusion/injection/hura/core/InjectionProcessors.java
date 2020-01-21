@@ -10,7 +10,12 @@ import com.mantledillusion.injection.hura.core.annotation.instruction.Optional;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.annotation.AnnotationProcessor;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.bean.*;
+import com.mantledillusion.injection.hura.core.annotation.property.Matches;
+import com.mantledillusion.injection.hura.core.annotation.property.Resolve;
 import com.mantledillusion.injection.hura.core.exception.ProcessorException;
+import com.mantledillusion.injection.hura.core.service.InjectionProvider;
+import com.mantledillusion.injection.hura.core.service.ResolvingProvider;
+import com.mantledillusion.injection.hura.core.service.StatefulService;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
@@ -180,7 +185,8 @@ final class InjectionProcessors<T> {
 					Object instance = null;
 					if (parameter.getType().isAssignableFrom(Phase.class)) {
 						instance = phase;
-					} else if (parameter.getType().isAssignableFrom(TemporalInjectorCallback.class)) {
+					} else if (parameter.getType().isAssignableFrom(InjectionProvider.class) ||
+							parameter.getType().isAssignableFrom(ResolvingProvider.class)) {
 						instance = tCallback;
 					} else if (parameter.isAnnotationPresent(Inject.class)) {
 						InjectionSettings<?> injectionSettings = InjectionSettings.of(parameter.getType(),
@@ -192,6 +198,11 @@ final class InjectionProcessors<T> {
 								parameter.getAnnotation(Plugin.class),
 								parameter.getAnnotation(Optional.class), parameter.getAnnotation(Adjust.class));
 						instance = tCallback.instantiate(m, injectionSettings);
+					} else if (parameter.isAnnotationPresent(Resolve.class)) {
+						ResolvingSettings resolvingSettings = ResolvingSettings.of(
+								parameter.getAnnotation(Resolve.class), parameter.getAnnotation(Matches.class),
+								parameter.getAnnotation(Optional.class));
+						instance = tCallback.resolve(resolvingSettings);
 					}
 					parameters[parameterIndex] = instance;
 					parameterIndex++;
@@ -217,9 +228,16 @@ final class InjectionProcessors<T> {
 		for (AnnotationOccurrence occurrence : ReflectionCache.getAnnotationsAnnotatedWith(clazz, annotationType)) {
 			LifecycleAnnotationType a = occurrence.getAnnotation().annotationType().getAnnotation(annotationType);
 			for (Class<? extends AnnotationProcessor> processorType: processorTypeRetriever.apply(a)) {
-				AnnotationProcessor<AnnotatedAnnotationType, AnnotatedElementType> processor = (AnnotationProcessor<AnnotatedAnnotationType, AnnotatedElementType>) callback.instantiate(processorType);
-				processorList.add((bean, tCallback) -> processor.process(phase, bean, (AnnotatedAnnotationType) occurrence.getAnnotation(), (AnnotatedElementType) occurrence.getAnnotatedElement(), tCallback));
+				AnnotationProcessor<AnnotatedAnnotationType, AnnotatedElementType> processor =
+						(AnnotationProcessor<AnnotatedAnnotationType, AnnotatedElementType>) callback.instantiate(processorType);
+				processorList.add((bean, tCallback) -> processor.process(phase, bean,
+						(AnnotatedAnnotationType) occurrence.getAnnotation(),
+						(AnnotatedElementType) occurrence.getAnnotatedElement(), tCallback));
 			}
 		}
+	}
+
+	private static <S extends StatefulService> S filterService(Phase phase, Class<S> serviceType, S service) {
+		return phase.isAvailable(serviceType) ? service : null;
 	}
 }

@@ -2,6 +2,14 @@ package com.mantledillusion.injection.hura.core.annotation.lifecycle;
 
 import com.mantledillusion.injection.hura.core.Blueprint;
 import com.mantledillusion.injection.hura.core.Injector;
+import com.mantledillusion.injection.hura.core.service.InjectionProvider;
+import com.mantledillusion.injection.hura.core.service.ResolvingProvider;
+import com.mantledillusion.injection.hura.core.service.StatefulService;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Describes phases of a bean's lifecycle that are significant for its dependency injection.
@@ -15,10 +23,11 @@ public enum Phase {
      * <p>
      * Availability:<br>
      * - Bean: <b>NO</b>
-     * - {@link Injector.TemporalInjectorCallback}: <b>YES</b>
+     * - {@link InjectionProvider}: <b>YES</b>
+     * - {@link ResolvingProvider}: <b>YES</b>
      * - @Inject/@Plugin method parameters: <b>NO</b>
      */
-    PRE_CONSTRUCT,
+    PRE_CONSTRUCT(InjectionProvider.class, ResolvingProvider.class),
 
     /**
      * The phase where the bean has been constructed, {@link Blueprint.PropertyAllocation}s
@@ -29,10 +38,11 @@ public enum Phase {
      * <p>
      * Availability:<br>
      * - Bean: <b>YES</b>
-     * - {@link Injector.TemporalInjectorCallback}: <b>YES</b>
+     * - {@link InjectionProvider}: <b>YES</b>
+     * - {@link ResolvingProvider}: <b>YES</b>
      * - @Inject/@Plugin method parameters: <b>YES</b>
      */
-    POST_INJECT,
+    POST_INJECT(InjectionProvider.class, ResolvingProvider.class),
 
     /**
      * The phase where the bean has been constructed, {@link Blueprint.PropertyAllocation}s
@@ -44,10 +54,11 @@ public enum Phase {
      * <p>
      * Availability:<br>
      * - Bean: <b>YES</b>
-     * - {@link Injector.TemporalInjectorCallback}: <b>NO</b>
+     * - {@link InjectionProvider}: <b>NO</b>
+     * - {@link ResolvingProvider}: <b>YES</b>
      * - @Inject/@Plugin method parameters: <b>NO</b>
      */
-    POST_CONSTRUCT,
+    POST_CONSTRUCT(ResolvingProvider.class),
 
     /**
      * The phase right before the processed bean's end-of-life.
@@ -57,10 +68,11 @@ public enum Phase {
      * <p>
      * Availability:<br>
      * - Bean: <b>YES</b>
-     * - {@link Injector.TemporalInjectorCallback}: <b>NO</b>
+     * - {@link InjectionProvider}: <b>NO</b>
+     * - {@link ResolvingProvider}: <b>YES</b>
      * - @Inject/@Plugin annotated method parameters: <b>NO</b>
      */
-    PRE_DESTROY,
+    PRE_DESTROY(ResolvingProvider.class),
 
     /**
      * The phase right after the processed bean's end-of-life.
@@ -70,8 +82,20 @@ public enum Phase {
      * <p>
      * Availability:<br>
      * - Bean: <b>YES</b>
-     * - {@link Injector.TemporalInjectorCallback}: <b>NO</b>
+     * - {@link InjectionProvider}: <b>NO</b>
+     * - {@link ResolvingProvider}: <b>NO</b>
      * - @Inject/@Plugin annotated method parameters: <b>NO</b>
      */
-    POST_DESTROY
+    POST_DESTROY();
+
+    private final Set<Class<? extends StatefulService>> availableServiceTypes;
+
+    @SafeVarargs
+    Phase(Class<? extends StatefulService>... availableServiceTypes) {
+        this.availableServiceTypes = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(availableServiceTypes)));
+    }
+
+    public boolean isAvailable(Class<? extends StatefulService> serviceType) {
+        return this.availableServiceTypes.contains(serviceType);
+    }
 }

@@ -20,7 +20,8 @@ class AggregateValidator implements AnnotationProcessor<Aggregate, AnnotatedElem
     AggregateValidator() {}
 
 	@Override
-	public void process(Phase phase, Object bean, Aggregate annotationInstance, AnnotatedElement annotatedElement, Injector.TemporalInjectorCallback callback) throws Exception {
+	public void process(Phase phase, Object bean, Aggregate annotationInstance, AnnotatedElement annotatedElement,
+						Injector.TemporalInjectorCallback callback) throws Exception {
 		if (annotatedElement.isAnnotationPresent(Inject.class)) {
 			throw new ValidatorException(
 					"The " + ValidatorUtils.getDescription(annotatedElement) + " is annotated with @"

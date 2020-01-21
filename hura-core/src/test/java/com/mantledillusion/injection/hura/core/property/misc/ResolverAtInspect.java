@@ -1,6 +1,5 @@
 package com.mantledillusion.injection.hura.core.property.misc;
 
-
 import com.mantledillusion.injection.hura.core.Injector;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.annotation.AnnotationProcessor;

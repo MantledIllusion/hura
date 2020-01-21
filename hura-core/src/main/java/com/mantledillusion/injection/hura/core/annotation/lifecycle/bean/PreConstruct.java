@@ -15,7 +15,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * phase of a bean's life cycle.
  * <p>
  * {@link Method}s cannot be annotated with @{@link PreConstruct} because this {@link Phase} is executed before the bean
- * being instantiated
+ * being instantiated.
  */
 @Retention(RUNTIME)
 @Target({TYPE})

@@ -1,6 +1,6 @@
 package com.mantledillusion.injection.hura.core.annotation.instruction;
 
-import com.mantledillusion.injection.hura.core.Injector.TemporalInjectorCallback;
+import com.mantledillusion.injection.hura.core.Injector;
 import com.mantledillusion.injection.hura.core.annotation.ValidatorUtils;
 import com.mantledillusion.injection.hura.core.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.core.annotation.injection.Plugin;
@@ -17,7 +17,8 @@ class AdjustValidator implements AnnotationProcessor<Adjust, AnnotatedElement> {
 	AdjustValidator() {}
 
 	@Override
-	public void process(Phase phase, Object bean, Adjust annotationInstance, AnnotatedElement annotatedElement, TemporalInjectorCallback callback) throws Exception {
+	public void process(Phase phase, Object bean, Adjust annotationInstance, AnnotatedElement annotatedElement,
+						Injector.TemporalInjectorCallback callback) throws Exception {
 		if (!annotatedElement.isAnnotationPresent(Inject.class)
 				&& !annotatedElement.isAnnotationPresent(Plugin.class)) {
 			throw new ValidatorException("The " + ValidatorUtils.getDescription(annotatedElement)

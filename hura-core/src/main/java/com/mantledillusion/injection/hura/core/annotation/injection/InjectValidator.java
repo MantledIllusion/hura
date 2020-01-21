@@ -17,7 +17,8 @@ class InjectValidator implements AnnotationProcessor<Inject, AnnotatedElement> {
 	InjectValidator() {}
 
 	@Override
-	public void process(Phase phase, Object bean, Inject annotationInstance, AnnotatedElement annotatedElement, Injector.TemporalInjectorCallback callback) throws Exception {
+	public void process(Phase phase, Object bean, Inject annotationInstance, AnnotatedElement annotatedElement,
+						Injector.TemporalInjectorCallback callback) throws Exception {
 		if (annotatedElement instanceof Field) {
 			Field field = (Field) annotatedElement;
 			if (Modifier.isStatic(field.getModifiers())) {

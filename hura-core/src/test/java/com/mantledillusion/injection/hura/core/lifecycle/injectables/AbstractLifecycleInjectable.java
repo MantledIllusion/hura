@@ -1,7 +1,7 @@
 package com.mantledillusion.injection.hura.core.lifecycle.injectables;
 
-import com.mantledillusion.injection.hura.core.Injector;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
+import com.mantledillusion.injection.hura.core.service.ResolvingProvider;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,11 +14,12 @@ public abstract class AbstractLifecycleInjectable {
 
     public static final Map<Class<? extends AbstractLifecycleInjectable>, List<Phase>> PHASES = new HashMap<>();
 
-    public static void add(Phase phase, AbstractLifecycleInjectable bean, Injector.TemporalInjectorCallback callback) throws Exception {
+    @SuppressWarnings("unchecked")
+    public static void add(Phase phase, AbstractLifecycleInjectable bean, ResolvingProvider resolvingProvider) throws Exception {
         Class<? extends AbstractLifecycleInjectable> impl;
         if (phase == Phase.PRE_CONSTRUCT) {
             impl = (Class<? extends AbstractLifecycleInjectable>)
-                    Class.forName(callback.resolve("${"+AbstractLifecycleInjectable.IMPL_PROPERTY_KEY+"}"));
+                    Class.forName(resolvingProvider.resolve("${"+AbstractLifecycleInjectable.IMPL_PROPERTY_KEY+"}"));
         } else {
             impl = bean.getClass();
         }

@@ -18,7 +18,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <p>
  * {@link Method}s annotated with @{@link PostDestroy} support the following parameters:<br>
  * <ul>
- * <li>Of the type {@link Phase}
+ * <li>Of the type {@link Phase}</li>
  * </ul>
  * <p>
  * {@link Method}s annotated with @{@link PostDestroy} may not:<br>

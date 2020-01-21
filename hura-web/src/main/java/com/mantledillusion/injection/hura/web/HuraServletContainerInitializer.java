@@ -20,6 +20,7 @@ public final class HuraServletContainerInitializer implements ServletContainerIn
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onStartup(Set<Class<?>> applicationClasses, ServletContext ctx) throws ServletException {
         ctx.addListener(this);
         for (Class<?> c: applicationClasses) {

@@ -1,6 +1,7 @@
 package com.mantledillusion.injection.hura.core;
 
 import com.mantledillusion.injection.hura.core.annotation.instruction.Define;
+import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
@@ -38,9 +39,8 @@ public interface Blueprint {
         /**
          * Provides a instance of this provider's bean type.
          *
-         * @param callback A callback to the injection sequence that caused the call on this
-         *                 {@link BeanProvider}. Can be used if the bean being provided needs
-         *                 some prerequisite beans; might <b>not</b> be null.
+         * @param callback The {@link Injector.TemporalInjectorCallback} allowing callbacks to the {@link Injector} the
+         *                 injection of the bean is executed by; might be null depending on the {@link Phase}.
          * @return A bean instance; might be null
          */
         T provide(Injector.TemporalInjectorCallback callback);

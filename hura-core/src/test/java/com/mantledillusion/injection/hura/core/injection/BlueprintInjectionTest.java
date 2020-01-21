@@ -93,7 +93,7 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 			
 			@Define
 			public Blueprint.SingletonAllocation singletonProviderAllocationMethod() {
-				return Blueprint.SingletonAllocation.allocateToProvider(InjectableWithExplicitSingleton.SINGLETON, callback -> instance);
+				return Blueprint.SingletonAllocation.allocateToProvider(InjectableWithExplicitSingleton.SINGLETON, (callback) -> instance);
 			}
 		});
 
@@ -147,7 +147,7 @@ public class BlueprintInjectionTest extends AbstractInjectionTest {
 			
 			@Define
 			public Blueprint.TypeAllocation providerAllocationMethod() {
-				return Blueprint.TypeAllocation.allocateToProvider(InjectableInterface.class, callback -> instance);
+				return Blueprint.TypeAllocation.allocateToProvider(InjectableInterface.class, (callback) -> instance);
 			}
 		});
 

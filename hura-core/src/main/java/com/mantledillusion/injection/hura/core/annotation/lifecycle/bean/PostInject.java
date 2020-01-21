@@ -1,10 +1,12 @@
 package com.mantledillusion.injection.hura.core.annotation.lifecycle.bean;
 
-import com.mantledillusion.injection.hura.core.Injector.TemporalInjectorCallback;
+import com.mantledillusion.injection.hura.core.service.InjectionProvider;
+import com.mantledillusion.injection.hura.core.service.ResolvingProvider;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.annotation.PreConstruct;
 import com.mantledillusion.injection.hura.core.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.core.annotation.injection.Plugin;
+import com.mantledillusion.injection.hura.core.annotation.property.Resolve;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
@@ -21,10 +23,12 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <p>
  * {@link Method}s annotated with @{@link PostInject} support the following parameters:<br>
  * <ul>
- * <li>Of the type {@link Phase}
- * <li>Of the type {@link TemporalInjectorCallback}</li>
+ * <li>Of the type {@link Phase}</li>
+ * <li>Of the type {@link InjectionProvider}</li>
+ * <li>Of the type {@link ResolvingProvider}</li>
  * <li>Any type annotated with {@link Inject}</li>
  * <li>Any type annotated with {@link Plugin}</li>
+ * <li>Any type annotated with {@link Resolve}</li>
  * </ul>
  * <p>
  * {@link Method}s annotated with @{@link PostInject} may not:<br>

@@ -17,7 +17,8 @@ class SubscribeValidator implements AnnotationProcessor<Subscribe, Method> {
     private SubscribeValidator() {}
 
     @Override
-    public void process(Phase phase, Object bean, Subscribe annotationInstance, Method method, Injector.TemporalInjectorCallback callback) throws Exception {
+    public void process(Phase phase, Object bean, Subscribe annotationInstance, Method method,
+                        Injector.TemporalInjectorCallback callback) throws Exception {
         Parameter[] parameters = method.getParameters();
         if (Modifier.isStatic(method.getModifiers())) {
             throw new ValidatorException("The " + ValidatorUtils.getDescription(method) + " is annotated with @"

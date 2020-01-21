@@ -1,7 +1,6 @@
 package com.mantledillusion.injection.hura.core.annotation.lifecycle.annotation;
 
 import com.mantledillusion.injection.hura.core.Injector;
-import com.mantledillusion.injection.hura.core.Injector.TemporalInjectorCallback;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
 
 import java.lang.annotation.Annotation;
@@ -36,9 +35,10 @@ public interface AnnotationProcessor<A extends Annotation, E extends AnnotatedEl
      *                           on the {@link AnnotatedElement}; might <b>not</b> be null.
      * @param annotatedElement   The {@link AnnotatedElement} the {@link Annotation} to process
      *                           that was found on; might <b>not</b> be null.
-     * @param callback           The {@link TemporalInjectorCallback} to the {@link Injector}
-     *                           the injection of the bean is executed by; might be null depending on the {@link Phase}.
+     * @param callback           The {@link Injector.TemporalInjectorCallback} allowing callbacks to
+     *                           the {@link Injector} the injection of the bean is executed by; might be null depending
+     *                           on the {@link Phase}.
      * @throws Exception Exceptions that may be thrown during validation.
      */
-    void process(Phase phase, Object bean, A annotationInstance, E annotatedElement, TemporalInjectorCallback callback) throws Exception;
+    void process(Phase phase, Object bean, A annotationInstance, E annotatedElement, Injector.TemporalInjectorCallback callback) throws Exception;
 }

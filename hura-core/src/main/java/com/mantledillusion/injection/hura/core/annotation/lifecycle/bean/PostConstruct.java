@@ -2,6 +2,7 @@ package com.mantledillusion.injection.hura.core.annotation.lifecycle.bean;
 
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.annotation.PreConstruct;
+import com.mantledillusion.injection.hura.core.annotation.property.Resolve;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
@@ -18,7 +19,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <p>
  * {@link Method}s annotated with @{@link PostConstruct} support the following parameters:<br>
  * <ul>
- * <li>Of the type {@link Phase}
+ * <li>Of the type {@link Phase}</li>
+ * <li>Any type annotated with {@link Resolve}</li>
  * </ul>
  * <p>
  * {@link Method}s annotated with @{@link PostConstruct} may not:<br>

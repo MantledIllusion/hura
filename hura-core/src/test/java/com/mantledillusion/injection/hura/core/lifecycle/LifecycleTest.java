@@ -87,6 +87,20 @@ public class LifecycleTest extends AbstractInjectionTest {
     }
 
     @Test
+    public void testResolvedParameterMethodInjectionDuringPostInject() {
+        String propertyValue = "value";
+        InjectableWithResolvedParameterDuringPostInjectPhase injectable = this.suite.injectInSuiteContext(InjectableWithResolvedParameterDuringPostInjectPhase.class,
+                Blueprint.PropertyAllocation.of(InjectableWithResolvedParameterDuringPostInjectPhase.PROPERTY_KEY, propertyValue));
+        this.suite.destroyInSuiteContext(injectable);
+        Assertions.assertEquals(propertyValue, injectable.methodResolvedValue);
+    }
+
+    @Test
+    public void testResolvedParameterMethodInjectionDuringPostDestroy() {
+        Assertions.assertThrows(ProcessorException.class, () -> suite.injectInSuiteContext(InjectableWithResolvedParameterDuringPostDestroyPhase.class));
+    }
+
+    @Test
     public void testBlueprintPostProcessingWithoutPostProcessor() {
         Assertions.assertThrows(IllegalArgumentException.class, () -> PhasedBeanProcessor.of(null, Phase.POST_CONSTRUCT));
     }

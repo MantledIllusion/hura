@@ -6,7 +6,7 @@ class PostInjectValidator extends AbstractLifecycleAnnotationValidator<PostInjec
 
     @Construct
     PostInjectValidator() {
-        super(PostInject.class, true, true, true);
+        super(PostInject.class, true, true);
     }
 
     @Override

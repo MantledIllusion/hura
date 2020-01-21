@@ -21,11 +21,11 @@ import com.mantledillusion.injection.hura.core.exception.*;
 import com.mantledillusion.injection.hura.core.service.AggregationProvider;
 import com.mantledillusion.injection.hura.core.service.InjectionProvider;
 import com.mantledillusion.injection.hura.core.service.ResolvingProvider;
+import com.mantledillusion.injection.hura.core.service.StatefulService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.lang.reflect.Executable;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -114,38 +114,53 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
     }
 
     /**
-     * A temporarily valid injection callback that can be used to instantiate a bean
-     * during a specific processing of a currently running injection sequence of an
-     * {@link Injector}.
+     * A temporarily valid callback that offers {@link StatefulService} functionality by delegating calls to the
+     * functions of...<br>
+     * - {@link InjectionProvider}<br>
+     * - {@link ResolvingProvider}<br>
+     * ...to the {@link Injector} performing the injection sequence the {@link TemporalInjectorCallback} belongs to.
      * <p>
-     * Since subsequent injection sequences cannot be started during the processing
-     * of a parent injection sequence, this callback can be used during processing
-     * to perform a manually triggered injection in the currently running sequence.
-     * For example, it is prohibited to call an {@link Injector} to inject something
-     * during a @{@link Process} method call. Doing so would create the possibility
-     * of incoherent {@link Blueprint.SingletonAllocation} pools, since the currently running injection
-     * sequence (which has caused the @{@link Process} method to be called) could
-     * define a sequence singleton later on that such an intermediate injection
-     * sequence created and finished during the method would not be able to obtain.
+     * The {@link TemporalInjectorCallback} is only active during the {@link Phase} it is provided for. After that
+     * {@link Phase} ends in the injection sequence, the callback will be shutdown automatically. Any successive calls
+     * on the callback's functions will result in {@link ShutdownException}s.
      * <p>
-     * The callback automatically looses its instantiation ability when the
-     * injection sequence proceeds; any successive calls on the callback's functions
-     * will result in {@link IllegalStateException}s. The current state can be
-     * checked with {@link TemporalInjectorCallback#isActive()}.
+     * It can be determined if the {@link TemporalInjectorCallback}'s {@link Phase} is still in progress by calling
+     * {@link #isActive()}. Additionally, {@link #isActive(Class)} determines if the given {@link StatefulService}'s
+     * functionality is also available in that {@link Phase}.
      */
     public final class TemporalInjectorCallback implements InjectionProvider, ResolvingProvider {
 
         private final InjectionChain chain;
-
+        private final Phase phase;
         private boolean isActive = true;
 
-        private TemporalInjectorCallback(InjectionChain chain) {
+        private TemporalInjectorCallback(InjectionChain chain, Phase phase) {
             this.chain = chain;
+            this.phase = phase;
+        }
+
+        /**
+         * Returns whether this {@link TemporalInjectorCallback} is active for providing the given
+         * {@link StatefulService}'s functionality in the {@link Phase} {@link #isActive()} in.
+         *
+         * @param serviceType The {@link StatefulService} to check for activity; might <b>not</b> be null.
+         * @return True if this {@link TemporalInjectorCallback} can serve the given {@link StatefulService}'s
+         * functionality, false otherwise
+         */
+        public boolean isActive(Class<? extends StatefulService> serviceType) {
+            return this.isActive && this.phase.isAvailable(serviceType);
         }
 
         @Override
         public boolean isActive() {
             return isActive;
+        }
+
+        private void checkActive(Class<? extends StatefulService> serviceType) {
+            checkActive();
+            if (!this.phase.isAvailable(serviceType)) {
+                throw new ShutdownException("The " + serviceType.getSimpleName() + " is not available in the phase " + this.phase + ".");
+            }
         }
 
         private synchronized void shutdown() {
@@ -154,7 +169,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
 
         @Override
         public final String resolve(String propertyKey, String matcher, boolean forced) {
-            checkActive();
+            checkActive(ResolvingProvider.class);
 
             InjectionUtils.checkKey(propertyKey);
             InjectionUtils.checkMatcher(matcher, null);
@@ -163,9 +178,13 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
             return this.chain.resolve(set);
         }
 
+        String resolve(ResolvingSettings resolvingSettings) {
+            return this.chain.resolve(resolvingSettings);
+        }
+
         @Override
         public <T> T instantiate(Class<T> clazz, Blueprint.Allocation allocation, Blueprint.Allocation... allocations) {
-            checkActive();
+            checkActive(InjectionProvider.class);
 
             InjectionChain chain = this.chain.extendBy(InjectionAllocations.ofAllocations(ListEssentials.toList(allocations, allocation)));
             InjectionSettings<T> set = InjectionSettings.of(clazz);
@@ -174,7 +193,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
 
         @Override
         public <T> T instantiate(Class<T> clazz, Collection<Blueprint> blueprints) {
-            checkActive();
+            checkActive(InjectionProvider.class);
 
             InjectionChain chain = this.chain.extendBy(InjectionAllocations.ofBlueprints(blueprints));
             InjectionSettings<T> set = InjectionSettings.of(clazz);
@@ -224,7 +243,9 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
         @Override
         T allocate(Injector injector, InjectionChain injectionChain, InjectionSettings<T> set,
                    InjectionProcessors<T> applicators) {
-            T bean = this.provider.provide(injector.new TemporalInjectorCallback(injectionChain));
+            TemporalInjectorCallback tCallback = injector.new TemporalInjectorCallback(injectionChain, Phase.PRE_CONSTRUCT);
+            T bean = this.provider.provide(tCallback);
+            tCallback.shutdown();
             injector.handleDestroying(injectionChain, set, bean, true,
                     Collections.emptyList(), Collections.emptyList());
             return bean;
@@ -522,7 +543,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
     }
 
     private <T> InjectionProcessors<T> buildApplicators(InjectionChain chain, InjectionSettings<T> set) {
-        TemporalInjectorCallback callback = new TemporalInjectorCallback(chain);
+        TemporalInjectorCallback callback = new TemporalInjectorCallback(chain, Phase.PRE_CONSTRUCT);
         InjectionProcessors<T> applicators = InjectionProcessors.of(set.type, callback);
         callback.shutdown();
 
@@ -541,7 +562,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
                     + " as any kind of singleton, as that would allow taking their sequence context out of itself.");
         }
 
-        process(null, set.type, injectionChain, applicators.getProcessorsOfPhase(Phase.PRE_CONSTRUCT));
+        process(null, set.type, injectionChain, Phase.PRE_CONSTRUCT, applicators.getProcessorsOfPhase(Phase.PRE_CONSTRUCT));
 
         InjectableConstructor<T> injectableConstructor = ReflectionCache.getInjectableConstructor(set.type);
 
@@ -617,7 +638,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
             }
         }
 
-        process(instance, set.type, injectionChain, applicators.getProcessorsOfPhase(Phase.POST_INJECT));
+        process(instance, set.type, injectionChain, Phase.POST_INJECT, applicators.getProcessorsOfPhase(Phase.POST_INJECT));
 
         for (AggregateableField aggregateableField: ReflectionCache.getAggregateableFields(set.type)) {
             Field field = aggregateableField.getField();
@@ -641,38 +662,46 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
     }
 
     private <T> void registerPreDestroyProcessors(T instance, InjectionChain injectionChain,
-                                                  List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> preDestroyables,
-                                                  List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> postDestroyables) {
-        for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> destroyer : preDestroyables) {
-            injectionChain.addPreDestroyable(() -> destroyer.process(instance, null));
+                                                  List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> preDestroyers,
+                                                  List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> postDestroyers) {
+        for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> preDestroyer : preDestroyers) {
+            injectionChain.addPreDestroyable(() -> process(instance, (Class<T>) instance.getClass(),
+                    injectionChain, Phase.PRE_DESTROY, preDestroyer));
         }
-        for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> destroyer : postDestroyables) {
-            injectionChain.addPostDestroyable(() -> destroyer.process(instance, null));
+        for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> postDestroyer : postDestroyers) {
+            injectionChain.addPostDestroyable(() -> process(instance, (Class<T>) instance.getClass(),
+                    injectionChain, Phase.POST_DESTROY, postDestroyer));
         }
     }
 
     private <T> void registerPostConstructProcessors(T instance, InjectionChain injectionChain,
-                                                     List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> finalizers) {
+                                                     List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> postConstructors) {
         if (instance instanceof Injector) {
             injectionChain.addActivateable(() -> ((Injector) instance).state = InjectorState.ACTIVE);
         }
-        for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> finalizer : finalizers) {
-            injectionChain.addPostConstructables(() -> finalizer.process(instance, null));
+        for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> finalizer : postConstructors) {
+            injectionChain.addPostConstructables(() -> process(instance, (Class<T>) instance.getClass(),
+                    injectionChain, Phase.POST_CONSTRUCT, finalizer));
         }
     }
 
-    private <T> void process(T instance, Class<T> type, InjectionChain chain,
-                             List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> injectionProcessors) {
-        for (InjectionProcessors.LifecycleAnnotationProcessor<? super T> postProcessor : injectionProcessors) {
-            TemporalInjectorCallback callback = new TemporalInjectorCallback(chain);
-            try {
-                postProcessor.process(instance, callback);
-            } catch (Exception e) {
-                throw new ProcessorException("Unable to process instance of '" + type.getSimpleName()
-                        + "'; the processing threw an exception", e);
-            } finally {
-                callback.shutdown();
-            }
+    private <T> void process(T instance, Class<T> type, InjectionChain chain, Phase phase,
+                             List<InjectionProcessors.LifecycleAnnotationProcessor<? super T>> processors) {
+        for (InjectionProcessors.LifecycleAnnotationProcessor<? super T>  processor: processors) {
+            process(instance, type, chain, phase, processor);
+        }
+    }
+
+    private <T> void process(T instance, Class<T> type, InjectionChain chain, Phase phase,
+                             InjectionProcessors.LifecycleAnnotationProcessor<? super T> processor) {
+        TemporalInjectorCallback callback = new TemporalInjectorCallback(chain, phase);
+        try {
+            processor.process(instance, callback);
+        } catch (Exception e) {
+            throw new ProcessorException("Unable to process instance of '" + type.getSimpleName()
+                    + "'; the processing threw an exception", e);
+        } finally {
+            callback.shutdown();
         }
     }
 
