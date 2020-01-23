@@ -1,6 +1,6 @@
 # Hura Web
 
-Hura's web combines the injection functionality of the core with the Java Servlet 4 specification.
+Hura's Web setup combines the injection functionality of the core with the Java Servlet 4 specification.
 
 ## 1. Running Hura injected web applications
 
