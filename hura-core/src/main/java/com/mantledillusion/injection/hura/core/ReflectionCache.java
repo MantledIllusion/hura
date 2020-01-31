@@ -16,7 +16,6 @@ import com.mantledillusion.injection.hura.core.annotation.instruction.Construct;
 import com.mantledillusion.injection.hura.core.annotation.instruction.Optional;
 import com.mantledillusion.injection.hura.core.annotation.property.Matches;
 import com.mantledillusion.injection.hura.core.annotation.property.Resolve;
-import com.mantledillusion.injection.hura.core.exception.BlueprintException;
 import com.mantledillusion.injection.hura.core.exception.InjectionException;
 import com.mantledillusion.injection.hura.core.exception.ValidatorException;
 
@@ -399,23 +398,7 @@ final class ReflectionCache {
 						}
 					}
 
-					Class<?> aggregationType;
-					AggregationSettings.AggregationMode aggregationMode;
-					if (field.getType() == Collection.class) {
-						aggregationType = InjectionUtils.findCollectionType(field.getGenericType());
-						aggregationMode = AggregationSettings.AggregationMode.LIST;
-					} else if (field.getType() == List.class) {
-						aggregationType = InjectionUtils.findCollectionType(field.getGenericType());
-						aggregationMode = AggregationSettings.AggregationMode.LIST;
-					} else if (field.getType() == Set.class) {
-						aggregationType = InjectionUtils.findCollectionType(field.getGenericType());
-						aggregationMode = AggregationSettings.AggregationMode.SET;
-					} else {
-						aggregationType = field.getType();
-						aggregationMode = AggregationSettings.AggregationMode.SINGLE;
-					}
-
-					AggregationSettings<?> fieldSet = retrieveAggregationSettings(aggregationType, aggregationMode, field);
+					AggregationSettings<?> fieldSet = retrieveAggregationSettings(field.getType(), field.getGenericType(), field);
 
 					fields.add(new AggregateableField(field, fieldSet));
 				}
@@ -541,7 +524,7 @@ final class ReflectionCache {
 		}
 	}
 
-	private static <T> AggregationSettings<T> retrieveAggregationSettings(Class<T> type, AggregationSettings.AggregationMode aggregationMode, AnnotatedElement e) {
-		return AggregationSettings.of(type, aggregationMode, e.getAnnotation(Aggregate.class), e.getAnnotation(Optional.class));
+	private static <T> AggregationSettings<T> retrieveAggregationSettings(Class<T> type, Type genericType, AnnotatedElement e) {
+		return AggregationSettings.of(type, genericType, e.getAnnotation(Aggregate.class), e.getAnnotation(Optional.class));
 	}
 }

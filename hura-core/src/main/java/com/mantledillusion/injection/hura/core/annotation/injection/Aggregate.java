@@ -12,6 +12,7 @@ import java.lang.reflect.Field;
 import java.util.function.BiPredicate;
 
 import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
@@ -32,7 +33,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * </ul>
  */
 @Retention(RUNTIME)
-@Target({FIELD})
+@Target({FIELD, PARAMETER})
 @PreConstruct(AggregateValidator.class)
 public @interface Aggregate {
 

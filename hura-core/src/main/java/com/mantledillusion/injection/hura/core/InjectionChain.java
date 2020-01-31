@@ -297,7 +297,7 @@ final class InjectionChain {
 		return this.singletonContext.retrieveSingleton(qualifier);
 	}
 
-	<T> Collection<T> aggregateSingletons(Class<T> type, Collection<BiPredicate<String, T>> biPredicates) {
+	<T> Collection<T> aggregate(Class<T> type, Collection<BiPredicate<String, T>> biPredicates) {
 		return this.singletonContext.aggregate(type, biPredicates);
 	}
 

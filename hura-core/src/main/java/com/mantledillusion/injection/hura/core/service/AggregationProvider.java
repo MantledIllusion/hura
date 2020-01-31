@@ -9,7 +9,7 @@ import java.util.function.BiPredicate;
 /**
  * Interface for services that provide aggregation of singleton beans.
  */
-public interface AggregationProvider {
+public interface AggregationProvider extends StatefulService {
 
     /**
      * Aggregates all singleton beans matching the {@link java.util.function.Predicate}s.

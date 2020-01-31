@@ -101,6 +101,22 @@ public class LifecycleTest extends AbstractInjectionTest {
     }
 
     @Test
+    public void testAggregatedParameterMethodInjectionDuringPostConstruct() {
+        InjectableWithAggregatedParameterMethodDuringPostConstructPhase injectable = this.suite.injectInSuiteContext(InjectableWithAggregatedParameterMethodDuringPostConstructPhase.class,
+                Blueprint.SingletonAllocation.allocateToInstance("q0", new Injectable()),
+                Blueprint.SingletonAllocation.allocateToInstance("q1", new Injectable()),
+                Blueprint.SingletonAllocation.allocateToInstance("q2", new Injectable()));
+        Assertions.assertNotNull(injectable.aggregatedByMethod);
+        Assertions.assertEquals(2, injectable.aggregatedByMethod.size());
+        Assertions.assertEquals(injectable.aggregatedByField, injectable.aggregatedByMethod);
+    }
+
+    @Test
+    public void testAggregatedParameterMethodInectionDuringPostInject() {
+        Assertions.assertThrows(ProcessorException.class, () -> suite.injectInSuiteContext(InjectableWithAggregatedParameterMethodDuringPostInjectPhase.class));
+    }
+
+    @Test
     public void testBlueprintPostProcessingWithoutPostProcessor() {
         Assertions.assertThrows(IllegalArgumentException.class, () -> PhasedBeanProcessor.of(null, Phase.POST_CONSTRUCT));
     }

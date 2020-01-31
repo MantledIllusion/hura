@@ -6,7 +6,7 @@ class PreConstructValidator extends AbstractLifecycleAnnotationValidator<PreCons
 
     @Construct
     PreConstructValidator() {
-        super(PreConstruct.class, true,true);
+        super(PreConstruct.class, true,true, false);
     }
 
     @Override

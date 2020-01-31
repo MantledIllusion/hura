@@ -2,6 +2,7 @@ package com.mantledillusion.injection.hura.core.annotation.lifecycle.bean;
 
 import com.mantledillusion.injection.hura.core.Injector;
 import com.mantledillusion.injection.hura.core.annotation.ValidatorUtils;
+import com.mantledillusion.injection.hura.core.annotation.injection.Aggregate;
 import com.mantledillusion.injection.hura.core.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.core.annotation.injection.Plugin;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
@@ -22,11 +23,14 @@ abstract class AbstractLifecycleAnnotationValidator<A extends Annotation> implem
     private final Class<A> annotationType;
     private final boolean allowInjection;
     private final boolean allowResolving;
+    private final boolean allowAggregating;
 
-    AbstractLifecycleAnnotationValidator(Class<A> annotationType, boolean allowInjection, boolean allowResolving) {
+    AbstractLifecycleAnnotationValidator(Class<A> annotationType, boolean allowInjection, boolean allowResolving,
+                                         boolean allowAggregating) {
         this.annotationType = annotationType;
         this.allowInjection = allowInjection;
         this.allowResolving = allowResolving;
+        this.allowAggregating = allowAggregating;
     }
 
     protected abstract Class<? extends BeanProcessor<?>>[] getProcessors(A annotationInstance);
@@ -98,6 +102,15 @@ abstract class AbstractLifecycleAnnotationValidator<A extends Annotation> implem
                             throw new ValidatorException("The " + ValidatorUtils.getDescription(method) + " is annotated with @"
                                     + annotationType.getSimpleName() + " but its parameter #" + parameterNumber + " '" + parameter.getName()
                                     + "' is annotated with @" + Resolve.class.getSimpleName() + " which is a functionality "
+                                    + "that is not available in this " + Phase.class.getSimpleName() + ".");
+                        }
+                    } else if (parameter.isAnnotationPresent(Aggregate.class)) {
+                        if (this.allowAggregating) {
+                            continue;
+                        } else {
+                            throw new ValidatorException("The " + ValidatorUtils.getDescription(method) + " is annotated with @"
+                                    + annotationType.getSimpleName() + " but its parameter #" + parameterNumber + " '" + parameter.getName()
+                                    + "' is annotated with @" + Aggregate.class.getSimpleName() + " which is a functionality "
                                     + "that is not available in this " + Phase.class.getSimpleName() + ".");
                         }
                     } else {

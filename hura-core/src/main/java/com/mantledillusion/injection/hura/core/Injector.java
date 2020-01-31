@@ -26,9 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.BiPredicate;
@@ -128,7 +126,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
      * {@link #isActive()}. Additionally, {@link #isActive(Class)} determines if the given {@link StatefulService}'s
      * functionality is also available in that {@link Phase}.
      */
-    public final class TemporalInjectorCallback implements InjectionProvider, ResolvingProvider {
+    public final class TemporalInjectorCallback implements InjectionProvider, ResolvingProvider, AggregationProvider {
 
         private final InjectionChain chain;
         private final Phase phase;
@@ -203,6 +201,17 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
         <T> T instantiate(Method m, InjectionSettings<T> set) {
             InjectionChain chain = this.chain.extendBy(m, set);
             return Injector.this.instantiate(chain, set);
+        }
+
+        @Override
+        public <T> Collection<T> aggregate(Class<T> type, Collection<BiPredicate<String, T>> biPredicates) {
+            checkActive(AggregationProvider.class);
+
+            return this.chain.aggregate(type, biPredicates);
+        }
+
+        Object aggregate(Parameter p, AggregationSettings<?> paramSet) {
+            return Injector.this.aggregate(this.chain, paramSet, p);
         }
     }
 
@@ -707,52 +716,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
 
     private <T> void registerAggregationProcessor(InjectionChain chain, Object instance, Field field, AggregationSettings<T> fieldSet) {
         chain.addAggregateable(() -> {
-            List<BiPredicate<String, T>> predicates = new ArrayList<>();
-            if (fieldSet.qualifierMatcher != null) {
-                String qualifierMatcher = chain.resolve(ResolvingSettings.of(fieldSet.qualifierMatcher, true));
-                try {
-                    Pattern.compile(qualifierMatcher);
-                } catch (PatternSyntaxException | NullPointerException e) {
-                    throw new AggregationException("The " + ValidatorUtils.getDescription(field)
-                            + " is annotated with @" + Aggregate.class.getSimpleName() + ", but the qualifierMatcher '"
-                            + qualifierMatcher + "' (resolved from '" + fieldSet.qualifierMatcher + "') is no valid pattern.", e);
-                }
-                predicates.add((qualifier, bean) -> qualifier.matches(qualifierMatcher));
-            }
-            for (Class<? extends BiPredicate<String, T>> predicateType: fieldSet.predicates) {
-                predicates.add(instantiate(chain, InjectionSettings.of(predicateType)));
-            }
-
-            Collection<T> singletons = chain.aggregateSingletons(fieldSet.type, predicates);
-
-            Object parameter = null;
-            switch (fieldSet.aggregationMode) {
-                case SINGLE:
-                    if (singletons.isEmpty()) {
-                        if (!fieldSet.optional) {
-                            throw new AggregationException("The non-optional field '" + field.getName()
-                                    + "' of the type " + field.getDeclaringClass().getSimpleName()
-                                    + " requires the aggregation of a single singleton instance, but no candidate is found");
-                        }
-                    } else if (singletons.size() > 1) {
-                        if (!fieldSet.distinct) {
-                            throw new AggregationException("The non-distinct field '" + field.getName()
-                                    + "' of the type " + field.getDeclaringClass().getSimpleName()
-                                    + " requires the aggregation of a single singleton instance, but "
-                                    + singletons.size() + " candidates have been found");
-                        }
-                        parameter = singletons.stream().findFirst().get();
-                    } else {
-                        parameter = singletons.stream().findFirst().get();
-                    }
-                    break;
-                case LIST:
-                    parameter = new ArrayList<>(singletons);
-                    break;
-                case SET:
-                    parameter = new HashSet<>(singletons);
-                    break;
-            }
+            Object parameter = aggregate(chain, fieldSet, field);
 
             try {
                 field.set(instance, parameter);
@@ -767,6 +731,55 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
                         + field.getDeclaringClass().getSimpleName() + "; unable to gain access", e);
             }
         });
+    }
+
+    private <T> Object aggregate(InjectionChain chain, AggregationSettings<T> fieldSet, AnnotatedElement annotatedElement) {
+        List<BiPredicate<String, T>> predicates = new ArrayList<>();
+        if (fieldSet.qualifierMatcher != null) {
+            String qualifierMatcher = chain.resolve(ResolvingSettings.of(fieldSet.qualifierMatcher, true));
+            try {
+                Pattern.compile(qualifierMatcher);
+            } catch (PatternSyntaxException | NullPointerException e) {
+                throw new AggregationException("The " + ValidatorUtils.getDescription(annotatedElement)
+                        + " is annotated with @" + Aggregate.class.getSimpleName() + ", but the qualifierMatcher '"
+                        + qualifierMatcher + "' (resolved from '" + fieldSet.qualifierMatcher + "') is no valid pattern.", e);
+            }
+            predicates.add((qualifier, bean) -> qualifier.matches(qualifierMatcher));
+        }
+        for (Class<? extends BiPredicate<String, T>> predicateType: fieldSet.predicates) {
+            predicates.add(instantiate(chain, InjectionSettings.of(predicateType)));
+        }
+
+        Collection<T> singletons = chain.aggregate(fieldSet.type, predicates);
+
+        Object parameter = null;
+        switch (fieldSet.aggregationMode) {
+            case SINGLE:
+                if (singletons.isEmpty()) {
+                    if (!fieldSet.optional) {
+                        throw new AggregationException("The non-optional '" + ValidatorUtils.getDescription(annotatedElement)
+                                + " requires the aggregation of a single singleton instance, but no candidate is found");
+                    }
+                } else if (singletons.size() > 1) {
+                    if (!fieldSet.distinct) {
+                        throw new AggregationException("The non-distinct " + ValidatorUtils.getDescription(annotatedElement)
+                                + " requires the aggregation of a single singleton instance, but " + singletons.size()
+                                + " candidates have been found");
+                    }
+                    parameter = singletons.stream().findFirst().get();
+                } else {
+                    parameter = singletons.stream().findFirst().get();
+                }
+                break;
+            case LIST:
+                parameter = new ArrayList<>(singletons);
+                break;
+            case SET:
+                parameter = new HashSet<>(singletons);
+                break;
+        }
+
+        return parameter;
     }
 
     /**

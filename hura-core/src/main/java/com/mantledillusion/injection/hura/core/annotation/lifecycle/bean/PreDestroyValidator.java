@@ -6,7 +6,7 @@ class PreDestroyValidator extends AbstractLifecycleAnnotationValidator<PreDestro
 
     @Construct
     PreDestroyValidator() {
-        super(PreDestroy.class, false, true);
+        super(PreDestroy.class, false, true, true);
     }
 
     @Override

@@ -2,6 +2,7 @@ package com.mantledillusion.injection.hura.core;
 
 import com.mantledillusion.essentials.reflection.AnnotationEssentials.AnnotationOccurrence;
 import com.mantledillusion.injection.hura.core.Injector.TemporalInjectorCallback;
+import com.mantledillusion.injection.hura.core.annotation.injection.Aggregate;
 import com.mantledillusion.injection.hura.core.annotation.injection.Inject;
 import com.mantledillusion.injection.hura.core.annotation.injection.Plugin;
 import com.mantledillusion.injection.hura.core.annotation.injection.Qualifier;
@@ -203,6 +204,11 @@ final class InjectionProcessors<T> {
 								parameter.getAnnotation(Resolve.class), parameter.getAnnotation(Matches.class),
 								parameter.getAnnotation(Optional.class));
 						instance = tCallback.resolve(resolvingSettings);
+					} else if (parameter.isAnnotationPresent(Aggregate.class)) {
+						AggregationSettings<?> aggregationSettings = AggregationSettings.of(parameter.getType(),
+								parameter.getParameterizedType(), parameter.getAnnotation(Aggregate.class),
+								parameter.getAnnotation(Optional.class));
+						instance = tCallback.aggregate(parameter, aggregationSettings);
 					}
 					parameters[parameterIndex] = instance;
 					parameterIndex++;
