@@ -20,7 +20,7 @@
 		<essentials.reflection.version>1.1.0</essentials.reflection.version>
 
 		<!-- org.apache.commons dependencies -->
-		<org.apache.commons.lang.version>3.8.1</org.apache.commons.lang.version>
+		<org.apache.commons.lang.version>3.9</org.apache.commons.lang.version>
 	</properties>
 
 	<dependencies>
