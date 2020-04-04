@@ -7,7 +7,6 @@ import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.annotation.AnnotationProcessor;
 import com.mantledillusion.injection.hura.core.exception.ValidatorException;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.reflect.TypeUtils;
 
 import java.lang.reflect.*;
 
@@ -36,11 +35,7 @@ class ResolveValidator implements AnnotationProcessor<Resolve, AnnotatedElement>
 			genericType = ((Parameter) annotatedElement).getParameterizedType();
 		}
 
-		if (!TypeUtils.isAssignable(String.class, genericType)) {
-			throw new ValidatorException("The " + ValidatorUtils.getDescription(annotatedElement)
-					+ " is annotated with @" + Resolve.class.getSimpleName()
-					+ ", but the fields type is not assignable by an instance of String.");
-		} else if (StringUtils.isEmpty(annotationInstance.value())) {
+		if (StringUtils.isEmpty(annotationInstance.value())) {
 			throw new ValidatorException("The " + ValidatorUtils.getDescription(annotatedElement)
 					+ " is annotated with @" + Resolve.class.getSimpleName() + ", but the property key '"
 					+ annotationInstance.value() + "' is empty, which is not allowed.");

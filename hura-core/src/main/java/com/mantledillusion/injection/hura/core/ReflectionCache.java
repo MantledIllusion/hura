@@ -68,10 +68,10 @@ final class ReflectionCache {
 		}
 
 		private final Constructor<T> constructor;
-		private final Map<Integer, ResolvingSettings> resolvableParams;
+		private final Map<Integer, ResolvingSettings<?>> resolvableParams;
 		private final Map<Integer, InjectionSettings<?>> injectableParams;
 
-		private InjectableConstructor(Constructor<T> constructor, Map<Integer, ResolvingSettings> resolvableParams,
+		private InjectableConstructor(Constructor<T> constructor, Map<Integer, ResolvingSettings<?>> resolvableParams,
 				Map<Integer, InjectionSettings<?>> injectableParams) {
 			this.constructor = constructor;
 			this.resolvableParams = resolvableParams;
@@ -92,7 +92,7 @@ final class ReflectionCache {
 					: ParamSettingType.INJECTABLE;
 		}
 
-		ResolvingSettings getResolvingSettings(int i) {
+		ResolvingSettings<?> getResolvingSettings(int i) {
 			return this.resolvableParams.get(i);
 		}
 
@@ -177,12 +177,12 @@ final class ReflectionCache {
 			return c;
 		}
 
-		private Map<Integer, ResolvingSettings> extractResolvingSettings(Constructor<?> c) throws Exception {
-			Map<Integer, ResolvingSettings> settings = new HashMap<>();
+		private Map<Integer, ResolvingSettings<?>> extractResolvingSettings(Constructor<?> c) throws Exception {
+			Map<Integer, ResolvingSettings<?>> settings = new HashMap<>();
 			Parameter[] parameters = c.getParameters();
 			for (int i = 0; i < c.getParameterCount(); i++) {
 				if (InjectionUtils.isResolvable(parameters[i])) {
-					settings.put(i, retrieveResolvingSettings(parameters[i]));
+					settings.put(i, retrieveResolvingSettings(parameters[i].getType(), parameters[i]));
 				}
 			}
 			return settings;
@@ -218,9 +218,9 @@ final class ReflectionCache {
 	static final class ResolvableField {
 
 		private final Field field;
-		private final ResolvingSettings settings;
+		private final ResolvingSettings<?> settings;
 
-		private ResolvableField(Field field, ResolvingSettings settings) {
+		private ResolvableField(Field field, ResolvingSettings<?> settings) {
 			this.field = field;
 			this.settings = settings;
 		}
@@ -229,7 +229,7 @@ final class ReflectionCache {
 			return field;
 		}
 
-		ResolvingSettings getSettings() {
+		ResolvingSettings<?> getSettings() {
 			return settings;
 		}
 	}
@@ -260,7 +260,7 @@ final class ReflectionCache {
 						}
 					}
 
-					ResolvingSettings fieldSet = retrieveResolvingSettings(field);
+					ResolvingSettings fieldSet = retrieveResolvingSettings(field.getType(), field);
 
 					fields.add(new ResolvableField(field, fieldSet));
 				}
@@ -509,8 +509,8 @@ final class ReflectionCache {
 		}
 	}
 
-	private static ResolvingSettings retrieveResolvingSettings(AnnotatedElement e) {
-		return ResolvingSettings.of(e.getAnnotation(Resolve.class), e.getAnnotation(Matches.class),
+	private static <T> ResolvingSettings<T> retrieveResolvingSettings(Class<T> type, AnnotatedElement e) {
+		return ResolvingSettings.of(type, e.getAnnotation(Resolve.class), e.getAnnotation(Matches.class),
 				e.getAnnotation(com.mantledillusion.injection.hura.core.annotation.instruction.Optional.class));
 	}
 

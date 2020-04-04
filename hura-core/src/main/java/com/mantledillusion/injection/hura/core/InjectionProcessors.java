@@ -200,7 +200,7 @@ final class InjectionProcessors<T> {
 								parameter.getAnnotation(Optional.class), parameter.getAnnotation(Adjust.class));
 						instance = tCallback.instantiate(m, injectionSettings);
 					} else if (parameter.isAnnotationPresent(Resolve.class)) {
-						ResolvingSettings resolvingSettings = ResolvingSettings.of(
+						ResolvingSettings<?> resolvingSettings = ResolvingSettings.of(parameter.getType(),
 								parameter.getAnnotation(Resolve.class), parameter.getAnnotation(Matches.class),
 								parameter.getAnnotation(Optional.class));
 						instance = tCallback.resolve(resolvingSettings);

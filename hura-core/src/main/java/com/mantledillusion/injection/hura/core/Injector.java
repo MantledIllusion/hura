@@ -17,6 +17,7 @@ import com.mantledillusion.injection.hura.core.annotation.instruction.Context;
 import com.mantledillusion.injection.hura.core.annotation.instruction.Optional;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.bean.PreDestroy;
+import com.mantledillusion.injection.hura.core.annotation.property.Resolve;
 import com.mantledillusion.injection.hura.core.exception.*;
 import com.mantledillusion.injection.hura.core.service.AggregationProvider;
 import com.mantledillusion.injection.hura.core.service.InjectionProvider;
@@ -37,33 +38,28 @@ import java.util.regex.PatternSyntaxException;
 /**
  * An {@link Injector} for instantiating and injecting beans.
  * <p>
- * The root {@link Injector} of an injection tree may be instantiated manually
- * using any method of...<br>
+ * The root {@link Injector} of an injection tree may be instantiated manually using any method of...<br>
  * - {@link #of()}<br>
  * - {@link #of(Blueprint.Allocation, Blueprint.Allocation...)}<br>
  * - {@link #of(Blueprint, Blueprint...)}<br>
  * - {@link #of(Collection)}<br>
  * ..., which returns a specific sub type of {@link Injector}; the {@link RootInjector}.
- * All other {@link Injector} instances down the tree (that are needed in beans created by an
- * {@link Injector} of any kind) should not instantiated manually, but injected
- * by their respective parent {@link Injector}.
  * <p>
- * With every injection sequence, an {@link Injector} returns exactly one bean.
- * The bean itself is instantiated by the {@link Injector} and may contain sub
- * beans that get injected in the process. This root bean referencing injected
- * sub beans is the root of an injection sub tree and can be given to
- * {@link #destroy(Object)} for sub tree destruction.
+ * All other {@link Injector} instances down the tree (that are needed in beans created by an {@link Injector} of any
+ * kind) should not instantiated manually, but injected by their respective parent {@link Injector}.
  * <p>
- * A sub bean is injected by using the @{@link Inject} annotation and is either
- * instantiated itself and/or referenced in case it is a {@link Blueprint.SingletonAllocation}.
+ * With every injection sequence, an {@link Injector} returns exactly one bean. The bean itself is instantiated by
+ * the {@link Injector} and may contain sub beans that get injected in the process. This root bean referencing injected
+ * sub beans is the root of an injection sub tree and can be given to {@link #destroy(Object)} for sub tree destruction.
  * <p>
- * When an {@link Injector} injects another {@link Injector}, it passes its own
- * {@link SingletonContext} onto this child, making it possible that to pass
- * {@link Blueprint.SingletonAllocation} beans further down the injection tree, but not up. As a
- * result, injections by child {@link Injector}s are able to retrieve
- * {@link Blueprint.SingletonAllocation}s from the same pool as their parent in the tree, but cannot
- * define {@link Blueprint.SingletonAllocation}s that will be available to the parent (or another
- * one of its children).
+ * A sub bean is injected by using the @{@link Inject} annotation and is either instantiated itself and/or referenced
+ * in case it is a {@link Blueprint.SingletonAllocation}.
+ * <p>
+ * When an {@link Injector} injects another {@link Injector}, it passes its own {@link SingletonContext} onto this
+ * child, making it possible that to pass {@link Blueprint.SingletonAllocation} beans further down the injection tree,
+ * but not up. As a result, injections by child {@link Injector}s are able to retrieve
+ * {@link Blueprint.SingletonAllocation}s from the same pool as their parent in the tree, but cannot define
+ * {@link Blueprint.SingletonAllocation}s that will be available to the parent (or another one of its children).
  */
 public class Injector implements ResolvingProvider, AggregationProvider, InjectionProvider {
 
@@ -166,17 +162,18 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
         }
 
         @Override
-        public final String resolve(String propertyKey, String matcher, boolean forced) {
+        public final <T> T resolve(Class<T> targetType, String propertyKey, String matcher, boolean forced,
+                                   Map<Resolve.ResolvingHint.HintType, String> hints) {
             checkActive(ResolvingProvider.class);
 
             InjectionUtils.checkKey(propertyKey);
             InjectionUtils.checkMatcher(matcher, null);
 
-            ResolvingSettings set = ResolvingSettings.of(propertyKey, matcher, forced);
+            ResolvingSettings<T> set = ResolvingSettings.of(targetType, propertyKey, matcher, forced, hints);
             return this.chain.resolve(set);
         }
 
-        String resolve(ResolvingSettings resolvingSettings) {
+        <T> T resolve(ResolvingSettings<T> resolvingSettings) {
             return this.chain.resolve(resolvingSettings);
         }
 
@@ -311,22 +308,22 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
         @Override
         T allocate(Injector injector, InjectionChain injectionChain, InjectionSettings<T> set,
                    InjectionProcessors<T> applicators) {
-            String directory = injectionChain.resolve(ResolvingSettings.of(this.directory, true));
+            String directory = injectionChain.resolve(ResolvingSettings.of(this.directory));
             if (!new File(directory).isDirectory()) {
                 throw new ValidatorException("The directory '" + directory + "' (resolved from '" + this.directory
                                 + "') is no valid directory.");
             }
 
-            String pluginId = injectionChain.resolve(ResolvingSettings.of(this.pluginId, true));
+            String pluginId = injectionChain.resolve(ResolvingSettings.of(this.pluginId));
 
-            String versionFrom = injectionChain.resolve(ResolvingSettings.of(this.versionFrom, true));
+            String versionFrom = injectionChain.resolve(ResolvingSettings.of(this.versionFrom));
             if (!versionFrom.matches(Plugin.VERSION_PATTERN)) {
                 throw new ValidatorException(
                         "The version from '" + versionFrom + "' (resolved from '" + this.versionFrom
                                 + "') does not follow the valid pattern " + Plugin.VERSION_PATTERN + ".");
             }
 
-            String versionUntil = injectionChain.resolve(ResolvingSettings.of(this.versionUntil, true));
+            String versionUntil = injectionChain.resolve(ResolvingSettings.of(this.versionUntil));
             if (!versionUntil.matches(Plugin.VERSION_PATTERN)) {
                 throw new ValidatorException(
                         "The version until '" + versionUntil + "' (resolved from '" + this.versionUntil
@@ -370,12 +367,13 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
     }
 
     @Override
-    public final String resolve(String propertyKey, String matcher, boolean forced) {
+    public final <T> T resolve(Class<T> targetType, String propertyKey, String matcher, boolean forced,
+                               Map<Resolve.ResolvingHint.HintType, String> hints) {
         checkActive();
         InjectionUtils.checkKey(propertyKey);
         InjectionUtils.checkMatcher(matcher, null);
 
-        ResolvingSettings set = ResolvingSettings.of(propertyKey, matcher, forced);
+        ResolvingSettings<T> set = ResolvingSettings.of(targetType, propertyKey, matcher, forced, hints);
         return this.resolvingContext.resolve(set);
     }
 
@@ -414,7 +412,10 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
     private <T> T resolveSingletonsAndPerform(InjectionChain chain, Function<Map<Phase, List<SelfSustainingProcessor>>, T> function) {
         T instance = null;
         try {
-            resolveSingletonsIntoChain(chain);
+            for (String qualifier : chain.getSingletonAllocations()) {
+                InjectionSettings<Object> set = InjectionSettings.of(qualifier);
+                instantiate(chain, set);
+            }
 
             Map<Phase, List<SelfSustainingProcessor>> destroyables = new HashMap<>();
             destroyables.put(Phase.PRE_DESTROY, chain.getPreDestroyables());
@@ -438,13 +439,6 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
             }
         }
         return instance;
-    }
-
-    private void resolveSingletonsIntoChain(InjectionChain chain) {
-        for (String qualifier : chain.getSingletonAllocations()) {
-            InjectionSettings<Object> set = InjectionSettings.of(qualifier);
-            instantiate(chain, set);
-        }
     }
 
     private void finalize(List<SelfSustainingProcessor> finalizables) {
@@ -509,7 +503,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
         } else {
             Object singleton = null;
 
-            set = set.refine(injectionChain.resolve(ResolvingSettings.of(set.qualifier, true)));
+            set = set.refine(injectionChain.resolve(ResolvingSettings.of(set.qualifier)));
             if (injectionChain.hasMapping(set.qualifier)) {
                 set = set.refine(injectionChain.map(set.qualifier));
             }
@@ -613,9 +607,9 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
 
         for (ResolvableField resolvableField: ReflectionCache.getResolvableFields(set.type)) {
             Field field = resolvableField.getField();
-            ResolvingSettings fieldSet = resolvableField.getSettings();
+            ResolvingSettings<?> fieldSet = resolvableField.getSettings();
 
-            String property = injectionChain.resolve(fieldSet);
+            Object property = injectionChain.resolve(fieldSet);
 
             try {
                 field.set(instance, property);
@@ -736,7 +730,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
     private <T> Object aggregate(InjectionChain chain, AggregationSettings<T> fieldSet, AnnotatedElement annotatedElement) {
         List<BiPredicate<String, T>> predicates = new ArrayList<>();
         if (fieldSet.qualifierMatcher != null) {
-            String qualifierMatcher = chain.resolve(ResolvingSettings.of(fieldSet.qualifierMatcher, true));
+            String qualifierMatcher = chain.resolve(ResolvingSettings.of(fieldSet.qualifierMatcher));
             try {
                 Pattern.compile(qualifierMatcher);
             } catch (PatternSyntaxException | NullPointerException e) {

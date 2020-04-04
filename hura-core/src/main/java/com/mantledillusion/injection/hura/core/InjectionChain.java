@@ -306,7 +306,7 @@ final class InjectionChain {
 		return this.resolvingContext;
 	}
 
-	String resolve(ResolvingSettings set) {
+	<T> T resolve(ResolvingSettings<T> set) {
 		return this.resolvingContext.resolve(set);
 	}
 

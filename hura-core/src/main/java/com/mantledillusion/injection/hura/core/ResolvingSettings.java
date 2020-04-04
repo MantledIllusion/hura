@@ -4,19 +4,29 @@ import com.mantledillusion.injection.hura.core.annotation.instruction.Optional;
 import com.mantledillusion.injection.hura.core.annotation.property.Matches;
 import com.mantledillusion.injection.hura.core.annotation.property.Resolve;
 
-final class ResolvingSettings {
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+final class ResolvingSettings<T> {
+
+	final Class<T> targetType;
 	final String resolvableValue;
 	final String matcher;
 	final boolean forced;
+	final Map<Resolve.ResolvingHint.HintType, String> hints;
 	
-	private ResolvingSettings(String resolvableValue, String matcher, boolean forced) {
+	private ResolvingSettings(Class<T> targetType, String resolvableValue, String matcher, boolean forced,
+							  Map<Resolve.ResolvingHint.HintType, String> hints) {
+		this.targetType = targetType;
 		this.resolvableValue = resolvableValue;
 		this.matcher = matcher;
 		this.forced = forced;
+		this.hints = hints;
 	}
 
-	static ResolvingSettings of(Resolve property, Matches matches, Optional optional) {
+	static <T> ResolvingSettings<T> of(Class<T> targetType, Resolve property, Matches matches, Optional optional) {
 		boolean forced = true;
 		String matcher = Matches.DEFAULT_MATCHER;
 		if (matches != null) {
@@ -25,18 +35,16 @@ final class ResolvingSettings {
 		if (optional != null) {
 			forced = false;
 		}
-		return new ResolvingSettings(property.value(), matcher, forced);
-	}
-	
-	static ResolvingSettings of(String propertyKey, String matcher) {
-		return new ResolvingSettings(propertyKey, matcher, false);
+		return new ResolvingSettings<>(targetType, property.value(), matcher, forced, Arrays.stream(property.hints()).
+				collect(Collectors.toMap(Resolve.ResolvingHint::type, Resolve.ResolvingHint::value)));
 	}
 
-	static ResolvingSettings of(String propertyKey, boolean forced) {
-		return new ResolvingSettings(propertyKey, Matches.DEFAULT_MATCHER, forced);
+	static ResolvingSettings<String> of(String propertyKey) {
+		return new ResolvingSettings<>(String.class, propertyKey, Matches.DEFAULT_MATCHER, true, Collections.emptyMap());
 	}
 
-	static ResolvingSettings of(String propertyKey, String matcher, boolean forced) {
-		return new ResolvingSettings(propertyKey, matcher, forced);
+	static <T> ResolvingSettings<T> of(Class<T> targetType, String propertyKey, String matcher, boolean forced,
+									   Map<Resolve.ResolvingHint.HintType, String> hints) {
+		return new ResolvingSettings<>(targetType, propertyKey, matcher, forced, hints != null ? hints : Collections.emptyMap());
 	}
 }
