@@ -2,6 +2,9 @@ package com.mantledillusion.injection.hura.core.property.injectables;
 
 import com.mantledillusion.injection.hura.core.annotation.property.Resolve;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 public class InjectableWithConvertedProperties {
 
     public static final String PKEY_BOOLEAN = "property.boolean";
@@ -43,5 +46,7 @@ public class InjectableWithConvertedProperties {
     @Resolve("${"+PKEY_NUMBER+"}")
     public Double DoubleNumber;
     @Resolve("${"+PKEY_NUMBER+"}")
-    public String StringNumber;
+    public BigInteger BigIntegerNumber;
+    @Resolve("${"+PKEY_NUMBER+"}")
+    public BigDecimal BigDecimalNumber;
 }

@@ -13,6 +13,9 @@ import com.mantledillusion.injection.hura.core.property.uninjectables.*;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 public class PropertyResolvingTest extends AbstractInjectionTest {
 
 	@Test
@@ -220,6 +223,8 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 		Assertions.assertEquals(new Float(69f), injectable.FloatNumber);
 		Assertions.assertEquals(69d, injectable.doubleNumber);
 		Assertions.assertEquals(new Double(69d), injectable.DoubleNumber);
+		Assertions.assertEquals(BigInteger.valueOf(69L), injectable.BigIntegerNumber);
+		Assertions.assertEquals(BigDecimal.valueOf(69L), injectable.BigDecimalNumber);
 	}
 
 	@Test

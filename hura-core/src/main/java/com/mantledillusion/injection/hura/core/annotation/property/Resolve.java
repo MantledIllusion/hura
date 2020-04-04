@@ -15,9 +15,23 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * {@link Annotation} for {@link String} {@link Field}s and {@link Parameter}s
- * who have to receive a property value when their {@link Class} is instantiated
- * and injected by an {@link Injector}.
+ * {@link Annotation} for {@link Field}s and {@link Parameter}s that have to receive a property value when their
+ * {@link Class} is instantiated and injected by an {@link Injector}.
+ * <p>
+ * The {@link Field}s and {@link Parameter}s annotated can be of the following types:
+ * <ul>
+ * <li>{@link String}</li>
+ * <li>char / {@link Character}</li>
+ * <li>boolean / {@link Boolean}</li>
+ * <li>byte / {@link Byte}</li>
+ * <li>short / {@link Short}</li>
+ * <li>integer / {@link Integer}</li>
+ * <li>long / {@link Long}</li>
+ * <li>float / {@link Float}</li>
+ * <li>double / {@link Double}</li>
+ * <li>{@link java.math.BigInteger}</li>
+ * <li>{@link java.math.BigDecimal}</li>
+ * </ul>
  * <p>
  * {@link Field}s/{@link Parameter}s annotated with @{@link Resolve} may
  * not:<br>
@@ -82,7 +96,19 @@ public @interface Resolve {
 			 * <p>
 			 * A parsable {@link Boolean}.
 			 */
-			LONG_UNSIGNED(Boolean.FALSE.toString());
+			LONG_UNSIGNED(Boolean.FALSE.toString()),
+			/**
+			 * {@link java.math.BigInteger}
+			 * <p>
+			 * A parsable {@link Integer}.
+			 */
+			BIG_INTEGER_RADIX("10"),
+			/**
+			 * {@link java.math.BigInteger}
+			 * <p>
+			 * A {@link java.text.DecimalFormat}.
+			 */
+			BIG_DECIMAL_FORMAT("");
 
 			HintType(String defaultValue) {
 				this.defaultValue = defaultValue;

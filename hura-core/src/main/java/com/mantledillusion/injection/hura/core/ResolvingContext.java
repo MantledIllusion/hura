@@ -10,6 +10,9 @@ import com.mantledillusion.injection.hura.core.exception.ConversionException;
 import com.mantledillusion.injection.hura.core.exception.ResolvingException;
 import com.mantledillusion.injection.hura.core.exception.ValidatorException;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -122,10 +125,38 @@ final class ResolvingContext {
 		}
 	}
 
+	private static class BigIntegerConverter implements Converter<String, BigInteger> {
+
+		@Override
+		public BigInteger toTarget(String source, ProcessingDelegate context) throws Exception {
+			try {
+				return new BigInteger(source, Integer.parseInt(context.get(HintType.BIG_INTEGER_RADIX.name(),
+						HintType.BIG_INTEGER_RADIX.getDefault())));
+			} catch (Exception e) {
+				throw new ConversionException("Cannot convert property to Double", e);
+			}
+		}
+	}
+
+	private static class BigDecimalConverter implements Converter<String, BigDecimal> {
+
+		@Override
+		public BigDecimal toTarget(String source, ProcessingDelegate context) throws Exception {
+			try {
+				DecimalFormat format = new DecimalFormat(context.get(HintType.BIG_DECIMAL_FORMAT.name(),
+						HintType.BIG_DECIMAL_FORMAT.getDefault()));
+				format.setParseBigDecimal(true);
+				return (BigDecimal) format.parse(source);
+			} catch (Exception e) {
+				throw new ConversionException("Cannot convert property to Double", e);
+			}
+		}
+	}
+
 	private static final ProcessingService CONVERTER = new DefaultProcessingService(
 			ProcessorRegistry.of(Arrays.asList(new BooleanConverter(), new CharConverter(), new ByteConverter(),
 					new ShortConverter(), new IntegerConverter(), new LongConverter(), new FloatConverter(),
-					new DoubleConverter()
+					new DoubleConverter(), new BigIntegerConverter(), new BigDecimalConverter()
 	)));
 	
 	static final String RESOLVING_CONTEXT_SINGLETON_ID = "_resolvingContext";
@@ -181,7 +212,7 @@ final class ResolvingContext {
 		}
 	}
 
-	private String deepReplace(ResolvingSettings set) {
+	private String deepReplace(ResolvingSettings<?> set) {
 		return StringEssentials.deepReplace(set.resolvableValue, value -> {
 			if (hasProperty(value)) {
 				return getProperty(value);
@@ -191,6 +222,6 @@ final class ResolvingContext {
 			}  else {
 				return value;
 			}
-		}, value -> hasProperty(value));
+		}, this::hasProperty);
 	}
 }
