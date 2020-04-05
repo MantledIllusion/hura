@@ -13,6 +13,8 @@ import com.mantledillusion.injection.hura.core.exception.ValidatorException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.DecimalFormat;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -153,10 +155,127 @@ final class ResolvingContext {
 		}
 	}
 
+	private static class LocalDateConverter implements Converter<String, LocalDate> {
+
+		@Override
+		public LocalDate toTarget(String source, ProcessingDelegate context) throws Exception {
+			try {
+				return LocalDate.parse(source, DateTimeFormatter.ofPattern(context.get(
+						HintType.LOCAL_DATE_FORMAT.name(), HintType.LOCAL_DATE_FORMAT.getDefault())));
+			} catch (Exception e) {
+				throw new ConversionException("Cannot convert property to LocalDate", e);
+			}
+		}
+	}
+
+	private static class LocalTimeConverter implements Converter<String, LocalTime> {
+
+		@Override
+		public LocalTime toTarget(String source, ProcessingDelegate context) throws Exception {
+			try {
+				return LocalTime.parse(source, DateTimeFormatter.ofPattern(context.get(
+						HintType.LOCAL_TIME_FORMAT.name(), HintType.LOCAL_TIME_FORMAT.getDefault())));
+			} catch (Exception e) {
+				throw new ConversionException("Cannot convert property to LocalTime", e);
+			}
+		}
+	}
+
+	private static class LocalDateTimeConverter implements Converter<String, LocalDateTime> {
+
+		@Override
+		public LocalDateTime toTarget(String source, ProcessingDelegate context) throws Exception {
+			try {
+				return LocalDateTime.parse(source, DateTimeFormatter.ofPattern(context.get(
+						HintType.LOCAL_DATE_TIME_FORMAT.name(), HintType.LOCAL_DATE_TIME_FORMAT.getDefault())));
+			} catch (Exception e) {
+				throw new ConversionException("Cannot convert property to LocalDateTime", e);
+			}
+		}
+	}
+
+	private static class OffsetTimeConverter implements Converter<String, OffsetTime> {
+
+		@Override
+		public OffsetTime toTarget(String source, ProcessingDelegate context) throws Exception {
+			try {
+				return OffsetTime.parse(source, DateTimeFormatter.ofPattern(context.get(
+						HintType.OFFSET_TIME_FORMAT.name(), HintType.OFFSET_TIME_FORMAT.getDefault())));
+			} catch (Exception e) {
+				throw new ConversionException("Cannot convert property to OffsetTime", e);
+			}
+		}
+	}
+
+	private static class OffsetDateTimeConverter implements Converter<String, OffsetDateTime> {
+
+		@Override
+		public OffsetDateTime toTarget(String source, ProcessingDelegate context) throws Exception {
+			try {
+				return OffsetDateTime.parse(source, DateTimeFormatter.ofPattern(context.get(
+						HintType.OFFSET_DATE_TIME_FORMAT.name(), HintType.OFFSET_DATE_TIME_FORMAT.getDefault())));
+			} catch (Exception e) {
+				throw new ConversionException("Cannot convert property to OffsetDateTime", e);
+			}
+		}
+	}
+
+	private static class ZonedDateTimeConverter implements Converter<String, ZonedDateTime> {
+
+		@Override
+		public ZonedDateTime toTarget(String source, ProcessingDelegate context) throws Exception {
+			try {
+				return ZonedDateTime.parse(source, DateTimeFormatter.ofPattern(context.get(
+						HintType.ZONED_DATE_TIME_FORMAT.name(), HintType.ZONED_DATE_TIME_FORMAT.getDefault())));
+			} catch (Exception e) {
+				throw new ConversionException("Cannot convert property to ZonedDateTime", e);
+			}
+		}
+	}
+
+	private static class InstantConverter implements Converter<String, Instant> {
+
+		@Override
+		public Instant toTarget(String source, ProcessingDelegate context) throws Exception {
+			try {
+				return Instant.parse(source);
+			} catch (Exception e) {
+				throw new ConversionException("Cannot convert property to Instant", e);
+			}
+		}
+	}
+
+	private static class PeriodConverter implements Converter<String, Period> {
+
+		@Override
+		public Period toTarget(String source, ProcessingDelegate context) throws Exception {
+			try {
+				return Period.parse(source);
+			} catch (Exception e) {
+				throw new ConversionException("Cannot convert property to Period", e);
+			}
+		}
+	}
+
+	private static class DurationConverter implements Converter<String, Duration> {
+
+		@Override
+		public Duration toTarget(String source, ProcessingDelegate context) throws Exception {
+			try {
+				return Duration.parse(source);
+			} catch (Exception e) {
+				throw new ConversionException("Cannot convert property to Period", e);
+			}
+		}
+	}
+
 	private static final ProcessingService CONVERTER = new DefaultProcessingService(
 			ProcessorRegistry.of(Arrays.asList(new BooleanConverter(), new CharConverter(), new ByteConverter(),
 					new ShortConverter(), new IntegerConverter(), new LongConverter(), new FloatConverter(),
-					new DoubleConverter(), new BigIntegerConverter(), new BigDecimalConverter()
+					new DoubleConverter(), new BigIntegerConverter(), new BigDecimalConverter(),
+					new LocalDateConverter(), new LocalTimeConverter(), new LocalDateTimeConverter(),
+					new OffsetTimeConverter(), new OffsetDateTimeConverter(), new ZonedDateTimeConverter(),
+					new InstantConverter(), new PeriodConverter(), new DurationConverter()
 	)));
 	
 	static final String RESOLVING_CONTEXT_SINGLETON_ID = "_resolvingContext";

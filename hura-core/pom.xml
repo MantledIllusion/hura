@@ -16,9 +16,9 @@
 		<!-- com.mantledillusion dependencies -->
 		<hydnora.version>2.0.0</hydnora.version>
 		<saman.version>3.2.1</saman.version>
-		<essentials.string.version>1.1.1</essentials.string.version>
-		<essentials.object.version>1.2.0</essentials.object.version>
-		<essentials.reflection.version>1.1.0</essentials.reflection.version>
+		<essentials-string.version>1.1.1</essentials-string.version>
+		<essentials-object.version>1.2.0</essentials-object.version>
+		<essentials-reflection.version>1.1.0</essentials-reflection.version>
 
 		<!-- org.apache.commons dependencies -->
 		<org.apache.commons.lang.version>3.9</org.apache.commons.lang.version>
@@ -39,17 +39,17 @@
 		<dependency>
 			<groupId>com.mantledillusion.essentials</groupId>
 			<artifactId>string-essentials</artifactId>
-			<version>${essentials.string.version}</version>
+			<version>${essentials-string.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.mantledillusion.essentials</groupId>
 			<artifactId>object-essentials</artifactId>
-			<version>${essentials.object.version}</version>
+			<version>${essentials-object.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.mantledillusion.essentials</groupId>
 			<artifactId>reflection-essentials</artifactId>
-			<version>${essentials.reflection.version}</version>
+			<version>${essentials-reflection.version}</version>
 		</dependency>
 
 		<!-- org.apache.commons dependencies -->

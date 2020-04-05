@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.*;
 
 public class PropertyResolvingTest extends AbstractInjectionTest {
 
@@ -203,7 +204,16 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 		InjectableWithConvertedProperties injectable = this.suite.injectInRootContext(InjectableWithConvertedProperties.class,
 				Blueprint.PropertyAllocation.of(InjectableWithConvertedProperties.PKEY_BOOLEAN, Boolean.TRUE.toString()),
 				Blueprint.PropertyAllocation.of(InjectableWithConvertedProperties.PKEY_CHARACTER, "C"),
-				Blueprint.PropertyAllocation.of(InjectableWithConvertedProperties.PKEY_NUMBER, "69"));
+				Blueprint.PropertyAllocation.of(InjectableWithConvertedProperties.PKEY_NUMBER, "69"),
+				Blueprint.PropertyAllocation.of(InjectableWithConvertedProperties.PKEY_LOCALDATE, "2011-12-03"),
+				Blueprint.PropertyAllocation.of(InjectableWithConvertedProperties.PKEY_LOCALTIME, "10:15:30"),
+				Blueprint.PropertyAllocation.of(InjectableWithConvertedProperties.PKEY_LOCALDATETIME, "2011-12-03T10:15:30"),
+				Blueprint.PropertyAllocation.of(InjectableWithConvertedProperties.PKEY_OFFSETTIME, "10:15:30+01:00"),
+				Blueprint.PropertyAllocation.of(InjectableWithConvertedProperties.PKEY_OFFSETDATETIME, "2011-12-03T10:15:30+01:00"),
+				Blueprint.PropertyAllocation.of(InjectableWithConvertedProperties.PKEY_ZONEDDATETIME, "2011-12-03T10:15:30+01:00[Europe/Paris]"),
+				Blueprint.PropertyAllocation.of(InjectableWithConvertedProperties.PKEY_INSTANT, "2011-12-03T10:15:30.00Z"),
+				Blueprint.PropertyAllocation.of(InjectableWithConvertedProperties.PKEY_PERIOD, "P1Y2M3D"),
+				Blueprint.PropertyAllocation.of(InjectableWithConvertedProperties.PKEY_DURATION, "P2DT3H4M"));
 
 		Assertions.assertEquals(true, injectable.booleanProperty);
 		Assertions.assertEquals(Boolean.TRUE, injectable.BooleanProperty);
@@ -225,6 +235,16 @@ public class PropertyResolvingTest extends AbstractInjectionTest {
 		Assertions.assertEquals(new Double(69d), injectable.DoubleNumber);
 		Assertions.assertEquals(BigInteger.valueOf(69L), injectable.BigIntegerNumber);
 		Assertions.assertEquals(BigDecimal.valueOf(69L), injectable.BigDecimalNumber);
+
+		Assertions.assertEquals(LocalDate.of(2011, 12, 3), injectable.localDate);
+		Assertions.assertEquals(LocalTime.of(10, 15, 30), injectable.localTime);
+		Assertions.assertEquals(LocalDateTime.of(2011, 12, 3, 10, 15, 30), injectable.localDateTime);
+		Assertions.assertEquals(OffsetTime.of(LocalTime.of(10, 15, 30), ZoneOffset.ofHours(1)), injectable.offsetTime);
+		Assertions.assertEquals(OffsetDateTime.of(LocalDateTime.of(2011, 12, 3, 10, 15, 30), ZoneOffset.ofHours(1)), injectable.offsetDateTime);
+		Assertions.assertEquals(ZonedDateTime.of(LocalDateTime.of(2011, 12, 3, 10, 15, 30), ZoneId.of("Europe/Paris")), injectable.zonedDateTime);
+		Assertions.assertEquals(Instant.from(ZonedDateTime.of(LocalDateTime.of(2011, 12, 3, 10, 15, 30), ZoneId.of("UTC"))), injectable.instant);
+		Assertions.assertEquals(Period.of(1, 2, 3), injectable.period);
+		Assertions.assertEquals(Duration.ofMinutes(3064), injectable.duration);
 	}
 
 	@Test

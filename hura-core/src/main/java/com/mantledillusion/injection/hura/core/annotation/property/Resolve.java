@@ -30,11 +30,19 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
  * <li>float / {@link Float}</li>
  * <li>double / {@link Double}</li>
  * <li>{@link java.math.BigInteger}</li>
- * <li>{@link java.math.BigDecimal}</li>
+ * <li>{@link java.math.BigDecimal} (None or custom decimal format)</li>
+ * <li>{@link java.time.LocalDate} (ISO-8601 or custom date format)</li>
+ * <li>{@link java.time.LocalTime} (ISO-8601 or custom time format)</li>
+ * <li>{@link java.time.LocalDateTime} (ISO-8601 or custom datetime format)</li>
+ * <li>{@link java.time.OffsetTime} (ISO-8601 or custom time format)</li>
+ * <li>{@link java.time.OffsetDateTime} (ISO-8601 or custom datetime format)</li>
+ * <li>{@link java.time.ZonedDateTime} (ISO-8601 or custom datetime format)</li>
+ * <li>{@link java.time.Instant} (ISO-8601 datetime format at UTC)</li>
+ * <li>{@link java.time.Period} (ISO-8601 period format)</li>
+ * <li>{@link java.time.Duration} (ISO-8601 duration format)</li>
  * </ul>
  * <p>
- * {@link Field}s/{@link Parameter}s annotated with @{@link Resolve} may
- * not:<br>
+ * {@link Field}s/{@link Parameter}s annotated with @{@link Resolve} may not:<br>
  * <ul>
  * <li>be a static {@link Field}</li>
  * <li>be a final {@link Field}</li>
@@ -65,50 +73,114 @@ public @interface Resolve {
 			 * {@link Byte#parseByte(String, int)}
 			 * <p>
 			 * A parsable {@link Integer}.
+			 * <p>
+			 * 10 by default.
 			 */
 			BYTE_RADIX("10"),
 			/**
 			 * {@link Short#parseShort(String, int)}
 			 * <p>
 			 * A parsable {@link Integer}.
+			 * <p>
+			 * 10 by default.
 			 */
 			SHORT_RADIX("10"),
 			/**
 			 * {@link Integer#parseInt(String, int)}
 			 * <p>
 			 * A parsable {@link Integer}.
+			 * <p>
+			 * 10 by default.
 			 */
 			INTEGER_RADIX("10"),
 			/**
 			 * {@link Integer#parseUnsignedInt(String, int)}
 			 * <p>
 			 * A parsable {@link Boolean}.
+			 * <p>
+			 * {@link Boolean#FALSE} by default.
 			 */
 			INTEGER_UNSIGNED(Boolean.FALSE.toString()),
 			/**
 			 * {@link Long#parseLong(String, int)}
 			 * <p>
 			 * A parsable {@link Integer}.
+			 * <p>
+			 * 10 by default.
 			 */
 			LONG_RADIX("10"),
 			/**
 			 * {@link Long#parseUnsignedLong(String, int)}
 			 * <p>
 			 * A parsable {@link Boolean}.
+			 * <p>
+			 * {@link Boolean#FALSE} by default.
 			 */
 			LONG_UNSIGNED(Boolean.FALSE.toString()),
 			/**
 			 * {@link java.math.BigInteger}
 			 * <p>
 			 * A parsable {@link Integer}.
+			 * <p>
+			 * 10 by default.
 			 */
 			BIG_INTEGER_RADIX("10"),
 			/**
 			 * {@link java.math.BigInteger}
 			 * <p>
 			 * A {@link java.text.DecimalFormat}.
+			 * <p>
+			 * Empty by default.
 			 */
-			BIG_DECIMAL_FORMAT("");
+			BIG_DECIMAL_FORMAT(""),
+			/**
+			 * {@link java.time.LocalDate}
+			 * <p>
+			 * A {@link java.time.format.DateTimeFormatter#ofPattern(String)} pattern
+			 * <p>
+			 * ISO local date yyyy-MM-dd (2011-12-03) by default.
+			 */
+			LOCAL_DATE_FORMAT("yyyy-MM-dd"),
+			/**
+			 * {@link java.time.LocalTime}
+			 * <p>
+			 * A {@link java.time.format.DateTimeFormatter#ofPattern(String)} pattern.
+			 *
+			 * ISO local time HH:mm:ss (10:15:30) by default.
+			 */
+			LOCAL_TIME_FORMAT("HH:mm:ss"),
+			/**
+			 * {@link java.time.LocalDateTime}
+			 * <p>
+			 * A {@link java.time.format.DateTimeFormatter#ofPattern(String)} pattern.
+			 *
+			 * ISO local date time yyyy-MM-dd'T'HH:mm:ss (2011-12-03T10:15:30) by default.
+			 */
+			LOCAL_DATE_TIME_FORMAT("yyyy-MM-dd'T'HH:mm:ss"),
+			/**
+			 * {@link java.time.OffsetTime}
+			 * <p>
+			 * A {@link java.time.format.DateTimeFormatter#ofPattern(String)} pattern.
+			 *
+			 * ISO offset time HH:mm:ssXXXXX (10:15:30+01:00) by default.
+			 */
+			OFFSET_TIME_FORMAT("HH:mm:ssXXXXX"),
+			/**
+			 * {@link java.time.OffsetDateTime}
+			 * <p>
+			 * A {@link java.time.format.DateTimeFormatter#ofPattern(String)} pattern.
+			 *
+			 * ISO offset date time yyyy-MM-dd'T'HH:mm:ssXXXXX (2011-12-03T10:15:30+01:00) by default.
+			 */
+			OFFSET_DATE_TIME_FORMAT("yyyy-MM-dd'T'HH:mm:ssXXXXX"),
+			/**
+			 * {@link java.time.ZonedDateTime}
+			 * <p>
+			 * A {@link java.time.format.DateTimeFormatter#ofPattern(String)} pattern.
+			 *
+			 * ISO zoned date time yyyy-MM-dd'T'HH:mm:ssXXXXX'['VV']' (2011-12-03T10:15:30+01:00[Europe/Paris]) by default.
+			 */
+			ZONED_DATE_TIME_FORMAT("yyyy-MM-dd'T'HH:mm:ssXXXXX'['VV']'");
 
 			HintType(String defaultValue) {
 				this.defaultValue = defaultValue;
