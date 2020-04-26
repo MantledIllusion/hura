@@ -795,6 +795,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
      *                 {@link Injector}, not a sub bean of such a bean.
      */
     public void destroy(Object rootBean) {
+        checkActive();
         if (this.beans.containsKey(rootBean)) {
             Map<Phase, List<SelfSustainingProcessor>> destroyers = this.beans.get(rootBean);
             destroy(rootBean, destroyers.get(Phase.PRE_DESTROY), true);
@@ -812,6 +813,7 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
      * instantiated by this {@link Injector} at the moment of calling.
      */
     public void destroyAll() {
+        checkActive();
         Iterator<Entry<Object, Map<Phase, List<SelfSustainingProcessor>>>> beanIter = this.beans.entrySet().iterator();
         while (beanIter.hasNext()) {
             Entry<Object, Map<Phase, List<SelfSustainingProcessor>>> entry = beanIter.next();

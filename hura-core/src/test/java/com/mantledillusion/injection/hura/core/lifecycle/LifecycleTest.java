@@ -4,6 +4,7 @@ import com.mantledillusion.injection.hura.core.*;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.Phase;
 import com.mantledillusion.injection.hura.core.annotation.lifecycle.bean.BeanProcessor;
 import com.mantledillusion.injection.hura.core.exception.ProcessorException;
+import com.mantledillusion.injection.hura.core.exception.ShutdownException;
 import com.mantledillusion.injection.hura.core.lifecycle.injectables.*;
 import com.mantledillusion.injection.hura.core.lifecycle.misc.PhasedProcessedLifecycleInjectableBlueprint;
 import com.mantledillusion.injection.hura.core.lifecycle.uninjectables.UninjectableWithFailingProcessor;
@@ -154,6 +155,8 @@ public class LifecycleTest extends AbstractInjectionTest {
         Assertions.assertTrue(sub.wasDestructed);
 
         Assertions.assertFalse(injectable.injector.isActive());
+
+        Assertions.assertThrows(ShutdownException.class, () -> injectable.injector.destroy(sub));
     }
 
     @Test
