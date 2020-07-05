@@ -43,7 +43,7 @@
 		<slf4j.version>1.7.30</slf4j.version>
 
 		<!-- testing dependencies -->
-		<junit.version>5.6.0</junit.version>
+		<junit.version>5.6.2</junit.version>
 	</properties>
 
 	<scm>
@@ -101,7 +101,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.0.1</version>
+				<version>3.2.1</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
@@ -114,7 +114,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.1.0</version>
+				<version>3.1.1</version>
 				<executions>
 					<execution>
 						<id>attach-javadocs</id>
