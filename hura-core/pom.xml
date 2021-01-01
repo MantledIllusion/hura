@@ -21,7 +21,7 @@
 		<essentials-reflection.version>1.1.0</essentials-reflection.version>
 
 		<!-- org.apache.commons dependencies -->
-		<org.apache.commons.lang.version>3.10</org.apache.commons.lang.version>
+		<org.apache.commons.lang.version>3.11</org.apache.commons.lang.version>
 	</properties>
 
 	<dependencies>
