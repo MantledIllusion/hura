@@ -3,6 +3,16 @@ Hura is a dependency injection framework focused on sequential injection and bea
 
 Hura Crepitans, also called 'Sandbox Tree' and nicknamed 'Dynamite Tree', is a plant mainly living in South America. Its fruits are pumpkin-shaped capsules that undergo huge amounts of tension when drying out during dry season. On the first rain, when the surface of the fruit gets wet and softens up, the dry seeds inside break through the shell with a loud bang, being sling-shotted over a distance for more than 300 feet.
 
+```xml
+<dependency>
+    <groupId>com.mantledillusion.injection</groupId>
+    <artifactId>hura-parent</artifactId>
+    <type>pom</type>
+</dependency>
+```
+
+Get the newest version at [mvnrepository.com/hura](https://mvnrepository.com/artifact/com.mantledillusion.injection/hura-parent)
+
 ## Advantages 
 
 As mentioned above, Hura as an injection framework specializes on a couple of advanced aspects of dependency injection:
