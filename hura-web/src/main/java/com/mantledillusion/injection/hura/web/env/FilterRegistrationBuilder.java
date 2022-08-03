@@ -30,7 +30,7 @@ public final class FilterRegistrationBuilder {
      * @see FilterRegistration.Dynamic#addMappingForServletNames(EnumSet, boolean, String...)
      *
      * @param dispatcherTypes the dispatcher types of the filter mapping,
-     * or null if the default <tt>DispatcherType.REQUEST</tt> is to be used
+     * or null if the default {@link DispatcherType#REQUEST} is to be used
      * @param isMatchAfter true if the given filter mapping should be matched
      * after any declared filter mappings, and false if it is supposed to
      * be matched before any declared filter mappings of the ServletContext
@@ -47,7 +47,7 @@ public final class FilterRegistrationBuilder {
      * @see FilterRegistration.Dynamic#addMappingForUrlPatterns(EnumSet, boolean, String...)
      *
      * @param dispatcherTypes the dispatcher types of the filter mapping,
-     * or null if the default <tt>DispatcherType.REQUEST</tt> is to be used
+     * or null if the default {@link DispatcherType#REQUEST} is to be used
      * @param isMatchAfter true if the given filter mapping should be matched
      * after any declared filter mappings, and false if it is supposed to
      * be matched before any declared filter mappings of the ServletContext

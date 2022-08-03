@@ -2,6 +2,7 @@ package com.mantledillusion.injection.hura.core.singleton;
 
 import com.mantledillusion.injection.hura.core.*;
 import com.mantledillusion.injection.hura.core.Blueprint.SingletonAllocation;
+import com.mantledillusion.injection.hura.core.adjustment.injectables.InjectableAlternative;
 import com.mantledillusion.injection.hura.core.exception.InjectionException;
 import com.mantledillusion.injection.hura.core.exception.AliasException;
 import com.mantledillusion.injection.hura.core.exception.ProcessorException;
@@ -28,6 +29,21 @@ public class SingletonInjectionTest extends AbstractInjectionTest {
 
 		Assertions.assertSame(singleton, childA.sequenceSingleton);
 		Assertions.assertSame(singleton, childB.sequenceSingleton);
+	}
+
+	@Test
+	public void testSingletonAllocationOverride() {
+		InjectableWithSingletonAllocationRequiredAndInjector injectable = this.suite
+				.injectInSuiteContext(InjectableWithSingletonAllocationRequiredAndInjector.class,
+						SingletonAllocation.allocateToType(InjectableWithSingletonAllocationRequiredAndInjector.SINGLETON, Injectable.class));
+
+		Assertions.assertEquals(Injectable.class, injectable.interfaceSingleton.getClass());
+
+		InjectableWithSingletonAllocationRequiredAndInjector subInjectable = injectable.injector
+				.instantiate(InjectableWithSingletonAllocationRequiredAndInjector.class,
+						SingletonAllocation.allocateToType(InjectableWithSingletonAllocationRequiredAndInjector.SINGLETON, InjectableAlternative.class));
+
+		Assertions.assertEquals(InjectableAlternative.class, subInjectable.interfaceSingleton.getClass());
 	}
 	
 	@Test

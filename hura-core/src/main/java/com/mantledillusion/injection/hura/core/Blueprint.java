@@ -229,6 +229,7 @@ public interface Blueprint {
          *                   might be null or contain nulls, both is ignored.
          * @return A new {@link SingletonAllocation} instance; never null
          */
+        @SafeVarargs
         public static <T> SingletonAllocation allocateToType(String qualifier, Class<T> beanClass,
                                                              PhasedBeanProcessor<T>... processors) {
             if (qualifier == null) {
