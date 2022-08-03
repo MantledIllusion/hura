@@ -280,6 +280,10 @@ final class InjectionChain {
 		return (AbstractAllocator<T>) this.sequenceSingletonAllocations.get(qualifier);
 	}
 
+	void removeSingletonAllocator(String qualifier) {
+		this.sequenceSingletonAllocations.remove(qualifier);
+	}
+
 	// SingletonAllocation Context
 	SingletonContext getSingletonContext() {
 		return this.singletonContext;

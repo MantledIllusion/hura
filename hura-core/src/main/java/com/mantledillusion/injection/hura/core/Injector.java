@@ -509,11 +509,12 @@ public class Injector implements ResolvingProvider, AggregationProvider, Injecti
             }
 
             boolean allocatedOnly = set.injectionMode == Optional.InjectionMode.EXPLICIT;
-            if (injectionChain.hasSingleton(set.qualifier, set.type, allocatedOnly)) {
-                singleton = injectionChain.retrieveSingleton(set.qualifier);
-            } else if (injectionChain.hasSingletonAllocator(set.qualifier)) {
+            if (injectionChain.hasSingletonAllocator(set.qualifier)) {
                 singleton = ((AbstractAllocator<T>) injectionChain.getSingletonAllocator(set.qualifier))
                         .allocate(this, injectionChain, set, buildApplicators(injectionChain, set));
+                injectionChain.removeSingletonAllocator(set.qualifier);
+            } else if (injectionChain.hasSingleton(set.qualifier, set.type, allocatedOnly)) {
+                singleton = injectionChain.retrieveSingleton(set.qualifier);
             } else if (!allocatedOnly) {
                 singleton = createAndInject(injectionChain, set, buildApplicators(injectionChain, set), false);
             }

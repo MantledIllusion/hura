@@ -15,6 +15,9 @@ public final class HuraServletContainerInitializer implements ServletContainerIn
 
     private final Injector.RootInjector serverInjector;
 
+    /**
+     * Default Constructor.
+     */
     public HuraServletContainerInitializer() {
         this.serverInjector = Injector.of();
     }
